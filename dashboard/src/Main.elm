@@ -1,29 +1,39 @@
-import StartApp.Simple exposing (start)
+import GitHub.PullRequests exposing (PullRequest (..))
 
+import Effects
+import Json.Decode
 import Html exposing (..)
-import Html.Attributes exposing (style)
-import Html.Events exposing (onClick)
+import Http
+import List
+import Result
+import StartApp exposing (start)
+import Task
 
-model = 0
+type alias Error = String
+type alias Model = Result Error (List PullRequest)
 
-type Action = Increment | Decrement
+init = (Err "Fetching…", fetch)
 
-update action model =
-  case action of
-    Increment -> model + 1
-    Decrement -> model - 1
+fetch : Effects.Effects Model
+fetch =
+  GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
+    |> Task.toResult
+    |> Task.map (Result.formatError toString)
+    |> Effects.task
 
-view address model =
-  div []
-    [
-      button [onClick address Decrement] [text "-"],
-      div [] [text (toString model)],
-      button [onClick address Increment] [text "+"]
-    ]
+update result _ = (result, Effects.none)
 
-main =
+view _ model =
+  case model of
+    Ok prs -> div [] (List.map (\(PullRequest pr) -> p [] [text pr.title]) prs)
+    Err error -> p [] [text error]
+
+app =
   start {
-    model = model,
+    init = init,
     update = update,
-    view = view
+    view = view,
+    inputs = []
   }
+
+main = app.html

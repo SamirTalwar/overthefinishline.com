@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+set -e
+
+cd $(dirname $0)
+
+mkdir -p public
+cp src/index.html public/index.html
+elm-make --yes --output public/application.js src/Main.elm

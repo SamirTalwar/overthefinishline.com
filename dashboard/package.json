@@ -11,7 +11,7 @@
   },
   "main": "public/application.js",
   "scripts": {
-    "test": "./run-tests"
+    "test": "make test"
   },
   "devDependencies": {
     "node-sass": "^3.7.0"

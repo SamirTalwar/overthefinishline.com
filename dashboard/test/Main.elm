@@ -1,15 +1,13 @@
-import Console
-import ElmTest exposing (..)
 import Task
+import TestFramework exposing (..)
 
 import Test.GitHub.PullRequests
 
-tests : Test
-tests =
-    suite "Over The Finish Line Dashboard tests" [
-      Test.GitHub.PullRequests.tests
-    ]
+tests : List Test
+tests = Test.GitHub.PullRequests.tests
 
-port runner : Signal (Task.Task x ())
-port runner =
-    Console.run (consoleRunner tests)
+port run : Task.Task x ()
+port run = TestFramework.run tests
+
+port display : Signal String
+port display = TestFramework.display

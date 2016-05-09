@@ -1,16 +1,15 @@
 module Test.GitHub.PullRequests where
 
-import ElmTest exposing (..)
 import Http
 import Json.Decode exposing (decodeString)
 import Task
+import TestFramework exposing (test)
 
 import GitHub.PullRequests exposing (..)
 
 tests =
-  suite "GitHub.PullRequests" [
-    test "foo" (assertEqual 1 1),
-    test "fetches the pull requests and decodes the JSON" (
+  [
+    test "GitHub.PullRequests.fetch: fetches the pull requests and decodes the JSON" (
       let
         get mapping url =
           if url == Http.url "https://api.github.com/repos/sandwiches/cheese/pulls" []
@@ -22,7 +21,7 @@ tests =
         ]
         actual = fetch get {owner = "sandwiches", repository = "cheese"}
       in
-        assertEqual expected actual
+        Task.map2 (==) expected actual
     )
   ]
 

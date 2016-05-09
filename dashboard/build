@@ -1,8 +1,0 @@
-#!/usr/bin/env zsh
-
-set -e
-
-cd $(dirname $0)
-
-elm make --yes --output=public/application.js src/Main.elm
-elm css --module=Stylesheet src/Stylesheet.elm

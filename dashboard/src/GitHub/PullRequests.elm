@@ -4,7 +4,6 @@ module GitHub.PullRequests (
   ) where
 
 import Json.Decode exposing (..)
-import Task
 
 type alias PullRequest = { title: String }
 

@@ -1,14 +1,12 @@
 import GitHub.PullRequests exposing (PullRequest)
 
 import Effects
-import Json.Decode
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Http
 import List
-import Result
 import StartApp exposing (start)
-import Task
+import Task exposing (Task)
 
 type Model = Loading | Error String | Dashboard (List PullRequest)
 
@@ -45,5 +43,5 @@ app =
 
 main = app.html
 
-port tasks : Signal (Task.Task Effects.Never ())
+port tasks : Signal (Task Effects.Never ())
 port tasks = app.tasks

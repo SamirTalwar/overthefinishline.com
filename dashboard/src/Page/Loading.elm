@@ -4,6 +4,6 @@ import Html exposing (..)
 import Html.Attributes exposing (class)
 
 html =
-  div [class "loading"] [
+  div [class "one-thing-only"] [
     h1 [] [text "Loading…"]
   ]

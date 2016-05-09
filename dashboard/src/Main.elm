@@ -1,4 +1,5 @@
-import GitHub.PullRequests exposing (PullRequest)
+import Error
+import GitHub.PullRequests exposing (PullRequests)
 
 import Page.Dashboard
 import Page.Error
@@ -10,7 +11,7 @@ import Http
 import StartApp exposing (App, start)
 import Task exposing (Task)
 
-type Model = Loading | Error String | Dashboard (List PullRequest)
+type Model = Loading | Error Error.Error | Dashboard PullRequests
 
 init : (Model, Effects.Effects Model)
 init = (Loading, fetch)
@@ -20,7 +21,7 @@ fetch =
   GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
     |> Task.toResult
     |> Task.map (\result -> case result of
-        Err error -> Error (toString error)
+        Err error -> Error error
         Ok pullRequests -> Dashboard pullRequests
        )
     |> Effects.task

@@ -1,8 +1,8 @@
 module Test.GitHub.PullRequests where
 
 import Http
-import Json.Decode exposing (decodeString)
-import Task
+import Json.Decode exposing (Decoder, decodeString)
+import Task exposing (Task)
 import TestFramework exposing (test)
 
 import GitHub.PullRequests exposing (..)
@@ -11,10 +11,13 @@ tests =
   [
     test "GitHub.PullRequests.fetch: fetches the pull requests" (
       let
-        get mapping url =
-          if url == Http.url "https://api.github.com/repos/sandwiches/cheese/pulls" []
-            then Task.fromResult (decodeString mapping cheeseSandwichPullRequestJson)
-            else Task.fail "Not Found"
+        get : Decoder a -> String -> Task Http.Error a
+        get decoder url =
+          if url == "https://api.github.com/repos/sandwiches/cheese/pulls"
+            then Task.fromResult (decodeString decoder cheeseSandwichPullRequestJson)
+                   |> Task.mapError Http.UnexpectedPayload
+            else Task.fail (Http.BadResponse 404 "Not Found")
+
         expected = Task.succeed [
           {title = "Add support for French cheese."},
           {title = "Discontinue pre-sliced cheese wrapped in plastic."}
@@ -22,6 +25,7 @@ tests =
         actual = fetch get {owner = "sandwiches", repository = "cheese"}
       in
         Task.map2 (==) expected actual
+          |> Task.mapError toString
     )
   ]
 

@@ -1,5 +1,4 @@
-ALL = \
-	public/application.js public/stylesheet.css public/vendor/bootstrap
+ALL = public/application.js public/stylesheet.css
 
 .PHONY: all
 all: $(ALL)
@@ -8,25 +7,8 @@ all: $(ALL)
 clean:
 	rm -f $(ALL)
 
-public/application.js: $(wildcard src/* src/**/*)
+public/application.js: $(wildcard src/*.elm src/**/*.elm)
 	elm make --yes --output=$@ src/Main.elm
 
-public/stylesheet.css: src/Stylesheet.elm src/Styles.elm
-	elm css --module=Stylesheet $<
-
-public/vendor/bootstrap: \
-		vendor/bootstrap/node_modules vendor/bootstrap/node_modules/.bin/grunt
-	cd vendor/bootstrap \
-		&& ./node_modules/.bin/grunt dist \
-		&& mkdir -p ../../public/vendor \
-		&& rm -rf ../../public/vendor/bootstrap \
-		&& cp -R dist ../../public/vendor/bootstrap \
-		&& git checkout dist docs/assets
-
-vendor/bootstrap/node_modules: vendor/bootstrap/package.json
-	cd vendor/bootstrap \
-		&& npm install
-
-vendor/bootstrap/node_modules/.bin/grunt:
-	cd vendor/bootstrap \
-		&& npm install grunt-cli
+public/stylesheet.css: src/stylesheet.scss
+	./node_modules/.bin/node-sass $< > $@

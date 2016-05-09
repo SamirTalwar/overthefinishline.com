@@ -1,7 +1,6 @@
 # Artifacts
 /public/application.js
 /public/stylesheet.css
-/public/vendor/bootstrap
 
 # Testing
 /elm-stuff/test.js

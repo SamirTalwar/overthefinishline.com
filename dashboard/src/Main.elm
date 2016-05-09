@@ -1,10 +1,8 @@
 import GitHub.PullRequests exposing (PullRequest (..))
-import Styles
 
 import Effects
 import Json.Decode
 import Html exposing (..)
-import Html.CssHelpers
 import Http
 import List
 import Result
@@ -25,11 +23,9 @@ fetch =
 
 update result _ = (result, Effects.none)
 
-{ id, class, classList } = Html.CssHelpers.withNamespace Styles.namespace
-
 view _ model =
   case model of
-    Ok prs -> div [class [Styles.PullRequests]] (List.map (\(PullRequest pr) -> p [] [text pr.title]) prs)
+    Ok prs -> div [] (List.map (\(PullRequest pr) -> p [] [text pr.title]) prs)
     Err error -> p [] [text error]
 
 app =

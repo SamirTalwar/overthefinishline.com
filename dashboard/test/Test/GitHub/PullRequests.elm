@@ -23,9 +23,9 @@ tests =
           {title = "Discontinue pre-sliced cheese wrapped in plastic."}
         ]
         actual = fetch get {owner = "sandwiches", repository = "cheese"}
+        assertion = Task.map2 (==) expected actual |> Task.mapError toString
       in
-        Task.map2 (==) expected actual
-          |> Task.mapError toString
+        (assertion, [("Expected", toString expected), ("Actual", toString actual)])
     )
   ]
 

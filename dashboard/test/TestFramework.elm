@@ -9,16 +9,20 @@ module TestFramework (
 
 import List
 import Signal
+import String
 import Task exposing (Task)
 
 type alias Name = String
 
 type alias Assertion = Task String Bool
 
-type Test = Test Name Assertion
+type alias FailureMessage = (String, String)
 
-test : Name -> Assertion -> Test
-test = Test
+type Test = Test { name : Name, assertion : Assertion, failureMessages : List FailureMessage }
+
+test : Name -> (Assertion, List FailureMessage) -> Test
+test name (assertion, failureMessages) =
+  Test { name = name, assertion = assertion, failureMessages = failureMessages }
 
 mailbox : Signal.Mailbox String
 mailbox = Signal.mailbox "tests"
@@ -28,14 +32,21 @@ display = mailbox.signal
 
 run : List Test -> Task x ()
 run tests =
-  (flip List.map) tests (\(Test name assertion) ->
+  (flip List.map) tests (\(Test { name, assertion, failureMessages }) ->
     (flip Task.map) assertion (\result -> case result of
-        True -> green (name ++ " PASSED")
-        False -> red (name ++ " FAILED"))
-    `Task.onError` (\error -> Task.succeed (red (name ++ " FAILED:\n  " ++ error)))
+        True -> passed name
+        False -> failed name failureMessages)
+    `Task.onError` (\error -> Task.succeed (failed name ([("Error", toString error)] ++ failureMessages)))
     `Task.andThen` Signal.send mailbox.address)
   |> Task.sequence
   |> Task.map (\_ -> ())
+
+passed name = green (name ++ " PASSED")
+
+failed name failureMessages =
+  red <| name ++ " FAILED" ++ String.join "" (List.map renderMessage failureMessages)
+
+renderMessage (key, value) = "\n  " ++ key ++ ":\n  " ++ value
 
 green string = "\x1b[32m" ++ string ++ reset
 

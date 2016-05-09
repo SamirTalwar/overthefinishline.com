@@ -1,6 +1,14 @@
+# Artifacts
 /public/application.js
+/public/stylesheet.css
 
-/elm.js
+# Testing
+/elm-stuff/test.js
+
+# Dependencies
 /elm-stuff/build-artifacts
 /elm-stuff/packages
-/elm-stuff/test.js
+/node_modules
+
+# Elm Reactor
+/elm.js

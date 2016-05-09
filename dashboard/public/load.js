@@ -1,1 +1,1 @@
-Elm.fullscreen(Elm.Main);
+Elm.embed(Elm.Main, document.getElementById('container'));

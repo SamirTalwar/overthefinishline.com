@@ -1,2 +1,13 @@
 $enable-flex: true;
 @import '../vendor/bootstrap/scss/bootstrap.scss';
+
+html, body, #container {
+    height: 100%;
+}
+
+.loading {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}

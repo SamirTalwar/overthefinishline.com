@@ -3,30 +3,37 @@ import GitHub.PullRequests exposing (PullRequest (..))
 import Effects
 import Json.Decode
 import Html exposing (..)
+import Html.Attributes exposing (class)
 import Http
 import List
 import Result
 import StartApp exposing (start)
 import Task
 
-type alias Error = String
-type alias Model = Result Error (List PullRequest)
+type Model = Loading | Error String | Dashboard (List PullRequest)
 
-init = (Err "Fetching…", fetch)
+init = (Loading, fetch)
 
 fetch : Effects.Effects Model
 fetch =
   GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
     |> Task.toResult
-    |> Task.map (Result.formatError toString)
+    |> Task.map (\result -> case result of
+        Err error -> Error (toString error)
+        Ok pullRequests -> Dashboard pullRequests
+       )
     |> Effects.task
 
 update result _ = (result, Effects.none)
 
 view _ model =
   case model of
-    Ok prs -> div [] (List.map (\(PullRequest pr) -> p [] [text pr.title]) prs)
-    Err error -> p [] [text error]
+    Loading ->
+      div [class "loading"] [
+        h1 [] [text "Loading…"]
+      ]
+    Dashboard prs -> div [] (List.map (\(PullRequest pr) -> p [] [text pr.title]) prs)
+    Error error -> p [] [text error]
 
 app =
   start {

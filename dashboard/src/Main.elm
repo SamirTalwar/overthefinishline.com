@@ -1,4 +1,4 @@
-import GitHub.PullRequests exposing (PullRequest (..))
+import GitHub.PullRequests exposing (PullRequest)
 
 import Effects
 import Json.Decode
@@ -32,7 +32,7 @@ view _ model =
       div [class "loading"] [
         h1 [] [text "Loading…"]
       ]
-    Dashboard prs -> div [] (List.map (\(PullRequest pr) -> p [] [text pr.title]) prs)
+    Dashboard prs -> div [] (List.map (\pr -> p [] [text pr.title]) prs)
     Error error -> p [] [text error]
 
 app =

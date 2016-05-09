@@ -1,18 +1,16 @@
 module GitHub.PullRequests (
-    PullRequest (..),
+    PullRequest,
     fetch
   ) where
 
 import Json.Decode exposing (..)
 import Task
 
-type PullRequest = PullRequest { title: String }
+type alias PullRequest = { title: String }
 
 root = "https://api.github.com"
 
 fetch get { owner, repository } =
   get decoder (root ++ "/repos/" ++ owner ++ "/" ++ repository ++ "/pulls")
 
-decoder = list (object1 createPullRequest ("title" := string))
-
-createPullRequest title = PullRequest { title = title }
+decoder = list (object1 PullRequest ("title" := string))

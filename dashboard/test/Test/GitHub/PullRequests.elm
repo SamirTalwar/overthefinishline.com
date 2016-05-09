@@ -17,8 +17,8 @@ tests =
             then Task.fromResult (decodeString mapping cheeseSandwichPullRequestJson)
             else Task.fail "Not Found"
         expected = Task.succeed [
-          PullRequest {title = "Add support for French cheese."},
-          PullRequest {title = "Discontinue pre-sliced cheese wrapped in plastic."}
+          {title = "Add support for French cheese."},
+          {title = "Discontinue pre-sliced cheese wrapped in plastic."}
         ]
         actual = fetch get {owner = "sandwiches", repository = "cheese"}
       in

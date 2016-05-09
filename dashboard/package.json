@@ -2,27 +2,21 @@
   "name": "overthefinisline.com-dashboard",
   "version": "1.0.0",
   "description": "Over The Finish Line :: Dashboard",
+  "author": "Samir Talwar",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://github.com/SamirTalwar/overthefinishline.com#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamirTalwar/overthefinishline.com.git"
+  },
   "main": "public/application.js",
-  "directories": {
-    "test": "test"
+  "scripts": {
+    "test": "./run-tests"
   },
   "dependencies": {
     "elm-css": "^0.4.0"
   },
   "devDependencies": {
     "elm-css": "^0.4.0"
-  },
-  "scripts": {
-    "test": "./run-tests"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/SamirTalwar/overthefinishline.com.git"
-  },
-  "author": "Samir Talwar",
-  "license": "SEE LICENSE IN LICENSE",
-  "bugs": {
-    "url": "https://github.com/SamirTalwar/overthefinishline.com/issues"
-  },
-  "homepage": "https://github.com/SamirTalwar/overthefinishline.com#readme"
+  }
 }

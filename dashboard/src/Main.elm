@@ -1,10 +1,12 @@
 import GitHub.PullRequests exposing (PullRequest)
 
+import Page.Dashboard
+import Page.Error
+import Page.Loading
+
 import Effects
-import Html exposing (..)
-import Html.Attributes exposing (class)
+import Html exposing (Html)
 import Http
-import List
 import StartApp exposing (App, start)
 import Task exposing (Task)
 
@@ -29,12 +31,9 @@ update result _ = (result, Effects.none)
 view : Signal.Address Model -> Model -> Html
 view _ model =
   case model of
-    Loading ->
-      div [class "loading"] [
-        h1 [] [text "Loading…"]
-      ]
-    Dashboard prs -> div [] (List.map (\pr -> p [] [text pr.title]) prs)
-    Error error -> p [] [text error]
+    Loading -> Page.Loading.html
+    Dashboard prs -> Page.Dashboard.html prs
+    Error error -> Page.Error.html error
 
 app : App Model
 app =

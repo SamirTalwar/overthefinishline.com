@@ -9,7 +9,7 @@ import GitHub.PullRequests exposing (..)
 
 tests =
   [
-    test "GitHub.PullRequests.fetch: fetches the pull requests and decodes the JSON" (
+    test "GitHub.PullRequests.fetch: fetches the pull requests" (
       let
         get mapping url =
           if url == Http.url "https://api.github.com/repos/sandwiches/cheese/pulls" []

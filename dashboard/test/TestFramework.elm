@@ -30,9 +30,15 @@ run : List Test -> Task x ()
 run tests =
   (flip List.map) tests (\(Test name assertion) ->
     (flip Task.map) assertion (\result -> case result of
-        True -> name ++ " PASSED"
-        False -> name ++ " FAILED")
-    `Task.onError` (\error -> Task.succeed (name ++ " FAILED:\n  " ++ error))
+        True -> green (name ++ " PASSED")
+        False -> red (name ++ " FAILED"))
+    `Task.onError` (\error -> Task.succeed (red (name ++ " FAILED:\n  " ++ error)))
     `Task.andThen` Signal.send mailbox.address)
   |> Task.sequence
   |> Task.map (\_ -> ())
+
+green string = "\x1b[32m" ++ string ++ reset
+
+red string = "\x1b[31m" ++ string ++ reset
+
+reset = "\x1b[0m"

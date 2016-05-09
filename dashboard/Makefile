@@ -8,7 +8,7 @@ clean:
 	rm -f $(ALL)
 
 public/application.js: $(wildcard src/*.elm src/**/*.elm)
-	elm make --yes --output=$@ src/Main.elm
+	elm make --warn --yes --output=$@ src/Main.elm
 
 public/stylesheet.css: src/stylesheet.scss
 	./node_modules/.bin/node-sass $< > $@

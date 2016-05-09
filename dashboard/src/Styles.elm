@@ -15,10 +15,6 @@ namespace = "overTheFinishLine"
 css =
   (stylesheet << Css.Namespace.namespace namespace)
     [
-      body [
-        fontFamily sansSerif
-      ],
-
       (.) PullRequests [
         margin (px 50)
       ]

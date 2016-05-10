@@ -1,11 +1,14 @@
 module Test.GitHub.PullRequests where
 
+import Date
 import Http
 import Json.Decode exposing (Decoder, decodeString)
 import Task exposing (Task)
 import TestFramework exposing (test)
 
+import Error exposing (Error)
 import GitHub.PullRequests exposing (..)
+import Model exposing (..)
 
 tests =
   [
@@ -18,15 +21,31 @@ tests =
                    |> Task.mapError Http.UnexpectedPayload
             else Task.fail (Http.BadResponse 404 "Not Found")
 
-        expected = Task.succeed [
-          {title = "Add support for French cheese."},
-          {title = "Discontinue pre-sliced cheese wrapped in plastic."}
-        ]
+        expected : Task Error PullRequests
+        expected = pullRequests |> Result.formatError (\_ -> Error.UnexpectedResponse) |> Task.fromResult
+
+        actual : Task Error PullRequests
         actual = fetch get {owner = "sandwiches", repository = "cheese"}
-        assertion = Task.map2 (==) expected actual |> Task.mapError toString
       in
-        (assertion, [("Expected", toString expected), ("Actual", toString actual)])
+        (Task.map2 (==) expected actual |> Task.mapError toString,
+         [("Expected", toString expected), ("Actual", toString actual)])
     )
+  ]
+
+pullRequests =
+  Model.pullRequests [
+    {
+      repository = {owner = "sandwiches", repository = "cheese"},
+      number = 123,
+      title = "Add support for French cheese.",
+      updatedAt = Date.fromString "2016-05-04T15:44:33Z"
+    },
+    {
+      repository = {owner = "sandwiches", repository = "cheese"},
+      number = 121,
+      title = "Discontinue pre-sliced cheese wrapped in plastic.",
+      updatedAt = Date.fromString "2016-02-06T03:08:56Z"
+    }
   ]
 
 cheeseSandwichPullRequestJson =
@@ -58,7 +77,33 @@ cheeseSandwichPullRequestJson =
       "merged_at": null,
       "merge_commit_sha": "37333f9e0fb66eb2e2d69839476cb3d10f3abf75",
       "assignee": null,
-      "milestone": null
+      "milestone": null,
+      "head": {
+        "label": "monsieur:french-cheese",
+        "ref": "french-cheese",
+        "repo": {
+          "id": 56509514,
+          "name": "cheese",
+          "full_name": "monsieur/cheese",
+          "owner": {
+            "login": "monsieur",
+            "id": 1191970
+          }
+        }
+      },
+      "base": {
+        "label": "sandwiches:master",
+        "ref": "master",
+        "repo": {
+          "id": 25231002,
+          "name": "cheese",
+          "full_name": "sandwiches/cheese",
+          "owner": {
+            "login": "sandwiches",
+            "id": 4359353
+          }
+        }
+      }
     },
     {
       "url": "https://api.github.com/repos/sandwiches/cheese/pulls/121",
@@ -86,7 +131,33 @@ cheeseSandwichPullRequestJson =
       "merged_at": null,
       "merge_commit_sha": "7c75d234c2a9b8bf61275224675ab5350d05e413",
       "assignee": null,
-      "milestone": null
+      "milestone": null,
+      "head": {
+        "label": "eco:no-plastic",
+        "ref": "no-plastic",
+        "repo": {
+          "id": 28364877,
+          "name": "cheese",
+          "full_name": "eco/cheese",
+          "owner": {
+            "login": "eco",
+            "id": 68881294
+          }
+        }
+      },
+      "base": {
+        "label": "sandwiches:master",
+        "ref": "master",
+        "repo": {
+          "id": 25231002,
+          "name": "cheese",
+          "full_name": "sandwiches/cheese",
+          "owner": {
+            "login": "sandwiches",
+            "id": 4359353
+          }
+        }
+      }
     }
   ]
   """

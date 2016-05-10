@@ -1,8 +1,9 @@
 module GitHub.PullRequests (fetch) where
 
+import Error exposing (Error)
 import Model exposing (PullRequest, PullRequests, Repository)
 
-import Error exposing (Error)
+import Date exposing (Date)
 import Http
 import Json.Decode exposing (..)
 import Task exposing (Task)
@@ -20,4 +21,14 @@ fetch get { owner, repository } =
          Http.UnexpectedPayload _ -> Error.UnexpectedResponse
          Http.BadResponse _ _ -> Error.UnexpectedResponse)
 
-decoder = list (object1 PullRequest ("title" := string))
+decoder : Decoder PullRequests
+decoder =
+  list
+    <| object4 PullRequest
+      (object2 Repository (at ["base", "repo", "owner", "login"] string) (at ["base", "repo", "name"] string))
+      ("number" := int)
+      ("title" := string)
+      ("updated_at" := date)
+
+date : Decoder Date
+date = customDecoder string Date.fromString

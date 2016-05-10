@@ -2,6 +2,7 @@ module Moment (
     Moment,
     parse,
     format,
+    compare,
     decode
   ) where
 
@@ -17,6 +18,9 @@ parse = Native.Moment.parse
 
 format : Moment -> String
 format = Native.Moment.format
+
+compare : Moment -> Moment -> Order
+compare = Native.Moment.compare
 
 decode : Decoder Moment
 decode = customDecoder string parse

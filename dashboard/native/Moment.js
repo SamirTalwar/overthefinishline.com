@@ -17,9 +17,22 @@ function make(elm) {
         return value.value.toISOString();
     }
 
+    function compare(a) {
+        return function(b) {
+            if (a.value.isBefore(b.value)) {
+                return elm.Basics.values.LT;
+            } else if (a.value.isAfter(b.value)) {
+                return elm.Basics.values.GT;
+            } else {
+                return elm.Basics.values.EQ;
+            }
+        };
+    }
+
     return elm.Native.Moment.values = {
         parse: parse,
-        format: format
+        format: format,
+        compare: compare
     };
 };
 

@@ -14,6 +14,11 @@ type alias PullRequests = List PullRequest
 type alias PullRequest = { repository : Repository, number : Int, title : String, updatedAt : Moment }
 type alias Repository = { owner : String, repository : String }
 
+createDashboard { pullRequests } =
+  Dashboard {
+    pullRequests = pullRequests |> List.sortWith (\a b -> Moment.compare a.updatedAt b.updatedAt)
+  }
+
 pullRequests
     : List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment }
     -> Result String PullRequests

@@ -21,7 +21,7 @@ fetch =
     |> Task.toResult
     |> Task.map (\result -> case result of
         Err error -> Error error
-        Ok pullRequests -> Dashboard { pullRequests = pullRequests })
+        Ok pullRequests -> createDashboard { pullRequests = pullRequests })
     |> Effects.task
 
 update : Model -> action -> (Model, Effects.Effects Model)

@@ -43,7 +43,7 @@ run tests =
     `Task.onError` (\error -> failed name ([("Error", Task.fail error)] ++ failureMessages))
     `Task.andThen` Signal.send mailbox.address)
   |> Task.sequence
-  |> Task.map (\_ -> ())
+  |> Task.map (always ())
 
 passed name = green (name ++ " PASSED")
 

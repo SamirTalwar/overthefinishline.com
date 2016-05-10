@@ -1,8 +1,8 @@
-module Test.GitHub.PullRequests where
+module Test.GitHub.PullRequests (tests) where
 
-import Date
 import Http
 import Json.Decode exposing (Decoder, decodeString)
+import Moment
 import Task exposing (Task)
 import TestFramework exposing (test)
 
@@ -38,13 +38,13 @@ pullRequests =
       repository = {owner = "sandwiches", repository = "cheese"},
       number = 123,
       title = "Add support for French cheese.",
-      updatedAt = Date.fromString "2016-05-04T15:44:33Z"
+      updatedAt = Moment.parse "2016-05-04T15:44:33Z"
     },
     {
       repository = {owner = "sandwiches", repository = "cheese"},
       number = 121,
       title = "Discontinue pre-sliced cheese wrapped in plastic.",
-      updatedAt = Date.fromString "2016-02-06T03:08:56Z"
+      updatedAt = Moment.parse "2016-02-06T03:08:56Z"
     }
   ]
 

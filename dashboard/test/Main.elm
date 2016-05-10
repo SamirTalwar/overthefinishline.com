@@ -1,10 +1,16 @@
+import List
 import Task
 import TestFramework exposing (..)
 
 import Test.GitHub.PullRequests
+import Test.Moment
 
 tests : List Test
-tests = Test.GitHub.PullRequests.tests
+tests =
+  List.concat [
+    Test.GitHub.PullRequests.tests,
+    Test.Moment.tests
+  ]
 
 port run : Task.Task x ()
 port run = TestFramework.run tests

@@ -1,3 +1,6 @@
+# Compiled native files
+/src/Native
+
 # Artifacts
 /public/application.js
 /public/stylesheet.css

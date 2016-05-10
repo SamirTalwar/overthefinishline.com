@@ -1,6 +1,7 @@
 module Model where
 
-import Date exposing (Date)
+import Moment exposing (Moment)
+
 import Error exposing (Error)
 
 type Model = Loading
@@ -10,11 +11,11 @@ type Model = Loading
            }
 
 type alias PullRequests = List PullRequest
-type alias PullRequest = { repository : Repository, number : Int, title : String, updatedAt : Date }
+type alias PullRequest = { repository : Repository, number : Int, title : String, updatedAt : Moment }
 type alias Repository = { owner : String, repository : String }
 
 pullRequests
-    : List { repository : Repository, number : Int, title : String, updatedAt : Result String Date }
+    : List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment }
     -> Result String PullRequests
 pullRequests records =
  records

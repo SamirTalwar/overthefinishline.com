@@ -11,8 +11,8 @@ tests =
   [
     test "Moment.now: responds with the current time" (
       let
-        now = Moment.now () |> Task.mapError (\_ -> "Moment.now failed.")
-        later = Task.sleep 100 `Task.andThen` Moment.now |> Task.mapError (\_ -> "Moment.now failed.")
+        now = Moment.now ()
+        later = Task.sleep 100 `Task.andThen` Moment.now
         difference = Task.map2 Moment.durationBetween now later
         assertion = Task.map (\d -> d > 50 && d < 300) difference
       in
@@ -75,7 +75,7 @@ tests =
         b = Moment.parse "2019-06-30T07:00:00.000Z"
         expected = 9288000000
         actual = Result.map2 Moment.durationBetween a b
-        assertion = Result.map ((==) expected) actual |> Result.formatError (\_ -> "Failed.")
+        assertion = Result.map ((==) expected) actual
       in
         (Task.fromResult assertion,
          [("Expected", Task.succeed (toString expected)),

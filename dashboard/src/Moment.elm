@@ -16,7 +16,7 @@ import Task exposing (Task)
 
 type Moment = Moment
 
-now : () -> Task () Moment
+now : () -> Task never Moment
 now _ = Native.Moment.now ()
 
 parse : String -> Result String Moment

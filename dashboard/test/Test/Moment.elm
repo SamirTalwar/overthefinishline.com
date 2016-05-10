@@ -2,10 +2,11 @@ module Test.Moment (tests) where
 
 import Result
 import Task
-import TestFramework exposing (test)
+import TestFramework exposing (Tests, test)
 
 import Moment exposing (..)
 
+tests : Tests
 tests =
   [
     test "Moment.now: responds with the current time" (

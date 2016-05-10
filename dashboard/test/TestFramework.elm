@@ -2,6 +2,7 @@ module TestFramework (
   Assertion,
   Name,
   Test,
+  Tests,
   display,
   run,
   test
@@ -19,6 +20,8 @@ type alias Assertion = Task String Bool
 type alias FailureMessage = (String, Task String String)
 
 type Test = Test { name : Name, assertion : Assertion, failureMessages : List FailureMessage }
+
+type alias Tests = List Test
 
 test : Name -> (Assertion, List FailureMessage) -> Test
 test name (assertion, failureMessages) =

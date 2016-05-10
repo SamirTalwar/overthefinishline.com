@@ -4,12 +4,13 @@ import Http
 import Json.Decode exposing (Decoder, decodeString)
 import Moment
 import Task exposing (Task)
-import TestFramework exposing (test)
+import TestFramework exposing (Tests, test)
 
 import Error exposing (Error)
 import GitHub.PullRequests exposing (..)
 import Model exposing (..)
 
+tests : Tests
 tests =
   [
     test "GitHub.PullRequests.fetch: fetches the pull requests" (

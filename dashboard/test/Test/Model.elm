@@ -1,12 +1,13 @@
-module Test.Model where
+module Test.Model (tests) where
 
 import Moment
 import Result
 import Task
-import TestFramework exposing (test)
+import TestFramework exposing (Tests, test)
 
 import Model exposing (..)
 
+tests : Tests
 tests =
   [
     test "Model.dashboard: gets the pull requests, least-recently-updated first" (

@@ -6,7 +6,8 @@ import Page.Error
 import Page.Loading
 
 import Effects
-import Html exposing (Html)
+import Html exposing (Html, div)
+import Html.Attributes exposing (class, id)
 import Http
 import StartApp exposing (App, start)
 import Task exposing (Task)
@@ -28,10 +29,11 @@ update result _ = (result, Effects.none)
 
 view : Signal.Address Model -> Model -> Html
 view _ model =
-  case model of
-    Loading -> Page.Loading.html
-    Dashboard dashboard -> Page.Dashboard.html dashboard
-    Error error -> Page.Error.html error
+  div [id "container", class "container-fluid"]
+    <| case model of
+      Loading -> Page.Loading.html
+      Dashboard dashboard -> Page.Dashboard.html dashboard
+      Error error -> Page.Error.html error
 
 app : App Model
 app =

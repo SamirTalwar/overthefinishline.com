@@ -5,6 +5,7 @@ module Moment (
     format,
     compare,
     durationBetween,
+    from,
     decode
   ) where
 
@@ -30,6 +31,9 @@ compare = Native.Moment.compare
 
 durationBetween : Moment -> Moment -> Int
 durationBetween = Native.Moment.durationBetween
+
+from : Moment -> Moment -> String
+from = Native.Moment.from
 
 decode : Decoder Moment
 decode = customDecoder string parse

@@ -1,6 +1,6 @@
 module Test.Model (tests) where
 
-import Moment
+import Moment exposing (Moment)
 import Result
 import Task
 import TestFramework exposing (Tests, test)
@@ -10,7 +10,7 @@ import Model exposing (..)
 tests : Tests
 tests =
   [
-    test "Model.dashboard: gets the pull requests, least-recently-updated first" (
+    test "Model.createDashboard: gets the pull requests, least-recently-updated first" (
       let
         expectedPullRequests = Model.pullRequests [
           {
@@ -44,8 +44,10 @@ tests =
             updatedAt = Moment.parse "2016-08-11T23:55:00Z"
           }
         ]
-        expected = Result.map (\input -> Dashboard { pullRequests = input }) expectedPullRequests
-        actual = Result.map (\input -> createDashboard { pullRequests = input }) pullRequests
+        expected =
+          Result.map2 (\now  pullRequests -> Dashboard { now = now, pullRequests = pullRequests })
+            now expectedPullRequests
+        actual = Result.map2 createDashboard now pullRequests
         assertion = Result.map2 (==) expected actual
       in
         (Task.fromResult assertion, [
@@ -54,6 +56,9 @@ tests =
         ])
     )
   ]
+
+now : Result String Moment
+now = Moment.parse "2017-01-01T00:00:00Z"
 
 pullRequests : Result String PullRequests
 pullRequests =

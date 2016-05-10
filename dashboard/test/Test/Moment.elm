@@ -80,5 +80,18 @@ tests =
         (Task.fromResult assertion,
          [("Expected", Task.succeed (toString expected)),
           ("Actual", Task.fromResult <| Result.map toString actual)])
+    ),
+
+    test "Moment.from: subtracts two moments in a fuzzy way" (
+      let
+        a = Moment.parse "2022-04-05T15:00:00.000Z"
+        b = Moment.parse "2022-04-09T08:00:00.000Z"
+        expected = "4 days ago"
+        actual = Result.map2 Moment.from a b
+        assertion = Result.map ((==) expected) actual
+      in
+        (Task.fromResult assertion,
+         [("Expected", Task.succeed expected),
+          ("Actual", Task.fromResult <| actual)])
     )
   ]

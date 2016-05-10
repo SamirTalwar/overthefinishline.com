@@ -9,6 +9,7 @@ import Effects
 import Html exposing (Html, div)
 import Html.Attributes exposing (class, id)
 import Http
+import Moment
 import StartApp exposing (App, start)
 import Task exposing (Task)
 
@@ -17,12 +18,13 @@ init = (Loading, fetch)
 
 fetch : Effects.Effects Model
 fetch =
-  GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
-    |> Task.toResult
-    |> Task.map (\result -> case result of
-        Err error -> Error error
-        Ok pullRequests -> createDashboard { pullRequests = pullRequests })
-    |> Effects.task
+  let
+    now = Moment.now ()
+    gitHubPullRequests = GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
+  in
+    Task.map2 createDashboard now gitHubPullRequests
+      |> (flip Task.onError) (Task.succeed << Error)
+      |> Effects.task
 
 update : Model -> action -> (Model, Effects.Effects Model)
 update result _ = (result, Effects.none)

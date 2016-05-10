@@ -42,12 +42,19 @@ function make(elm) {
         }
     }
 
+    function from(a) {
+        return function(b) {
+            return a.value.from(b.value);
+        }
+    }
+
     return elm.Native.Moment.values = {
         now: now,
         parse: parse,
         format: format,
         compare: compare,
-        durationBetween: durationBetween
+        durationBetween: durationBetween,
+        from: from
     };
 };
 

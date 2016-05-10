@@ -5,31 +5,37 @@ import Page.Dashboard
 import Page.Error
 import Page.Loading
 
-import Effects
+import Effects exposing (Effects)
 import Html exposing (Html, div)
 import Html.Attributes exposing (class, id)
 import Http
 import Moment
+import Signal exposing (Signal)
 import StartApp exposing (App, start)
 import Task exposing (Task)
 
-init : (Model, Effects.Effects Model)
+type Action = Display Model
+
+init : (Model, Effects Action)
 init = (Loading, fetch)
 
-fetch : Effects.Effects Model
+fetch : Effects Action
 fetch =
   let
     now = Moment.now ()
     gitHubPullRequests = GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
   in
     Task.map2 createDashboard now gitHubPullRequests
-      |> (flip Task.onError) (Task.succeed << Error)
+      |> Task.map Display
+      |> (flip Task.onError) (Task.succeed << Display << Error)
       |> Effects.task
 
-update : Model -> action -> (Model, Effects.Effects Model)
-update result _ = (result, Effects.none)
+update : Action -> Model -> (Model, Effects Action)
+update action model =
+  case action of
+    Display newModel -> (newModel, Effects.none)
 
-view : Signal.Address Model -> Model -> Html
+view : Signal.Address Action -> Model -> Html
 view _ model =
   div [id "container", class "container-fluid"]
     <| case model of

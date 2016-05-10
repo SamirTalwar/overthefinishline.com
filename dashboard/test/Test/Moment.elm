@@ -16,9 +16,9 @@ tests =
         assertion = Result.map ((==) timestamp) formatted
       in
         (Task.fromResult assertion,
-         [("Timestamp", timestamp),
-          ("Parsed", (toString parsed)),
-          ("Formatted", (toString formatted))])
+         [("Timestamp", Task.succeed timestamp),
+          ("Parsed", Task.fromResult <| Result.map toString parsed),
+          ("Formatted", Task.fromResult <| Result.map toString formatted)])
     ),
 
     test "Moment.compare: LT" (
@@ -28,8 +28,8 @@ tests =
         assertion = Result.map ((==) LT) <| Result.map2 Moment.compare a b
       in
         (Task.fromResult assertion,
-         [("A", toString a),
-          ("B", toString b)])
+         [("A", Task.fromResult <| Result.map toString a),
+          ("B", Task.fromResult <| Result.map toString b)])
     ),
 
     test "Moment.compare: GT" (
@@ -39,8 +39,8 @@ tests =
         assertion = Result.map ((==) GT) <| Result.map2 Moment.compare a b
       in
         (Task.fromResult assertion,
-         [("A", toString a),
-          ("B", toString b)])
+         [("A", Task.fromResult <| Result.map toString a),
+          ("B", Task.fromResult <| Result.map toString b)])
     ),
 
     test "Moment.compare: EQ" (
@@ -50,7 +50,7 @@ tests =
         assertion = Result.map ((==) EQ) <| Result.map2 Moment.compare a b
       in
         (Task.fromResult assertion,
-         [("A", toString a),
-          ("B", toString b)])
+         [("A", Task.fromResult <| Result.map toString a),
+          ("B", Task.fromResult <| Result.map toString b)])
     )
   ]

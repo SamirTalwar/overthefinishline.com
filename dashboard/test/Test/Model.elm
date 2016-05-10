@@ -48,8 +48,8 @@ tests =
         assertion = Result.map2 (==) expected actual
       in
         (Task.fromResult assertion, [
-          ("Expected", toString expected),
-          ("Actual", toString actual)
+          ("Expected", Task.fromResult <| Result.map toString expected),
+          ("Actual", Task.fromResult <| Result.map toString actual)
         ])
     )
   ]

@@ -16,7 +16,7 @@ tests =
     Test.Moment.tests
   ]
 
-port run : Task.Task x ()
+port run : Task.Task String ()
 port run = TestFramework.run tests
 
 port display : Signal String

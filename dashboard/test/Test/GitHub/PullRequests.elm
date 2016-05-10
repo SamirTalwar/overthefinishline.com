@@ -28,7 +28,8 @@ tests =
         actual = fetch get {owner = "sandwiches", repository = "cheese"}
       in
         (Task.map2 (==) expected actual |> Task.mapError toString,
-         [("Expected", toString expected), ("Actual", toString actual)])
+         [("Expected", Task.mapError toString <| Task.map toString expected),
+          ("Actual", Task.mapError toString <| Task.map toString actual)])
     )
   ]
 

@@ -19,7 +19,7 @@ test: elm-stuff/test.js
 	node $^
 
 elm-stuff/test.js: test/run.js $(PRODUCTION_FILES) $(NATIVE_FILES) $(TEST_FILES)
-	elm make --warn --yes --output $@ $(PRODUCTION_FILES) $(TEST_FILES)
+	elm make --warn --yes --output=$@ $(PRODUCTION_FILES) $(TEST_FILES)
 	cat test/run.js >> $@
 
 public/application.js: elm-package.json $(PRODUCTION_FILES) $(NATIVE_FILES)

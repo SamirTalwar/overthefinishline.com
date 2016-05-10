@@ -6,11 +6,18 @@ function make(elm) {
 
     if (elm.Native.Moment.values) return elm.Native.Moment.values;
 
-    function parse(string) {
-        var value = moment.utc(string);
+    function boxed(value) {
         var box = {ctor: 'Moment', isoString: value.toISOString()};
         Object.defineProperty(box, 'value', {value: value});
-        return elm.Result.values.Ok(box);
+        return box;
+    }
+
+    function now() {
+        return elm.Task.values.succeed(boxed(moment.utc()));
+    }
+
+    function parse(string) {
+        return elm.Result.values.Ok(boxed(moment.utc(string)));
     }
 
     function format(value) {
@@ -29,10 +36,18 @@ function make(elm) {
         };
     }
 
+    function durationBetween(a) {
+        return function(b) {
+            return b.value.diff(a.value);
+        }
+    }
+
     return elm.Native.Moment.values = {
+        now: now,
         parse: parse,
         format: format,
-        compare: compare
+        compare: compare,
+        durationBetween: durationBetween
     };
 };
 

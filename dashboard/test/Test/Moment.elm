@@ -8,6 +8,20 @@ import Moment exposing (..)
 
 tests =
   [
+    test "Moment.now: responds with the current time" (
+      let
+        now = Moment.now () |> Task.mapError (\_ -> "Moment.now failed.")
+        later = Task.sleep 100 `Task.andThen` Moment.now |> Task.mapError (\_ -> "Moment.now failed.")
+        difference = Task.map2 Moment.durationBetween now later
+        assertion = Task.map (\d -> d > 50 && d < 300) difference
+      in
+        (assertion, [
+          ("Now", Task.map toString now),
+          ("Later", Task.map toString later),
+          ("Difference", Task.map toString difference)
+        ])
+    ),
+
     test "Moment.parse: parses and formats ISO-8601 strings in UTC" (
       let
         timestamp = "2019-07-20T20:18:30.000Z"
@@ -52,5 +66,18 @@ tests =
         (Task.fromResult assertion,
          [("A", Task.fromResult <| Result.map toString a),
           ("B", Task.fromResult <| Result.map toString b)])
+    ),
+
+    test "Moment.durationBetween: subtracts two moments" (
+      let
+        a = Moment.parse "2019-03-14T19:00:00.000Z"
+        b = Moment.parse "2019-06-30T07:00:00.000Z"
+        expected = 9288000000
+        actual = Result.map2 Moment.durationBetween a b
+        assertion = Result.map ((==) expected) actual |> Result.formatError (\_ -> "Failed.")
+      in
+        (Task.fromResult assertion,
+         [("Expected", Task.succeed (toString expected)),
+          ("Actual", Task.fromResult <| Result.map toString actual)])
     )
   ]

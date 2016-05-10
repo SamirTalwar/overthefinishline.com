@@ -1,17 +1,11 @@
-module GitHub.PullRequests (
-    PullRequest,
-    PullRequests,
-    fetch
-  ) where
+module GitHub.PullRequests (fetch) where
+
+import Model exposing (PullRequest, PullRequests, Repository)
 
 import Error exposing (Error)
 import Http
 import Json.Decode exposing (..)
 import Task exposing (Task)
-
-type alias Repository = { owner : String, repository : String }
-type alias PullRequest = { title : String }
-type alias PullRequests = List PullRequest
 
 type alias HttpGet = Decoder PullRequests -> String -> Task Http.Error PullRequests
 

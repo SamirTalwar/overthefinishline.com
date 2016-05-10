@@ -1,5 +1,5 @@
-import Error
-import GitHub.PullRequests exposing (PullRequests)
+import GitHub.PullRequests
+import Model exposing (..)
 
 import Page.Dashboard
 import Page.Error
@@ -11,8 +11,6 @@ import Http
 import StartApp exposing (App, start)
 import Task exposing (Task)
 
-type Model = Loading | Error Error.Error | Dashboard PullRequests
-
 init : (Model, Effects.Effects Model)
 init = (Loading, fetch)
 
@@ -22,8 +20,7 @@ fetch =
     |> Task.toResult
     |> Task.map (\result -> case result of
         Err error -> Error error
-        Ok pullRequests -> Dashboard pullRequests
-       )
+        Ok pullRequests -> Dashboard { pullRequests = pullRequests })
     |> Effects.task
 
 update : Model -> action -> (Model, Effects.Effects Model)
@@ -33,7 +30,7 @@ view : Signal.Address Model -> Model -> Html
 view _ model =
   case model of
     Loading -> Page.Loading.html
-    Dashboard prs -> Page.Dashboard.html prs
+    Dashboard dashboard -> Page.Dashboard.html dashboard
     Error error -> Page.Error.html error
 
 app : App Model

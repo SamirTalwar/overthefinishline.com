@@ -3,5 +3,5 @@ module Page.Dashboard where
 import Html exposing (..)
 import List
 
-html prs =
-  div [] (List.map (\pr -> p [] [text pr.title]) prs)
+html { pullRequests } =
+  div [] (List.map (\pullRequest -> p [] [text pullRequest.title]) pullRequests)

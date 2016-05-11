@@ -1,4 +1,4 @@
-module Test.GitHub.PullRequests (tests) where
+module Test.GitHub.PullRequests exposing (tests)
 
 import Http
 import Json.Decode exposing (Decoder, decodeString)

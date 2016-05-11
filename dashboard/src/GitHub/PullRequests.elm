@@ -1,4 +1,4 @@
-module GitHub.PullRequests (fetch) where
+module GitHub.PullRequests exposing (fetch)
 
 import Error exposing (Error)
 import Model exposing (PullRequest, PullRequests, Repository)

@@ -1,1 +1,1 @@
-Elm.embed(Elm.Main, document.getElementById('root'));
+Elm.Main.embed(document.getElementById('root'));

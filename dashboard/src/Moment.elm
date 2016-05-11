@@ -1,4 +1,4 @@
-module Moment (
+module Moment exposing (
     Moment,
     now,
     parse,
@@ -7,13 +7,13 @@ module Moment (
     durationBetween,
     from,
     decode
-  ) where
-
-import Native.Moment
+  )
 
 import Json.Decode exposing (Decoder, customDecoder, string)
 import Result exposing (Result (..))
 import Task exposing (Task)
+
+import Native.Moment
 
 type Moment = Moment
 

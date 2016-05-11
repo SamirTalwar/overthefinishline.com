@@ -1,4 +1,4 @@
-module Test.Model (tests) where
+module Test.Model exposing (tests)
 
 import Moment exposing (Moment)
 import Result

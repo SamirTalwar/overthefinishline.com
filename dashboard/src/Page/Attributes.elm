@@ -1,4 +1,4 @@
-module Page.Attributes where
+module Page.Attributes exposing (..)
 
 import Html.Attributes exposing (property)
 import Json.Encode as Json

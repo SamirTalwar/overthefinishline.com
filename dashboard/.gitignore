@@ -1,5 +1,6 @@
 # Compiled native files
 /src/Native
+/test/Native
 
 # Artifacts
 /public/application.js

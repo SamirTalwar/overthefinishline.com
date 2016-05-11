@@ -1,6 +1,7 @@
-module Test.Moment (tests) where
+module Test.Moment exposing (tests)
 
 import Result
+import Process
 import Task
 import TestFramework exposing (Tests, test)
 
@@ -12,7 +13,7 @@ tests =
     test "Moment.now: responds with the current time" (
       let
         now = Moment.now ()
-        later = Task.sleep 100 `Task.andThen` Moment.now
+        later = Process.sleep 100 `Task.andThen` Moment.now
         difference = Task.map2 Moment.durationBetween now later
         assertion = Task.map (\d -> d > 50 && d < 300) difference
       in

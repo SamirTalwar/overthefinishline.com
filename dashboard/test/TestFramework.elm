@@ -1,17 +1,17 @@
-module TestFramework (
-  Assertion,
-  Name,
-  Test,
-  Tests,
-  display,
-  run,
-  test
-  ) where
+port module TestFramework exposing (
+    Assertion,
+    Name,
+    Test,
+    Tests,
+    run,
+    test
+  )
 
 import List
-import Signal
 import String
 import Task exposing (Task)
+
+import Native.TestFramework
 
 type alias Name = String
 
@@ -27,23 +27,18 @@ test : Name -> (Assertion, List FailureMessage) -> Test
 test name (assertion, failureMessages) =
   Test { name = name, assertion = assertion, failureMessages = failureMessages }
 
-mailbox : Signal.Mailbox String
-mailbox = Signal.mailbox "tests"
-
-display : Signal String
-display = mailbox.signal
-
-run : List Test -> Task String ()
+run : List Test -> Cmd message
 run tests =
   (flip List.map) tests (\(Test { name, assertion, failureMessages }) ->
-    assertion `Task.andThen` (\result ->
-      case result of
-        True -> Task.succeed (passed name)
-        False -> failed name failureMessages)
+    assertion
+    `Task.andThen` (\testPassed ->
+      if testPassed
+        then Task.succeed (passed name)
+        else failed name failureMessages)
     `Task.onError` (\error -> failed name ([("Error", Task.fail error)] ++ failureMessages))
-    `Task.andThen` Signal.send mailbox.address)
-  |> Task.sequence
-  |> Task.map (always ())
+    |> Task.perform identity Native.TestFramework.runTest
+  )
+  |> Cmd.batch
 
 passed name = green (name ++ " PASSED")
 

@@ -1,8 +1,9 @@
-import List
-import Task
-import TestFramework exposing (..)
+module Main exposing (main)
 
+import Html
+import Html.App exposing (program)
 import List
+import TestFramework exposing (..)
 
 import Test.GitHub.PullRequests
 import Test.Model
@@ -16,8 +17,11 @@ tests =
     Test.Moment.tests
   ]
 
-port run : Task.Task String ()
-port run = TestFramework.run tests
-
-port display : Signal String
-port display = TestFramework.display
+main : Program Never
+main =
+  program {
+    init = ((), run tests),
+    update = \message model -> (model, Cmd.none),
+    view = \model -> Html.div [] [],
+    subscriptions = always Sub.none
+  }

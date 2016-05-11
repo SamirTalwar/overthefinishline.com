@@ -1,4 +1,4 @@
-module Page.Error where
+module Page.Error exposing (html)
 
 import Error exposing (..)
 import Html exposing (..)

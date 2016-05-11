@@ -1,4 +1,4 @@
-module Page.Dashboard where
+module Page.Dashboard exposing (html)
 
 import Model exposing (..)
 

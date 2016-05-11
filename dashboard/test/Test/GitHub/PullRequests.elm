@@ -40,13 +40,15 @@ pullRequests =
       repository = {owner = "sandwiches", repository = "cheese"},
       number = 123,
       title = "Add support for French cheese.",
-      updatedAt = Moment.parse "2016-05-04T15:44:33Z"
+      updatedAt = Moment.parse "2016-05-04T15:44:33Z",
+      link = "https://github.com/sandwiches/cheese/pull/123"
     },
     {
       repository = {owner = "sandwiches", repository = "cheese"},
       number = 121,
       title = "Discontinue pre-sliced cheese wrapped in plastic.",
-      updatedAt = Moment.parse "2016-02-06T03:08:56Z"
+      updatedAt = Moment.parse "2016-02-06T03:08:56Z",
+      link = "https://github.com/sandwiches/cheese/pull/121"
     }
   ]
 

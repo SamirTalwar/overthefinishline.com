@@ -24,8 +24,9 @@ fetch get { owner, repository } =
 decoder : Decoder PullRequests
 decoder =
   list
-    <| object4 PullRequest
+    <| object5 PullRequest
       (object2 Repository (at ["base", "repo", "owner", "login"] string) (at ["base", "repo", "name"] string))
       ("number" := int)
       ("title" := string)
       ("updated_at" := Moment.decode)
+      ("html_url" := string)

@@ -21,3 +21,15 @@ html, body, #root, #container {
         display: block;
     }
 }
+
+.details {
+    td.link {
+        padding: 0;
+
+        > a {
+            display: block;
+            padding: 0.75rem;
+            text-decoration: none;
+        }
+    }
+}

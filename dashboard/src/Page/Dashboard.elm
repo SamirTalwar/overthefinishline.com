@@ -1,7 +1,7 @@
 module Page.Dashboard where
 
 import Html exposing (..)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, href)
 import List
 import Moment
 
@@ -19,9 +19,9 @@ html { now, pullRequests } =
           |> List.map (\pullRequest ->
             tr [] [
               td [] [text (pullRequest.repository.owner ++ " / " ++ pullRequest.repository.repository)],
-              td [] [text ("#" ++ (toString pullRequest.number))],
-              td [] [text pullRequest.title],
-              td [] [text (pullRequest.updatedAt `Moment.from` now)]
+              td [class "link"] [a [href pullRequest.link] [text ("#" ++ (toString pullRequest.number))]],
+              td [class "link"] [a [href pullRequest.link] [text pullRequest.title]],
+              td [] [text ("updated " ++ pullRequest.updatedAt `Moment.from` now)]
             ]
           )
       )

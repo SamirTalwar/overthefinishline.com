@@ -12,8 +12,18 @@ type Model = Loading
            }
 
 type alias PullRequests = List PullRequest
-type alias PullRequest = { repository : Repository, number : Int, title : String, updatedAt : Moment }
-type alias Repository = { owner : String, repository : String }
+type alias PullRequest = {
+  repository : Repository,
+  number : Int,
+  title : String,
+  updatedAt : Moment,
+  link : Link
+}
+type alias Repository = {
+  owner : String,
+  repository : String
+}
+type alias Link = String
 
 createDashboard now pullRequests =
   Dashboard {
@@ -22,7 +32,7 @@ createDashboard now pullRequests =
   }
 
 pullRequests
-    : List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment }
+    : List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, link : Link }
     -> Result String PullRequests
 pullRequests records =
  records

@@ -12,7 +12,7 @@ type alias HttpGet = Decoder PullRequests -> String -> Task Http.Error PullReque
 
 root = "https://api.github.com"
 
-fetch : HttpGet -> Repository -> Task Error PullRequests
+fetch : HttpGet -> { owner: String, repository : String } -> Task Error PullRequests
 fetch get { owner, repository } =
   get decoder (root ++ "/repos/" ++ owner ++ "/" ++ repository ++ "/pulls")
     |> Task.mapError (\error -> case error of
@@ -25,7 +25,11 @@ decoder : Decoder PullRequests
 decoder =
   list
     <| object5 PullRequest
-      (object2 Repository (at ["base", "repo", "owner", "login"] string) (at ["base", "repo", "name"] string))
+      (object3 Repository
+        (at ["base", "repo", "owner", "login"] string)
+        (at ["base", "repo", "name"] string)
+        (at ["base", "repo", "html_url"] string)
+      )
       ("number" := int)
       ("title" := string)
       ("updated_at" := Moment.decode)

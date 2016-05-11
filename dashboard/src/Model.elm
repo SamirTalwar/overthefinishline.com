@@ -21,7 +21,8 @@ type alias PullRequest = {
 }
 type alias Repository = {
   owner : String,
-  repository : String
+  name : String,
+  link : Link
 }
 type alias Link = String
 

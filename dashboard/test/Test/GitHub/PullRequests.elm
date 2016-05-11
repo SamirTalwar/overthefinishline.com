@@ -37,14 +37,22 @@ tests =
 pullRequests =
   Model.pullRequests [
     {
-      repository = {owner = "sandwiches", repository = "cheese"},
+      repository = {
+        owner = "sandwiches",
+        name = "cheese",
+        link = "https://github.com/sandwiches/cheese"
+      },
       number = 123,
       title = "Add support for French cheese.",
       updatedAt = Moment.parse "2016-05-04T15:44:33Z",
       link = "https://github.com/sandwiches/cheese/pull/123"
     },
     {
-      repository = {owner = "sandwiches", repository = "cheese"},
+      repository = {
+        owner = "sandwiches",
+        name = "cheese",
+        link = "https://github.com/sandwiches/cheese"
+      },
       number = 121,
       title = "Discontinue pre-sliced cheese wrapped in plastic.",
       updatedAt = Moment.parse "2016-02-06T03:08:56Z",
@@ -92,7 +100,8 @@ cheeseSandwichPullRequestJson =
           "owner": {
             "login": "monsieur",
             "id": 1191970
-          }
+          },
+          "html_url": "https://github.com/monsieur/cheese"
         }
       },
       "base": {
@@ -105,7 +114,8 @@ cheeseSandwichPullRequestJson =
           "owner": {
             "login": "sandwiches",
             "id": 4359353
-          }
+          },
+          "html_url": "https://github.com/sandwiches/cheese"
         }
       }
     },
@@ -146,7 +156,8 @@ cheeseSandwichPullRequestJson =
           "owner": {
             "login": "eco",
             "id": 68881294
-          }
+          },
+          "html_url": "https://github.com/eco/cheese"
         }
       },
       "base": {
@@ -159,7 +170,8 @@ cheeseSandwichPullRequestJson =
           "owner": {
             "login": "sandwiches",
             "id": 4359353
-          }
+          },
+          "html_url": "https://github.com/sandwiches/cheese"
         }
       }
     }

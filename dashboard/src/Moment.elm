@@ -1,9 +1,12 @@
 module Moment exposing (
     Moment,
+    Duration,
+    DurationUnit (..),
     now,
     parse,
     format,
     compare,
+    durationOf,
     durationBetween,
     from,
     decode
@@ -17,6 +20,10 @@ import Native.Moment
 
 type Moment = Moment
 
+type alias Duration = Int
+
+type DurationUnit = Hours
+
 now : () -> Task never Moment
 now _ = Native.Moment.now ()
 
@@ -29,7 +36,12 @@ format = Native.Moment.format
 compare : Moment -> Moment -> Order
 compare = Native.Moment.compare
 
-durationBetween : Moment -> Moment -> Int
+durationOf : Int -> DurationUnit -> Duration
+durationOf value unit =
+  case unit of
+    Hours -> Native.Moment.durationOf value "hours"
+
+durationBetween : Moment -> Moment -> Duration
 durationBetween = Native.Moment.durationBetween
 
 from : Moment -> Moment -> String

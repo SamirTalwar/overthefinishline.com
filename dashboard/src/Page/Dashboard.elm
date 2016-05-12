@@ -19,19 +19,22 @@ html { now, pullRequests } =
         pullRequests
           |> List.take 3
           |> List.map (\pullRequest ->
-            tr [] [
-              td [class "link"] [
-                a [href pullRequest.repository.link] [
-                  text (pullRequest.repository.owner ++ " / " ++ pullRequest.repository.name)]],
-              td [class "link"] [
-                a [href pullRequest.link] [
-                  text ("#" ++ (toString pullRequest.number))]],
-              td [class "link"] [
-                a [href pullRequest.link] [
-                  text pullRequest.title]],
-              td [] [
-                text ("updated " ++ pullRequest.updatedAt `Moment.from` now)]
-            ]
+            let
+              old = Moment.durationBetween pullRequest.updatedAt now > Moment.durationOf 3 Moment.Hours
+            in
+              tr [] [
+                td [class "link"] [
+                  a [href pullRequest.repository.link] [
+                    text (pullRequest.repository.owner ++ " / " ++ pullRequest.repository.name)]],
+                td [class "link"] [
+                  a [href pullRequest.link] [
+                    text ("#" ++ (toString pullRequest.number))]],
+                td [class "link"] [
+                  a [href pullRequest.link] [
+                    text pullRequest.title]],
+                td (if old then [class "old"] else []) [
+                  text ("updated " ++ pullRequest.updatedAt `Moment.from` now)]
+              ]
           )
       )
     ]

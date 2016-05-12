@@ -42,6 +42,12 @@ function compare(a) {
     };
 }
 
+function durationOf(value) {
+    return function(unit) {
+        return moment.duration(value, unit).asMilliseconds();
+    };
+}
+
 function durationBetween(a) {
     return function(b) {
         return b.value.diff(a.value);
@@ -59,6 +65,7 @@ global['_SamirTalwar$overthefinishline_com$Native_Moment'] = {
     parse: parse,
     format: format,
     compare: compare,
+    durationOf: durationOf,
     durationBetween: durationBetween,
     from: from,
 };

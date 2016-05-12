@@ -32,4 +32,8 @@ html, body, #root, #container {
             text-decoration: none;
         }
     }
+
+    .old {
+        color: $state-danger-text;
+    }
 }

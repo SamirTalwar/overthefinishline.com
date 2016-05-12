@@ -70,7 +70,18 @@ tests =
           ("B", Task.fromResult <| Result.map toString b)])
     ),
 
-    test "Moment.durationBetween: subtracts two moments" (
+    test "Moment.durationOf: calculates durations in hours" (
+      let
+        expected = 21600000
+        actual = Moment.durationOf 6 Hours
+        assertion = Task.succeed (expected == actual)
+      in
+        (assertion,
+         [("Expected", Task.succeed <| toString expected),
+          ("Actual", Task.succeed <| toString actual)])
+    ),
+
+    test "Moment.durationBetween: calcluates the difference between two moments in milliseconds" (
       let
         a = Moment.parse "2019-03-14T19:00:00.000Z"
         b = Moment.parse "2019-06-30T07:00:00.000Z"

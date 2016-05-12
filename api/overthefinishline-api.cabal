@@ -4,7 +4,7 @@ synopsis:            Over The Finish Line :: API
 description:         Please see README.md
 homepage:            https://github.com/SamirTalwar/overthefinishline.com#readme
 license:             AllRightsReserved
-license-file:        LICENSE
+license-file:        ../LICENSE
 author:              Samir Talwar
 maintainer:          samir@noodlesandwich.com
 copyright:           Samir Talwar

@@ -14,7 +14,7 @@ test: elm-stuff/test.js
 
 .PHONY: serve
 serve: build
-	cd public && python3 -m http.server
+	cd public && python3 -m http.server 8001
 
 .PHONY: clean
 clean:

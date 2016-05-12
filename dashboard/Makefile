@@ -1,28 +1,29 @@
-OUTPUT_FILES = public/application.js public/stylesheet.css
 PRODUCTION_FILES = $(shell find src -name '*.elm')
-NATIVE_PRODUCTION_FILES = src/Native/Moment.js
+PRODUCTION_NATIVE_FILES = src/Native/Moment.js
+PRODUCTION_OUTPUT_FILES = public/application.js public/stylesheet.css
 TEST_FILES = $(shell find test -name '*.elm')
-NATIVE_TEST_FILES = test/Native/TestFramework.js
+TEST_NATIVE_FILES = test/Native/TestFramework.js
+TEST_OUTPUT_FILES = elm-stuff/test.js
 
-.PHONY: all
-all: $(OUTPUT_FILES)
-
-.PHONY: clean
-clean:
-	rm -f $(OUTPUT_FILES)
-
-.PHONY: serve
-serve:
-	cd public && python3 -m http.server
+.PHONY: build
+build: $(PRODUCTION_OUTPUT_FILES)
 
 .PHONY: test
 test: elm-stuff/test.js
 	node test/run.js
 
-elm-stuff/test.js: test/run.js $(PRODUCTION_FILES) $(NATIVE_PRODUCTION_FILES) $(TEST_FILES) $(NATIVE_TEST_FILES)
+.PHONY: serve
+serve: build
+	cd public && python3 -m http.server
+
+.PHONY: clean
+clean:
+	rm -f $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST_OUTPUT_FILES) $(TEST_NATIVE_FILES)
+
+elm-stuff/test.js: test/run.js $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST_FILES) $(TEST_NATIVE_FILES)
 	elm make --warn --yes --output=$@ $(PRODUCTION_FILES) $(TEST_FILES)
 
-public/application.js: elm-package.json $(PRODUCTION_FILES) $(NATIVE_PRODUCTION_FILES)
+public/application.js: elm-package.json $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES)
 	elm make --warn --yes --output=$@ $(PRODUCTION_FILES)
 
 public/stylesheet.css: elm-package.json src/stylesheet.scss

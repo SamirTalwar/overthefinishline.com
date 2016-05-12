@@ -1,4 +1,4 @@
-var Elm = require('../elm-stuff/test');
+var Elm = require('./test');
 
 global.window = global;
 let app = Elm.Main.worker();

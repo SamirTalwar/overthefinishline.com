@@ -1,13 +1,12 @@
 # Compiled native files
-/src/Native
-/test/Native
+/client/src/Native
+/client/test/Native
 
 # Artifacts
-/public/application.js
-/public/stylesheet.css
+/client/build
 
 # Testing
-/elm-stuff/test.js
+test.js
 
 # Dependencies
 /elm-stuff/build-artifacts

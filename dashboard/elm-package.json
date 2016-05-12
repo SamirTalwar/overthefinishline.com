@@ -4,8 +4,8 @@
     "repository": "https://github.com/SamirTalwar/overthefinishline-com.git",
     "license": "AllRightsReserved",
     "source-directories": [
-        "src",
-        "test"
+        "client/src",
+        "client/test"
     ],
     "exposed-modules": [],
     "elm-version": "0.17.0 <= v < 0.18.0",

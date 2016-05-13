@@ -8,10 +8,12 @@ TEST_OUTPUT_FILES = client/build/test/test.js
 
 .PHONY: build
 build: $(PRODUCTION_OUTPUT_FILES)
+	cd server && stack build
 
 .PHONY: test
 test: client/build/test/run.js client/build/test/test.js
-	node $<
+	node client/build/test/run.js
+	cd server && stack test
 
 .PHONY: serve
 serve: build

@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+
+set -e
+
+cd $(dirname $0)/server
+
+NAME=overthefinishline-dashboard-server-exe
+PORT=8001
+CLIENT_PATH=../client/build/src
+
+application_path=$(stack exec which $NAME)
+pid=0
+done=false
+
+function run {
+    $application_path --port=$PORT --client=$CLIENT_PATH &
+    pid=$!
+}
+
+function terminate {
+    kill $pid
+}
+
+trap 'done=true' SIGINT SIGTERM
+
+run
+while ! $done; do
+    fswatch --one-event --latency=1 $application_path >/dev/null
+    terminate
+    run
+done
+terminate

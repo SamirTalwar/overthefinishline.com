@@ -15,10 +15,6 @@ test: client/build/test/run.js client/build/test/test.js
 	node client/build/test/run.js
 	cd server && stack test
 
-.PHONY: serve
-serve: build
-	cd server && stack exec overthefinishline-dashboard-server-exe -- --port=8001 --client=../client/build/src
-
 .PHONY: clean
 clean:
 	rm -f $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST_OUTPUT_FILES) $(TEST_NATIVE_FILES)

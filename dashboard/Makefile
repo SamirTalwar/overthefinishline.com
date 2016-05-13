@@ -17,7 +17,7 @@ test: client/build/test/run.js client/build/test/test.js
 
 .PHONY: serve
 serve: build
-	cd client/build/src && python3 -m http.server 8001
+	cd server && stack exec overthefinishline-dashboard-server-exe -- --port=8001 --client=../client/build/src
 
 .PHONY: clean
 clean:

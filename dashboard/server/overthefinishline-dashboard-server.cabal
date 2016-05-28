@@ -26,7 +26,6 @@ executable overthefinishline-dashboard-server-exe
   build-depends:       base
                      , overthefinishline-dashboard-server
                      , filepath
-                     , optparse-applicative
                      , scotty
                      , wai-middleware-static
   default-language:    Haskell2010

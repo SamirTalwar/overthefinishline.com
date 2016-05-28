@@ -2,30 +2,30 @@
 
 set -e
 
-cd $(dirname $0)/server
+cd $(dirname $0)
 
 NAME=overthefinishline-dashboard-server-exe
-PORT=8001
-CLIENT_PATH=../client/build/src
 
-application_path=$(stack exec which $NAME)
+application_path=$(cd server && stack exec which $NAME)
+config_path=development.env
+
 pid=0
 done=false
 
 function run {
-    $application_path --port=$PORT --client=$CLIENT_PATH &
+    env $(cat $config_path) $application_path &
     pid=$!
 }
 
 function terminate {
-    kill $pid
+    kill $pid || :
 }
 
 trap 'done=true' SIGINT SIGTERM
 
 run
 while ! $done; do
-    fswatch --one-event --latency=1 $application_path >/dev/null
+    fswatch --one-event --latency=1 $application_path $config_path >/dev/null
     terminate
     run
 done

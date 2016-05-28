@@ -10,16 +10,16 @@ import System.FilePath
 import Web.Scotty
 
 type Port = Int
-data ServerOptions = ServerOptions { port :: Port, clientPath :: FilePath }
+data Configuration = Configuration { port :: Port, clientPath :: FilePath }
 
-main = readOptions >>= server
+main = readConfiguration >>= server
 
-server (ServerOptions port clientPath) =
+server (Configuration port clientPath) =
   scotty port $ do
     middleware $ staticPolicy (noDots >-> addBase clientPath)
     get "/" $ file (clientPath </> "index.html")
 
-readOptions =
-  ServerOptions
+readConfiguration =
+  Configuration
    <$> (read <$> getEnv "PORT")
    <*> getEnv "CLIENT_PATH"

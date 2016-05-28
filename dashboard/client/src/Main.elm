@@ -12,7 +12,7 @@ import Http
 import Moment
 import Task exposing (Task)
 
-type Message = Display Model
+type alias Message = Model
 
 init : (Model, Cmd Message)
 init = (Loading, fetch)
@@ -24,20 +24,20 @@ fetch =
     gitHubPullRequests = GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
   in
     Task.map2 createDashboard now gitHubPullRequests
-      |> Task.perform (Display << Error) (Display)
+      |> Task.perform Error identity
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
   case message of
-    Display newModel -> (newModel, Cmd.none)
+    newModel -> (newModel, Cmd.none)
 
 view : Model -> Html Message
 view model =
   div [id "container", class "container-fluid"]
     <| case model of
       Loading -> Page.Loading.html
-      Dashboard dashboard -> Page.Dashboard.html dashboard
       Error error -> Page.Error.html error
+      Dashboard dashboard -> Page.Dashboard.html dashboard
 
 main : Program Never
 main =

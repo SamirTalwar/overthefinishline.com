@@ -1,6 +1,7 @@
 import GitHub.PullRequests
 import Model exposing (..)
 
+import Page.Authentication
 import Page.Dashboard
 import Page.Error
 import Page.Loading
@@ -24,7 +25,7 @@ fetch =
     gitHubPullRequests = GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
   in
     Task.map2 createDashboard now gitHubPullRequests
-      |> Task.perform Error identity
+      |> Task.perform Error (always Unauthenticated)
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
@@ -37,6 +38,7 @@ view model =
     <| case model of
       Loading -> Page.Loading.html
       Error error -> Page.Error.html error
+      Unauthenticated -> Page.Authentication.html
       Dashboard dashboard -> Page.Dashboard.html dashboard
 
 main : Program Never

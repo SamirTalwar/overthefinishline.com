@@ -6,6 +6,7 @@ import Error exposing (Error)
 
 type Model = Loading
            | Error Error
+           | Unauthenticated
            | Dashboard {
              now : Moment,
              pullRequests : PullRequests

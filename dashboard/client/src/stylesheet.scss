@@ -1,5 +1,5 @@
 $enable-flex: true;
-@import '../../vendor/bootstrap/scss/bootstrap.scss';
+@import '../../vendor/bootstrap/scss/bootstrap';
 
 html, body, #root, #container {
     height: 100%;
@@ -10,6 +10,18 @@ html, body, #root, #container {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+.sign-in {
+    @extend .btn;
+    @extend .btn-primary;
+    @extend .btn-lg;
+
+    display: inline-block;
+
+    span {
+        padding-right: $spacer-x;
+    }
 }
 
 .summary {

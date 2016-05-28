@@ -6,17 +6,18 @@ import Control.Monad.IO.Class (liftIO)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as ByteStringC
-import Data.ByteString.Lazy (fromStrict, toStrict)
-import Data.Text.Lazy (pack)
-import Data.Text.Lazy.Encoding (decodeUtf8, encodeUtf8)
+import Data.ByteString.Lazy (toStrict)
+import Data.Text (pack)
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
+import Network.HTTP.Types.Status (badRequest400)
 import Network.OAuth.OAuth2
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.Environment (getEnv)
 import System.FilePath
 import System.IO.Error
-import Web.Scotty
+import Web.Spock
 
 type Port = Int
 data OAuthCredentials = OAuthCredentials {
@@ -33,17 +34,21 @@ main = readConfiguration >>= server
 
 server (Configuration port clientPath (OAuthCredentials gitHubClientId gitHubClientSecret)) = do
   httpManager <- newManager tlsManagerSettings
-  scotty port $ do
+  runSpock port $ spockT id $ do
     middleware $ staticPolicy (noDots >-> addBase clientPath)
-    get "/" $ file (clientPath </> "index.html")
+    get "/" $ file "text/html" (clientPath </> "index.html")
     get "/authentication/by/github" $
-      redirect $ decodeUtf8 $ fromStrict $ authorizationUrl gitHubOAuth
+      redirect $ decodeUtf8 $ authorizationUrl gitHubOAuth
     get "/authorization/by/github" $ do
       code <- param "code"
-      response <- liftIO $ fetchAccessToken httpManager gitHubOAuth (toStrict $ encodeUtf8 code)
-      case response of
-        Left failure -> text $ decodeUtf8 failure
-        Right accessToken -> text $ pack $ show accessToken
+      case code of
+        Nothing ->
+          setStatus badRequest400
+        Just code -> do
+          response <- liftIO $ fetchAccessToken httpManager gitHubOAuth (encodeUtf8 code)
+          case response of
+            Left failure -> text $ decodeUtf8 $ toStrict failure
+            Right accessToken -> text $ pack $ show accessToken
   where
     gitHubOAuth = OAuth2 {
       oauthClientId = gitHubClientId,

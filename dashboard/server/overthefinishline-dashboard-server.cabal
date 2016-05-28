@@ -30,7 +30,8 @@ executable overthefinishline-dashboard-server-exe
                      , hoauth2
                      , http-client
                      , http-client-tls
-                     , scotty
+                     , http-types
+                     , Spock
                      , text
                      , transformers
                      , wai-middleware-static

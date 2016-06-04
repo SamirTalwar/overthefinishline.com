@@ -3,7 +3,7 @@ module Test.Model exposing (tests)
 import Moment exposing (Moment)
 import Result
 import Task
-import TestFramework exposing (Tests, test)
+import TestFramework exposing (..)
 
 import Model exposing (..)
 
@@ -69,21 +69,18 @@ tests =
             link = "https://github.com/people/carol/pull/50"
           }
         ]
-        expected =
-          Result.map2 (\now pullRequests -> Dashboard { now = now, pullRequests = pullRequests })
-            now expectedPullRequests
-        actual = Result.map2 createDashboard now pullRequests
-        assertion = Result.map2 (==) expected actual
+        expected = Result.map2 unsortedDashboard now expectedPullRequests |> Task.fromResult
+        actual = Result.map2 createDashboard now pullRequests |> Task.fromResult
       in
-        (Task.fromResult assertion, [
-          ("Expected", Task.fromResult <| Result.map toString expected),
-          ("Actual", Task.fromResult <| Result.map toString actual)
-        ])
+        assert actual (equals expected)
     )
   ]
 
 now : Result String Moment
 now = Moment.parse "2017-01-01T00:00:00Z"
+
+unsortedDashboard : Moment -> PullRequests -> Model
+unsortedDashboard now pullRequests = Dashboard { now = now, pullRequests = pullRequests }
 
 pullRequests : Result String PullRequests
 pullRequests =

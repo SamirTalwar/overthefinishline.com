@@ -4,7 +4,7 @@ import Http
 import Json.Decode exposing (Decoder, decodeString)
 import Moment
 import Task exposing (Task)
-import TestFramework exposing (Tests, test)
+import TestFramework exposing (..)
 
 import Error exposing (Error)
 import GitHub.PullRequests exposing (..)
@@ -28,9 +28,7 @@ tests =
         actual : Task Error PullRequests
         actual = fetch get {owner = "sandwiches", repository = "cheese"}
       in
-        (Task.map2 (==) expected actual |> Task.mapError toString,
-         [("Expected", Task.mapError toString <| Task.map toString expected),
-          ("Actual", Task.mapError toString <| Task.map toString actual)])
+        assert actual (equals expected)
     )
   ]
 

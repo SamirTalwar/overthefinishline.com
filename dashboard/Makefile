@@ -8,12 +8,12 @@ TEST_OUTPUT_FILES = client/build/test/test.js
 
 .PHONY: build
 build: $(PRODUCTION_OUTPUT_FILES)
-	cd server && stack build
+	cd server && sbt assembly
 
 .PHONY: test
 test: client/build/test/run.js client/build/test/test.js
 	node client/build/test/run.js
-	cd server && stack test
+	cd server && sbt test
 
 .PHONY: clean
 clean:

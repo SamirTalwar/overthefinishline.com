@@ -7,6 +7,7 @@
 
 # Artifacts
 /client/build
+target
 
 # Testing
 test.js
@@ -18,3 +19,6 @@ test.js
 
 # Elm Reactor
 /elm.js
+
+# IntelliJ IDEA
+.idea

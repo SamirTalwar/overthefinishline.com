@@ -32,16 +32,18 @@ class Application(clientPath: Path, gitHubOAuthCredentials: ClientParametersAuth
     }
   }
 
-  val routes =
-    pathSingleSlash {
+  lazy val routes = staticFileRoutes ~ gitHubOAuthRoutes
+
+  private val staticFileRoutes = pathSingleSlash {
       encodeResponse {
         getFromFile(clientPath.resolve("index.html").toFile)
       }
     } ~
     encodeResponse {
       getFromDirectory(clientPath.toString)
-    } ~
-    path("authentication" / "by" / "github") {
+    }
+
+  private val gitHubOAuthRoutes = path("authentication" / "by" / "github") {
       val authorizationUri = gitHubAuthorizationFlow.newAuthorizationUrl().setScopes(Seq("user:email", "repo").asJava)
         .build()
       redirect(authorizationUri, StatusCodes.TemporaryRedirect)

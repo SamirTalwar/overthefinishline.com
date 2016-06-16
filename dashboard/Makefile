@@ -10,7 +10,7 @@ build: $(PRODUCTION_OUTPUT_FILES)
 
 .PHONY: test
 test: $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST_FILES) node_modules
-	./vendor/arborist/bin/run $(TEST_FILES)
+	node ./elm-stuff/packages/SamirTalwar/arborist/1.0.0/bin/run $(TEST_FILES)
 	cd server && sbt test
 
 .PHONY: clean

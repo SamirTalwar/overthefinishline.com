@@ -1,9 +1,9 @@
-module Main exposing (main)
+port module Main exposing (main)
 
+import Arborist.Framework exposing (..)
 import Html
 import Html.App exposing (program)
 import List
-import TestFramework exposing (..)
 
 import Test.GitHub.PullRequests
 import Test.Model
@@ -17,11 +17,13 @@ tests =
     Test.Moment.tests
   ]
 
+port output : String -> Cmd message
+
 main : Program Never
 main =
   program {
     init = ((), run tests),
-    update = \message model -> (model, Cmd.none),
+    update = \message model -> ((), output message),
     view = \model -> Html.div [] [],
     subscriptions = always Sub.none
   }

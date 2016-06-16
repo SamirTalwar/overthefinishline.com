@@ -1,10 +1,11 @@
 module Test.GitHub.PullRequests exposing (tests)
 
+import Arborist.Framework exposing (..)
+import Arborist.Matchers exposing (..)
 import Http
 import Json.Decode exposing (Decoder, decodeString)
 import Moment
 import Task exposing (Task)
-import TestFramework exposing (..)
 
 import Error exposing (Error)
 import GitHub.PullRequests exposing (..)

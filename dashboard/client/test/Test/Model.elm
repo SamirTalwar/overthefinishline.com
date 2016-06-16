@@ -1,9 +1,10 @@
 module Test.Model exposing (tests)
 
+import Arborist.Framework exposing (..)
+import Arborist.Matchers exposing (..)
 import Moment exposing (Moment)
 import Result
 import Task
-import TestFramework exposing (..)
 
 import Model exposing (..)
 

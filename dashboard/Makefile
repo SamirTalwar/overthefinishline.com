@@ -31,7 +31,7 @@ client/build/src/load.js: client/static/load.js client/build
 client/build/src/application.js: elm-package.json $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) client/build
 	elm make --warn --yes --output=$@ $(PRODUCTION_FILES)
 
-client/build/src/stylesheet.css: elm-package.json client/src/stylesheet.scss client/build
+client/build/src/stylesheet.css: elm-package.json client/src/stylesheet.scss client/build node_modules
 	./node_modules/.bin/node-sass client/src/stylesheet.scss > $@
 
 client/build/test/run.js: client/test/run.js client/build
@@ -43,7 +43,7 @@ client/build/test/test.js: $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST
 client/src/Native:
 	mkdir -p $@
 
-client/src/Native/Moment.js: client/native/src/Moment.js client/src/Native
+client/src/Native/Moment.js: client/native/src/Moment.js client/src/Native node_modules
 	./node_modules/.bin/browserify --outfile=$@ $<
 
 client/test/Native:
@@ -51,3 +51,6 @@ client/test/Native:
 
 client/test/Native/TestFramework.js: client/native/test/TestFramework.js client/test/Native
 	./node_modules/.bin/browserify --outfile=$@ $<
+
+node_modules: package.json
+	npm install

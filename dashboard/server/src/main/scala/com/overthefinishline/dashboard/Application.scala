@@ -5,17 +5,15 @@ import scala.collection.JavaConverters._
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.google.api.client.auth.oauth2.{AuthorizationCodeFlow, BearerToken, ClientParametersAuthentication}
-import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.http._
+import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson.JacksonFactory
-import spray.json.DefaultJsonProtocol
 
-class Application(clientPath: Path, gitHubOAuthCredentials: ClientParametersAuthentication) extends SprayJsonSupport with DefaultJsonProtocol {
+class Application(clientPath: Path, gitHubOAuthCredentials: ClientParametersAuthentication) extends JsonSupport {
   val gitHubAuthorizationFlow = new AuthorizationCodeFlow.Builder(
     BearerToken.authorizationHeaderAccessMethod(),
     new NetHttpTransport,
@@ -32,9 +30,10 @@ class Application(clientPath: Path, gitHubOAuthCredentials: ClientParametersAuth
     }
   }
 
-  lazy val routes = staticFileRoutes ~ gitHubOAuthRoutes
+  lazy val routes = staticFileRoutes ~ dashboardRoutes ~ gitHubOAuthRoutes
 
-  private val staticFileRoutes = pathSingleSlash {
+  private val staticFileRoutes =
+    pathSingleSlash {
       encodeResponse {
         getFromFile(clientPath.resolve("index.html").toFile)
       }
@@ -43,7 +42,13 @@ class Application(clientPath: Path, gitHubOAuthCredentials: ClientParametersAuth
       getFromDirectory(clientPath.toString)
     }
 
-  private val gitHubOAuthRoutes = path("authentication" / "by" / "github") {
+  private val dashboardRoutes =
+    path("dashboard") {
+      complete(Unauthorized.asInstanceOf[Model])
+    }
+
+  private val gitHubOAuthRoutes =
+    path("authentication" / "by" / "github") {
       val authorizationUri = gitHubAuthorizationFlow.newAuthorizationUrl().setScopes(Seq("user:email", "repo").asJava)
         .build()
       redirect(authorizationUri, StatusCodes.TemporaryRedirect)

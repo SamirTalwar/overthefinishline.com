@@ -1,10 +1,11 @@
 package com.overthefinishline.dashboard
 
 import java.nio.file.Paths
+import java.security.SecureRandom
+import javax.crypto.spec.SecretKeySpec
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
 class DashboardTest extends FunSpec with Matchers with BeforeAndAfter with ScalatestRouteTest with JsonSupport {
@@ -13,7 +14,8 @@ class DashboardTest extends FunSpec with Matchers with BeforeAndAfter with Scala
   before {
     routes = new Application(
       clientPath = Paths.get(""),
-      gitHubOAuthCredentials = new ClientParametersAuthentication("", "")
+      oAuthRoutes = new NullRoutes,
+      credentials = new Credentials(new SecureRandom(), new SecretKeySpec("key".getBytes, ""))
     ).routes
   }
 

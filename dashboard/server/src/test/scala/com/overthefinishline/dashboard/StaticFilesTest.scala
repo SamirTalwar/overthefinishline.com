@@ -1,11 +1,12 @@
 package com.overthefinishline.dashboard
 
 import java.nio.file.{Files, Path}
+import java.security.SecureRandom
 import java.util.function.Consumer
+import javax.crypto.spec.SecretKeySpec
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
 class StaticFilesTest extends FunSpec with Matchers with BeforeAndAfter with ScalatestRouteTest {
@@ -17,7 +18,8 @@ class StaticFilesTest extends FunSpec with Matchers with BeforeAndAfter with Sca
     clientPath = Files.createTempDirectory("public")
     routes = new Application(
       clientPath = clientPath,
-      gitHubOAuthCredentials = new ClientParametersAuthentication("", "")
+      oAuthRoutes = new NullRoutes,
+      credentials = new Credentials(new SecureRandom(), new SecretKeySpec("key".getBytes, ""))
     ).routes
   }
 

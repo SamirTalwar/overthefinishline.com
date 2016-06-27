@@ -45,7 +45,7 @@ object Application {
     val base64Decoder = Base64.getDecoder
     val port = System.getenv("PORT").toInt
     val clientPath = Paths.get(System.getenv("CLIENT_PATH"))
-    val credentials = new Credentials(new SecureRandom, new SecretKeySpec(base64Decoder.decode(System.getenv("ENCRYPTION_KEY")), SecretKeyAlgorithm))
+    val credentials = new EncryptedCookieCredentials(new SecureRandom, new SecretKeySpec(base64Decoder.decode(System.getenv("ENCRYPTION_KEY")), SecretKeyAlgorithm))
     val oAuthRoutes = new OAuthRoutes(
       credentials,
       new ClientParametersAuthentication(

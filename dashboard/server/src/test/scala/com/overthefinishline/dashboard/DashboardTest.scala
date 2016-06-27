@@ -1,8 +1,6 @@
 package com.overthefinishline.dashboard
 
 import java.nio.file.Paths
-import java.security.SecureRandom
-import javax.crypto.spec.SecretKeySpec
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -15,7 +13,7 @@ class DashboardTest extends FunSpec with Matchers with BeforeAndAfter with Scala
     routes = new Application(
       clientPath = Paths.get(""),
       oAuthRoutes = new NullRoutes,
-      credentials = new Credentials(new SecureRandom(), new SecretKeySpec("key".getBytes, ""))
+      credentials = new FakeCredentials
     ).routes
   }
 

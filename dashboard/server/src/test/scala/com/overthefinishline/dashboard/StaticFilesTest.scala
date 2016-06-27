@@ -1,9 +1,7 @@
 package com.overthefinishline.dashboard
 
 import java.nio.file.{Files, Path}
-import java.security.SecureRandom
 import java.util.function.Consumer
-import javax.crypto.spec.SecretKeySpec
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -19,7 +17,7 @@ class StaticFilesTest extends FunSpec with Matchers with BeforeAndAfter with Sca
     routes = new Application(
       clientPath = clientPath,
       oAuthRoutes = new NullRoutes,
-      credentials = new Credentials(new SecureRandom(), new SecretKeySpec("key".getBytes, ""))
+      credentials = new FakeCredentials
     ).routes
   }
 

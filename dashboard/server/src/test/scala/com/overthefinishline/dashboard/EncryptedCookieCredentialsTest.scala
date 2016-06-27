@@ -10,9 +10,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
-class CredentialsTest extends FunSpec with Matchers with BeforeAndAfter with ScalatestRouteTest with JsonSupport {
+class EncryptedCookieCredentialsTest extends FunSpec with Matchers with BeforeAndAfter with ScalatestRouteTest with JsonSupport {
   val encryptionKey = new SecretKeySpec("0123456789abcdef".getBytes, "AES")
-  val credentials = new Credentials(new SecureRandom(), encryptionKey)
+  val credentials = new EncryptedCookieCredentials(new SecureRandom(), encryptionKey)
 
   val routes =
     path("store") {

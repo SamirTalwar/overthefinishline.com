@@ -1,7 +1,9 @@
 package com.overthefinishline.dashboard
 
-import java.nio.file.Paths
+import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
 
+import akka.actor.{Actor, Props}
+import akka.dispatch.ExecutionContexts
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
@@ -9,11 +11,24 @@ import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 class DashboardTest extends FunSpec with Matchers with BeforeAndAfter with ScalatestRouteTest with JsonSupport {
   var routes: Route = null
 
+  val credentials = new FakeCredentials
+
+  var now: Instant = ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 0, ZoneOffset.UTC).toInstant
+  def clock = Clock.fixed(now, ZoneOffset.UTC)
+
+  var pullRequests: PullRequests = null
+  val gitHubPullRequests = system.actorOf(Props(new Actor {
+    def receive = {
+      case _ => sender ! pullRequests
+    }
+  }))
+
   before {
-    routes = new Application(
-      clientPath = Paths.get(""),
-      oAuthRoutes = new NullRoutes,
-      credentials = new FakeCredentials
+    routes = new DashboardRoutes(
+      executionContext = ExecutionContexts.global(),
+      credentials = credentials,
+      clock = clock,
+      gitHubPullRequests = gitHubPullRequests
     ).routes
   }
 
@@ -21,6 +36,38 @@ class DashboardTest extends FunSpec with Matchers with BeforeAndAfter with Scala
     it("asks the client to log in if no token is found") {
       Get("/dashboard") ~> routes ~> check {
         responseAs[Model] should be(Unauthorized)
+      }
+    }
+
+    it("gets a list of pull requests for a random repository") {
+      pullRequests = PullRequests(
+        PullRequest(
+          repository = Repository(
+            owner = "sandwiches",
+            name = "cheese",
+            link = "https://github.com/sandwiches/cheese"
+          ),
+          number = 123,
+          title = "Add support for French cheese.",
+          updatedAt = ZonedDateTime.parse("2016-05-04T15:44:33Z").toInstant,
+          link = "https://github.com/sandwiches/cheese/pull/123"
+        ),
+        PullRequest(
+          repository = Repository(
+            owner = "sandwiches",
+            name = "cheese",
+            link = "https://github.com/sandwiches/cheese"
+          ),
+          number = 121,
+          title = "Discontinue pre-sliced cheese wrapped in plastic.",
+          updatedAt = ZonedDateTime.parse("2016-02-06T03:08:56Z").toInstant,
+          link = "https://github.com/sandwiches/cheese/pull/121"
+        )
+      )
+
+      credentials.credentials = Some(UserCredentials(AccessToken("", "")))
+      Get("/dashboard") ~> routes ~> check {
+        responseAs[Model] should be(Dashboard(now, pullRequests))
       }
     }
   }

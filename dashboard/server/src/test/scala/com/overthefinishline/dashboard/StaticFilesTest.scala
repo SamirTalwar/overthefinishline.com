@@ -16,8 +16,7 @@ class StaticFilesTest extends FunSpec with Matchers with BeforeAndAfter with Sca
     clientPath = Files.createTempDirectory("public")
     routes = new Application(
       clientPath = clientPath,
-      oAuthRoutes = new NullRoutes,
-      credentials = new FakeCredentials
+      applicationRoutes = new NullRoutes
     ).routes
   }
 

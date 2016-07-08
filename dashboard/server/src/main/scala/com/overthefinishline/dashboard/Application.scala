@@ -2,17 +2,22 @@ package com.overthefinishline.dashboard
 
 import java.nio.file.{Path, Paths}
 import java.security.SecureRandom
+import java.time.Clock
 import java.util.Base64
 import javax.crypto.spec.SecretKeySpec
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication
+import com.overthefinishline.dashboard.sources.GitHubPullRequests
 
-class Application(clientPath: Path, credentials: Credentials, oAuthRoutes: ApplicationRoutes) extends JsonSupport {
-  lazy val routes = staticFileRoutes ~ dashboardRoutes ~ oAuthRoutes.routes
+class Application(
+    clientPath: Path,
+    applicationRoutes: ApplicationRoutes
+) extends JsonSupport {
+  lazy val routes = staticFileRoutes ~ applicationRoutes.routes
 
   private val staticFileRoutes =
     pathSingleSlash {
@@ -22,14 +27,6 @@ class Application(clientPath: Path, credentials: Credentials, oAuthRoutes: Appli
     } ~
     encodeResponse {
       getFromDirectory(clientPath.toString)
-    }
-
-  private val dashboardRoutes =
-    path("dashboard") {
-      credentials.retrieve {
-        case Some(userCredentials) => complete(Dashboard.asInstanceOf[Model])
-        case None => complete(Unauthorized.asInstanceOf[Model])
-      }
     }
 }
 
@@ -43,6 +40,7 @@ object Application {
     implicit val executionContext = system.dispatcher
 
     val base64Decoder = Base64.getDecoder
+    val http = Http()
     val port = System.getenv("PORT").toInt
     val clientPath = Paths.get(System.getenv("CLIENT_PATH"))
     val credentials = new EncryptedCookieCredentials(new SecureRandom, new SecretKeySpec(base64Decoder.decode(System.getenv("ENCRYPTION_KEY")), SecretKeyAlgorithm))
@@ -52,8 +50,15 @@ object Application {
         System.getenv("GITHUB_OAUTH_CLIENT_ID"),
         System.getenv("GITHUB_OAUTH_CLIENT_SECRET"))
     )
-    val application = new Application(clientPath, credentials, oAuthRoutes)
-    val bindingFuture = Http().bindAndHandle(application.routes, "localhost", port)
+    val dashboardRoutes = new DashboardRoutes(
+      executionContext = executionContext,
+      credentials = credentials,
+      clock = Clock.systemUTC(),
+      gitHubPullRequests = system.actorOf(Props(new GitHubPullRequests(http))))
+    val application = new Application(
+      clientPath = clientPath,
+      applicationRoutes = ApplicationRoutes(oAuthRoutes, dashboardRoutes))
+    val bindingFuture = http.bindAndHandle(application.routes, "localhost", port)
 
     println(s"Server online at http://localhost:$port")
 

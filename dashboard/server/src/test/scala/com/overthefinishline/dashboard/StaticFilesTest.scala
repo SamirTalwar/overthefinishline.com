@@ -4,7 +4,6 @@ import java.nio.file.{Files, Path}
 import java.util.function.Consumer
 
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.RouteDirectives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 

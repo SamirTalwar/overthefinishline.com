@@ -3,7 +3,6 @@ package com.overthefinishline.dashboard
 import java.security.SecureRandom
 import javax.crypto.spec.SecretKeySpec
 
-import akka.http.javadsl.model.headers.SetCookie
 import akka.http.scaladsl.model.headers.{Cookie, `Set-Cookie`}
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._

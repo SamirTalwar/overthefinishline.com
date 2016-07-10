@@ -1,6 +1,7 @@
 package com.overthefinishline.dashboard
 
 import java.nio.file.Path
+
 import akka.http.scaladsl.server.Directives._
 
 object StaticFileRoute {

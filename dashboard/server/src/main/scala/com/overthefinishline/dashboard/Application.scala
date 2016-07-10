@@ -9,15 +9,16 @@ import javax.crypto.spec.SecretKeySpec
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication
 import com.overthefinishline.dashboard.sources.GitHubPullRequests
 
 class Application(
     clientPath: Path,
-    applicationRoutes: ApplicationRoutes
+    applicationRoutes: Route
 ) extends JsonSupport {
-  lazy val routes = staticFileRoutes ~ applicationRoutes.routes
+  lazy val routes = staticFileRoutes ~ applicationRoutes
 
   private val staticFileRoutes =
     pathSingleSlash {
@@ -44,20 +45,20 @@ object Application {
     val port = System.getenv("PORT").toInt
     val clientPath = Paths.get(System.getenv("CLIENT_PATH"))
     val credentials = new EncryptedCookieCredentials(new SecureRandom, new SecretKeySpec(base64Decoder.decode(System.getenv("ENCRYPTION_KEY")), SecretKeyAlgorithm))
-    val oAuthRoutes = new OAuthRoutes(
+    val oAuthRoute = OAuthRoute(
       credentials,
       new ClientParametersAuthentication(
         System.getenv("GITHUB_OAUTH_CLIENT_ID"),
         System.getenv("GITHUB_OAUTH_CLIENT_SECRET"))
     )
-    val dashboardRoutes = new DashboardRoutes(
+    val dashboardRoute = DashboardRoute(
       executionContext = executionContext,
       credentials = credentials,
       clock = Clock.systemUTC(),
       gitHubPullRequests = system.actorOf(Props(new GitHubPullRequests(http))))
     val application = new Application(
       clientPath = clientPath,
-      applicationRoutes = ApplicationRoutes(oAuthRoutes, dashboardRoutes))
+      applicationRoutes = oAuthRoute ~ dashboardRoute)
     val bindingFuture = http.bindAndHandle(application.routes, "localhost", port)
 
     println(s"Server online at http://localhost:$port")

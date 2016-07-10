@@ -4,6 +4,7 @@ import java.nio.file.{Files, Path}
 import java.util.function.Consumer
 
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.RouteDirectives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
@@ -16,7 +17,7 @@ class StaticFilesTest extends FunSpec with Matchers with BeforeAndAfter with Sca
     clientPath = Files.createTempDirectory("public")
     routes = new Application(
       clientPath = clientPath,
-      applicationRoutes = new NullRoutes
+      applicationRoutes = RouteDirectives.reject
     ).routes
   }
 

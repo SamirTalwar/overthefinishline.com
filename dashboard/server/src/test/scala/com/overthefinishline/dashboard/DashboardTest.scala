@@ -24,12 +24,12 @@ class DashboardTest extends FunSpec with Matchers with BeforeAndAfter with Scala
   }))
 
   before {
-    routes = new DashboardRoutes(
+    routes = DashboardRoute(
       executionContext = ExecutionContexts.global(),
       credentials = credentials,
       clock = clock,
       gitHubPullRequests = gitHubPullRequests
-    ).routes
+    )
   }
 
   describe("the dashboard") {

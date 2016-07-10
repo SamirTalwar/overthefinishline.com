@@ -9,27 +9,24 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.http.{GenericUrl, HttpHeaders, HttpRequest, HttpRequestInitializer}
 import com.google.api.client.json.jackson.JacksonFactory
 
-class OAuthRoutes(
-    credentials: Credentials,
-    gitHubOAuthCredentials: ClientParametersAuthentication
-) extends ApplicationRoutes {
-  private val gitHubAuthorizationFlow = new AuthorizationCodeFlow.Builder(
-    BearerToken.authorizationHeaderAccessMethod(),
-    new NetHttpTransport,
-    new JacksonFactory,
-    new GenericUrl("https://github.com/login/oauth/access_token"),
-    gitHubOAuthCredentials,
-    gitHubOAuthCredentials.getClientId,
-    "https://github.com/login/oauth/authorize")
-    .build()
+object OAuthRoute extends JsonSupport {
+  def apply(credentials: Credentials, gitHubOAuthCredentials: ClientParametersAuthentication) = {
+    val gitHubAuthorizationFlow = new AuthorizationCodeFlow.Builder(
+      BearerToken.authorizationHeaderAccessMethod(),
+      new NetHttpTransport,
+      new JacksonFactory,
+      new GenericUrl("https://github.com/login/oauth/access_token"),
+      gitHubOAuthCredentials,
+      gitHubOAuthCredentials.getClientId,
+      "https://github.com/login/oauth/authorize")
+      .build()
 
-  private val requestJson = new HttpRequestInitializer {
-    override def initialize(request: HttpRequest): Unit = {
-      request.setHeaders(new HttpHeaders().setAccept("application/json"))
+    val requestJson = new HttpRequestInitializer {
+      override def initialize(request: HttpRequest): Unit = {
+        request.setHeaders(new HttpHeaders().setAccept("application/json"))
+      }
     }
-  }
 
-  override val routes =
     path("authentication" / "by" / "github") {
       val authorizationUri = gitHubAuthorizationFlow.newAuthorizationUrl().setScopes(Seq("user:email", "repo").asJava)
         .build()
@@ -44,4 +41,5 @@ class OAuthRoutes(
         redirect("/", StatusCodes.TemporaryRedirect)
       }
     }
+  }
 }

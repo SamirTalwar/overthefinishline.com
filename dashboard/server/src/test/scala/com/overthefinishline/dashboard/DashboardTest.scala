@@ -4,33 +4,27 @@ import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
 
 import akka.actor.{Actor, Props}
 import akka.dispatch.ExecutionContexts
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
 class DashboardTest extends FunSpec with Matchers with BeforeAndAfter with ScalatestRouteTest with JsonSupport {
-  var routes: Route = null
+  val now: Instant = ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 0, ZoneOffset.UTC).toInstant
 
   val credentials = new FakeCredentials
-
-  var now: Instant = ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 0, ZoneOffset.UTC).toInstant
-  def clock = Clock.fixed(now, ZoneOffset.UTC)
-
-  var pullRequests: PullRequests = null
+  val clock = Clock.fixed(now, ZoneOffset.UTC)
   val gitHubPullRequests = system.actorOf(Props(new Actor {
     def receive = {
       case _ => sender ! pullRequests
     }
   }))
+  val routes = DashboardRoute(
+    executionContext = ExecutionContexts.global(),
+    credentials = credentials,
+    clock = clock,
+    gitHubPullRequests = gitHubPullRequests
+  )
 
-  before {
-    routes = DashboardRoute(
-      executionContext = ExecutionContexts.global(),
-      credentials = credentials,
-      clock = clock,
-      gitHubPullRequests = gitHubPullRequests
-    )
-  }
+  var pullRequests: PullRequests = null
 
   describe("the dashboard") {
     it("asks the client to log in if no token is found") {

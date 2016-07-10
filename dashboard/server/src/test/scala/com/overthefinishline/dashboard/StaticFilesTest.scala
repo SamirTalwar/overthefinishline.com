@@ -15,10 +15,7 @@ class StaticFilesTest extends FunSpec with Matchers with BeforeAndAfter with Sca
 
   before {
     clientPath = Files.createTempDirectory("public")
-    routes = new Application(
-      clientPath = clientPath,
-      applicationRoutes = RouteDirectives.reject
-    ).routes
+    routes = StaticFileRoute(clientPath)
   }
 
   after {

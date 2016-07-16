@@ -7,7 +7,6 @@
 
 # Artifacts
 /client/build
-target
 
 # Testing
 test.js

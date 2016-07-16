@@ -6,12 +6,12 @@ TEST_FILES = $(shell find client/test -name '*.elm')
 
 .PHONY: build
 build: $(PRODUCTION_OUTPUT_FILES)
-	cd server && sbt assembly
+	cd server && stack build
 
 .PHONY: test
-test: $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST_FILES) node_modules
+test: client/build/test/run.js client/build/test/test.js
 	node ./elm-stuff/packages/SamirTalwar/arborist/1.0.0/bin/run $(TEST_FILES)
-	cd server && sbt test
+	cd server && stack test
 
 .PHONY: clean
 clean:

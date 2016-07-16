@@ -4,14 +4,16 @@ set -e
 
 cd $(dirname $0)
 
-jar=server/target/dashboard-server.jar
+NAME=overthefinishline-dashboard-server-exe
+
+application_path=$(cd server && stack exec which $NAME)
 config_path=development.env
 
 pid=0
 done=false
 
 function run {
-    env $(cat $config_path) java -jar $jar &
+    env $(cat $config_path) $application_path &
     pid=$!
 }
 
@@ -23,7 +25,7 @@ trap 'done=true' SIGINT SIGTERM
 
 run
 while ! $done; do
-    fswatch --one-event --latency=5 $jar $config_path >/dev/null
+    fswatch --one-event --latency=1 $application_path $config_path >/dev/null
     terminate
     run
 done

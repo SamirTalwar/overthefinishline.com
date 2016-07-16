@@ -1,0 +1,51 @@
+name:                overthefinishline-dashboard-server
+version:             0.1.0.0
+synopsis:            Over The Finish Line :: Dashboard
+description:         Please see README.md
+homepage:            https://github.com/SamirTalwar/overthefinishline.com#readme
+license:             AllRightsReserved
+license-file:        ../../LICENSE
+author:              Samir Talwar
+maintainer:          samir@noodlesandwich.com
+copyright:           Samir Talwar
+category:            Web
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Lib
+  build-depends:       base >= 4.7 && < 5
+  default-language:    Haskell2010
+
+executable overthefinishline-dashboard-server-exe
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , overthefinishline-dashboard-server
+                     , bytestring
+                     , filepath
+                     , hoauth2
+                     , http-client
+                     , http-client-tls
+                     , http-types
+                     , Spock
+                     , text
+                     , transformers
+                     , wai-middleware-static
+  default-language:    Haskell2010
+
+test-suite overthefinishline-dashboard-server-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , overthefinishline-dashboard-server
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/SamirTalwar/overthefinishline.com

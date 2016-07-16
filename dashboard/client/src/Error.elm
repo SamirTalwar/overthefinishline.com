@@ -1,3 +1,3 @@
 module Error exposing (..)
 
-type Error = FailureToConnect | UnexpectedResponse
+type Error = FailureToConnect | UnexpectedResponse String

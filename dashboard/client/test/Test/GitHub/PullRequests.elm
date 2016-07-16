@@ -24,7 +24,7 @@ tests =
             else Task.fail (Http.BadResponse 404 "Not Found")
 
         expected : Task Error PullRequests
-        expected = pullRequests |> Result.formatError (always Error.UnexpectedResponse) |> Task.fromResult
+        expected = pullRequests |> Result.formatError Error.UnexpectedResponse |> Task.fromResult
 
         actual : Task Error PullRequests
         actual = fetch get {owner = "sandwiches", repository = "cheese"}

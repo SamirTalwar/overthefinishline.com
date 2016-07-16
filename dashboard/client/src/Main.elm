@@ -25,7 +25,7 @@ fetch =
     gitHubPullRequests = GitHub.PullRequests.fetch Http.get {owner = "elm-lang", repository = "core"}
   in
     Task.map2 createDashboard now gitHubPullRequests
-      |> Task.perform Error (always Unauthenticated)
+      |> Task.perform Error identity
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =

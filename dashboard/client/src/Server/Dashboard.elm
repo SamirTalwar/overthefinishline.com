@@ -21,16 +21,23 @@ fetch get =
 
 decoder : Decoder Model
 decoder =
-  object2 createDashboard
-    ("now" := Moment.decode)
-    ("pullRequests" := list
-      (object5 PullRequest
-        (object3 Repository
-          (at ["repository", "owner"] string)
-          (at ["repository", "name"] string)
-          (at ["repository", "link"] string)
-        )
-        ("number" := int)
-        ("title" := string)
-        ("updatedAt" := Moment.decode)
-        ("link" := string)))
+  ("tag" := string) `andThen` \tag ->
+    case tag of
+      "Unauthenticated" ->
+        succeed Unauthenticated
+      "Dashboard" ->
+        object2 createDashboard
+          ("now" := Moment.decode)
+          ("pullRequests" := list
+            (object5 PullRequest
+              (object3 Repository
+                (at ["repository", "owner"] string)
+                (at ["repository", "name"] string)
+                (at ["repository", "link"] string)
+              )
+              ("number" := int)
+              ("title" := string)
+              ("updatedAt" := Moment.decode)
+              ("link" := string)))
+      _ ->
+          fail (tag ++ " is not a recognized tag")

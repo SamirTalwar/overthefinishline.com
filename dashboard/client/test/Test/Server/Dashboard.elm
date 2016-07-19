@@ -14,6 +14,24 @@ import Model exposing (..)
 tests : Tests
 tests =
   [
+    test "Server.Dashboard.fetch: finds out that the user needs to authenticate" (
+      let
+        get : Decoder a -> String -> Task Http.Error a
+        get decoder url =
+          if url == "/dashboard"
+            then Task.fromResult (decodeString decoder unauthenticatedJson)
+                   |> Task.mapError Http.UnexpectedPayload
+            else Task.fail (Http.BadResponse 404 "Not Found")
+
+        expected : Task Error Model
+        expected = Task.succeed Unauthenticated
+
+        actual : Task Error Model
+        actual = fetch get
+      in
+        assert actual (equals expected)
+    ),
+
     test "Server.Dashboard.fetch: fetches a dashboard full of pull requests" (
       let
         get : Decoder a -> String -> Task Http.Error a
@@ -63,9 +81,17 @@ dashboard =
     ]
   }
 
+unauthenticatedJson =
+  """
+    {
+      "tag": "Unauthenticated"
+    }
+  """
+
 dashboardJson =
   """
     {
+      "tag": "Dashboard",
       "now": "2016-06-01T08:00:00Z",
       "pullRequests": [
         {

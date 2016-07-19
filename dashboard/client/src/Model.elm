@@ -28,11 +28,8 @@ type alias Repository = {
   }
 type alias Link = String
 
-createDashboard now pullRequests =
-  Dashboard {
-    now = now,
-    pullRequests = pullRequests |> List.sortWith (\a b -> Moment.compare a.updatedAt b.updatedAt)
-  }
+createDashboard : Moment -> PullRequests -> Model
+createDashboard now pullRequests = Dashboard { now = now, pullRequests = pullRequests }
 
 dashboard
     : { now: Result String Moment,

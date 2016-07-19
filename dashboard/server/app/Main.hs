@@ -2,22 +2,27 @@
 
 module Main where
 
+import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
+import Data.Aeson hiding (json)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as ByteStringC
 import Data.ByteString.Lazy (toStrict)
 import Data.Text (pack)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Data.Time.Clock (getCurrentTime)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (badRequest400)
-import Network.OAuth.OAuth2
+import Network.OAuth.OAuth2 as OAuth
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.Environment (getEnv)
 import System.FilePath
 import System.IO.Error
 import Web.Spock
+
+import OverTheFinishLine.Dashboard.Model
 
 type Port = Int
 data OAuthCredentials = OAuthCredentials {
@@ -29,12 +34,23 @@ data Configuration = Configuration {
   clientPath :: FilePath,
   gitHubOAuthCredentials :: OAuthCredentials
 }
+data Session = Session {
+  gitHubAccessToken :: OAuth.AccessToken
+}
+data User = User {
+  login :: String
+}
+
+instance FromJSON User where
+  parseJSON (Object v) =
+    User <$> v .: "login"
+  parseJSON _ = mzero
 
 main = readConfiguration >>= server
 
 server (Configuration port clientPath (OAuthCredentials gitHubClientId gitHubClientSecret)) = do
   httpManager <- newManager tlsManagerSettings
-  runSpock port $ spockT id $ do
+  runSpock port $ spock (defaultSpockCfg Nothing PCNoDatabase ()) $ do
     middleware $ staticPolicy (noDots >-> addBase clientPath)
     get "/" $ file "text/html" (clientPath </> "index.html")
     get "/authentication/by/github" $
@@ -47,8 +63,25 @@ server (Configuration port clientPath (OAuthCredentials gitHubClientId gitHubCli
         Just code -> do
           response <- liftIO $ fetchAccessToken httpManager gitHubOAuth (encodeUtf8 code)
           case response of
-            Left failure -> text $ decodeUtf8 $ toStrict failure
-            Right accessToken -> text $ pack $ show accessToken
+            Left failure ->
+              text $ decodeUtf8 $ toStrict failure
+            Right accessToken -> do
+              sessionRegenerateId
+              writeSession $ Just (Session accessToken)
+              text $ pack $ show accessToken
+    get "/dashboard" $ do
+      maybeSession <- readSession
+      case maybeSession of
+        Nothing ->
+          json Unauthenticated
+        Just session -> do
+          response <- liftIO $ authGetJSON httpManager (gitHubAccessToken session) "https://api.github.com/user"
+          case response of
+            Left failure ->
+              text $ decodeUtf8 $ toStrict failure
+            Right user -> do
+              now <- liftIO getCurrentTime
+              json (Dashboard now (login user) [])
   where
     gitHubOAuth = OAuth2 {
       oauthClientId = gitHubClientId,

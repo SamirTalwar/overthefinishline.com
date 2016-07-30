@@ -4,6 +4,9 @@ module Main where
 
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.Maybe
 import Data.Aeson hiding (json)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
@@ -41,6 +44,8 @@ data User = User {
   login :: String
 }
 
+data Failure = MissingAuthenticationCode | InvalidAuthenticationCode ByteString
+
 instance FromJSON User where
   parseJSON (Object v) =
     User <$> v .: "login"
@@ -52,23 +57,24 @@ server (Configuration port clientPath (OAuthCredentials gitHubClientId gitHubCli
   httpManager <- newManager tlsManagerSettings
   runSpock port $ spock (defaultSpockCfg Nothing PCNoDatabase ()) $ do
     middleware $ staticPolicy (noDots >-> addBase clientPath)
-    get "/" $ file "text/html" (clientPath </> "index.html")
+
+    get "/" $
+      file "text/html" (clientPath </> "index.html")
+
     get "/authentication/by/github" $
       redirect $ decodeUtf8 $ authorizationUrl gitHubOAuth
+
     get "/authorization/by/github" $ do
-      code <- param "code"
-      case code of
-        Nothing ->
-          setStatus badRequest400
-        Just code -> do
-          response <- liftIO $ fetchAccessToken httpManager gitHubOAuth (encodeUtf8 code)
-          case response of
-            Left failure ->
-              text $ decodeUtf8 $ toStrict failure
-            Right accessToken -> do
-              sessionRegenerateId
-              writeSession $ Just (Session accessToken)
-              text $ pack $ show accessToken
+      accessToken <- runExceptT $ do
+        code <- maybeToExceptT MissingAuthenticationCode (MaybeT (param "code"))
+        withExceptT (InvalidAuthenticationCode . toStrict) $
+          ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuth (encodeUtf8 code)
+      either failWith (\token -> do
+        sessionRegenerateId
+        writeSession $ Just (Session token)
+        text $ pack $ show token
+        ) accessToken
+
     get "/dashboard" $ do
       maybeSession <- readSession
       case maybeSession of
@@ -82,6 +88,7 @@ server (Configuration port clientPath (OAuthCredentials gitHubClientId gitHubCli
             Right user -> do
               now <- liftIO getCurrentTime
               json (Dashboard now (login user) [])
+
   where
     gitHubOAuth = OAuth2 {
       oauthClientId = gitHubClientId,
@@ -90,6 +97,12 @@ server (Configuration port clientPath (OAuthCredentials gitHubClientId gitHubCli
       oauthAccessTokenEndpoint = "https://github.com/login/oauth/access_token",
       oauthCallback = Nothing
     }
+
+failWith MissingAuthenticationCode =
+  setStatus badRequest400
+failWith (InvalidAuthenticationCode message) = do
+  setStatus badRequest400
+  text (decodeUtf8 message)
 
 readConfiguration =
   Configuration

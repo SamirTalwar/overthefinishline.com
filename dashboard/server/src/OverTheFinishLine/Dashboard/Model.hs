@@ -14,6 +14,7 @@ data Exception =
     UserIsUnauthenticated
   | MissingAuthenticationCode
   | InvalidAuthenticationCode Text
+  | QueryFailure Text
 
 data Model =
     Unauthenticated

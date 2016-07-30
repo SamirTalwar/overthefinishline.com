@@ -17,7 +17,7 @@ import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Data.Time.Clock (getCurrentTime)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Network.HTTP.Types.Status (badRequest400)
+import Network.HTTP.Types.Status (badRequest400, internalServerError500)
 import Network.OAuth.OAuth2 as OAuth
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.Environment (getEnv)
@@ -68,12 +68,9 @@ webServer (Configuration port clientPath (OAuthCredentials gitHubClientId gitHub
       either handleException store accessToken
 
     get "/dashboard" $ do
-      maybeSession <- readSession
-      case maybeSession of
-        Nothing ->
-          json Unauthenticated
-        Just session -> do
-          constructDashboard session
+      now <- liftIO getCurrentTime
+      result <- retrieveGitHubUser
+      either handleException (renderDashboard now) result
 
   where
     appHtml = file "text/html" (clientPath </> "index.html")
@@ -90,19 +87,22 @@ webServer (Configuration port clientPath (OAuthCredentials gitHubClientId gitHub
       writeSession $ Just (Session token)
       redirect "/"
 
-    constructDashboard session = do
-      response <- liftIO $ authGetJSON httpManager (gitHubAccessToken session) "https://api.github.com/user"
-      case response of
-        Left failure ->
-          text $ decodeUtf8 $ toStrict failure
-        Right user -> do
-          now <- liftIO getCurrentTime
-          json (Dashboard now (login user) [])
+    retrieveGitHubUser = runExceptT $ do
+      session <- maybeToExceptT UserIsUnauthenticated (MaybeT readSession)
+      withExceptT (QueryFailure . decodeUtf8 . toStrict) $
+        ExceptT $ liftIO $ authGetJSON httpManager (gitHubAccessToken session) "https://api.github.com/user"
 
+    renderDashboard now user = json (Dashboard now (login user) [])
+
+    handleException UserIsUnauthenticated =
+      json Unauthenticated
     handleException MissingAuthenticationCode =
       setStatus badRequest400
     handleException (InvalidAuthenticationCode message) = do
       setStatus badRequest400
+      text message
+    handleException (QueryFailure message) = do
+      setStatus internalServerError500
       text message
 
     gitHubOAuth = OAuth2 {

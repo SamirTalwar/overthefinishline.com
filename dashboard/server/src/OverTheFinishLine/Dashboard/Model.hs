@@ -6,9 +6,14 @@ module OverTheFinishLine.Dashboard.Model where
 import Data.Aeson
 import Data.Aeson.Types
 import qualified Data.Char as Char
-import Data.Text (pack)
+import Data.Text (Text, pack)
 import Data.Time (UTCTime)
 import GHC.Generics
+
+data Exception =
+    UserIsUnauthenticated
+  | MissingAuthenticationCode
+  | InvalidAuthenticationCode Text
 
 data Model =
     Unauthenticated

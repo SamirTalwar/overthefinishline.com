@@ -8,10 +8,17 @@ TEST_FILES = $(shell find client/test -name '*.elm')
 build: $(PRODUCTION_OUTPUT_FILES)
 	cd server && stack build
 
+.PHONY: check
+check: test lint
+
 .PHONY: test
 test: client/build/test/run.js client/build/test/test.js
 	node ./elm-stuff/packages/SamirTalwar/arborist/1.0.0/bin/run $(TEST_FILES)
 	cd server && stack test
+
+.PHONY: lint
+lint:
+	cd server && stack exec hlint .
 
 .PHONY: clean
 clean:

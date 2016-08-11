@@ -4,11 +4,11 @@ import Server.Dashboard
 import Page.Authentication
 import Page.Dashboard
 import Page.Error
+import Page.Frame
 import Page.Loading
 
 import Html exposing (Html, div)
 import Html.App exposing (program)
-import Html.Attributes exposing (class, id)
 import Http
 import Task exposing (Task)
 
@@ -28,7 +28,7 @@ update message model =
 
 view : Model -> Html Message
 view model =
-  div [id "container", class "container-fluid"]
+  Page.Frame.html
     <| case model of
       Loading -> Page.Loading.html
       Error error -> Page.Error.html error

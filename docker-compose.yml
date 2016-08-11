@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  dashboard:
+    image: overthefinishline.com/dashboard
+    command: '/usr/local/bin/overthefinishline-dashboard-exe'
+    env_file: dashboard/development.env
+    environment:
+      'CLIENT_PATH': '/client'
+    ports:
+      - 8001:8001

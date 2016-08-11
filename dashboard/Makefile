@@ -6,7 +6,8 @@ TEST_FILES = $(shell find client/test -name '*.elm')
 
 .PHONY: build
 build: $(PRODUCTION_OUTPUT_FILES)
-	cd server && stack build
+	stack build
+	stack image container
 
 .PHONY: check
 check: test lint
@@ -14,11 +15,12 @@ check: test lint
 .PHONY: test
 test: client/build/test/run.js client/build/test/test.js
 	node ./elm-stuff/packages/SamirTalwar/arborist/1.0.0/bin/run $(TEST_FILES)
-	cd server && stack test
+	stack test
 
 .PHONY: lint
 lint:
-	cd server && stack exec hlint .
+	stack exec which hlint >/dev/null || stack install hlint
+	stack exec hlint .
 
 .PHONY: clean
 clean:

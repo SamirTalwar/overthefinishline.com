@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+
+set -e
+
+cd $(dirname $0)
+
+done=false
+trap 'done=true' SIGINT SIGTERM
+
+function run {
+    docker-compose up -d
+}
+
+function terminate {
+    docker-compose down --volumes
+}
+
+while ! $done; do
+    run || true
+    fswatch --one-event .built >/dev/null
+done
+terminate

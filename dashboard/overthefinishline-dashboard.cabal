@@ -1,10 +1,10 @@
-name:                overthefinishline-dashboard-server
+name:                overthefinishline-dashboard
 version:             0.1.0.0
 synopsis:            Over The Finish Line :: Dashboard
 description:         Please see README.md
 homepage:            https://github.com/SamirTalwar/overthefinishline.com#readme
 license:             AllRightsReserved
-license-file:        ../../LICENSE
+license-file:        ../LICENSE
 author:              Samir Talwar
 maintainer:          samir@noodlesandwich.com
 copyright:           Samir Talwar
@@ -14,7 +14,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  hs-source-dirs:      src
+  hs-source-dirs:      server/src
   exposed-modules:     OverTheFinishLine.Dashboard.Model
   build-depends:       base >= 4.7 && < 5
                      , aeson
@@ -22,12 +22,12 @@ library
                      , time
   default-language:    Haskell2010
 
-executable overthefinishline-dashboard-server-exe
-  hs-source-dirs:      app
+executable overthefinishline-dashboard-exe
+  hs-source-dirs:      server/app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , overthefinishline-dashboard-server
+                     , overthefinishline-dashboard
                      , aeson
                      , bytestring
                      , filepath
@@ -44,10 +44,10 @@ executable overthefinishline-dashboard-server-exe
 
 test-suite overthefinishline-dashboard-server-test
   type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
+  hs-source-dirs:      server/test
   main-is:             Spec.hs
   build-depends:       base
-                     , overthefinishline-dashboard-server
+                     , overthefinishline-dashboard
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

@@ -28,14 +28,10 @@ import Web.Spock
 import OverTheFinishLine.Dashboard.Model
 
 type Port = Int
-data OAuthCredentials = OAuthCredentials {
-  clientId :: ByteString,
-  clientSecret :: ByteString
-}
 data Configuration = Configuration {
   port :: Port,
   clientPath :: FilePath,
-  gitHubOAuthCredentials :: OAuthCredentials
+  gitHubOAuthCredentials :: OAuth2
 }
 data Session = Session {
   gitHubAccessToken :: OAuth.AccessToken
@@ -55,7 +51,7 @@ server configuration = do
   httpManager <- newManager tlsManagerSettings
   webServer configuration httpManager
 
-webServer (Configuration port clientPath (OAuthCredentials gitHubClientId gitHubClientSecret)) httpManager =
+webServer (Configuration port clientPath gitHubOAuthCredentials) httpManager =
   runSpock port $ spock (defaultSpockCfg Nothing PCNoDatabase ()) $ do
     middleware $ staticPolicy (noDots >-> addBase clientPath)
 
@@ -75,12 +71,12 @@ webServer (Configuration port clientPath (OAuthCredentials gitHubClientId gitHub
   where
     appHtml = file "text/html" (clientPath </> "index.html")
 
-    authenticateWithGitHub = redirect $ decodeUtf8 $ authorizationUrl gitHubOAuth
+    authenticateWithGitHub = redirect $ decodeUtf8 $ authorizationUrl gitHubOAuthCredentials
 
     retrieveAccessToken = runExceptT $ do
       code <- maybeToExceptT MissingAuthenticationCode (MaybeT (param "code"))
       withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
-        ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuth (encodeUtf8 code)
+        ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
 
     store token = do
       sessionRegenerateId
@@ -105,21 +101,16 @@ webServer (Configuration port clientPath (OAuthCredentials gitHubClientId gitHub
       setStatus internalServerError500
       text message
 
-    gitHubOAuth = OAuth2 {
-      oauthClientId = gitHubClientId,
-      oauthClientSecret = gitHubClientSecret,
-      oauthOAuthorizeEndpoint = "https://github.com/login/oauth/authorize?scope=user:email%20repo",
-      oauthAccessTokenEndpoint = "https://github.com/login/oauth/access_token",
-      oauthCallback = Nothing
-    }
-
 readConfiguration =
   Configuration
    <$> readEnv "PORT"
    <*> getEnv "CLIENT_PATH"
-   <*> (OAuthCredentials
+   <*> (OAuth2
      <$> byteStringEnv "GITHUB_OAUTH_CLIENT_ID"
-     <*> byteStringEnv "GITHUB_OAUTH_CLIENT_SECRET")
+     <*> byteStringEnv "GITHUB_OAUTH_CLIENT_SECRET"
+     <*> pure "https://github.com/login/oauth/authorize?scope=user:email%20repo"
+     <*> pure "https://github.com/login/oauth/access_token"
+     <*> pure Nothing)
   where
     byteStringEnv name = ByteStringC.pack <$> getEnv name
 

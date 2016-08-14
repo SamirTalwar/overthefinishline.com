@@ -37,4 +37,5 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     sessionId Text
     expiryTime UTCTime
     userId UserId
+    UniqueSessionId sessionId
 |]

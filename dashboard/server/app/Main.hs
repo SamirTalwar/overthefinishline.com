@@ -150,8 +150,13 @@ createApp configuration databaseConnectionPool httpManager =
         map (\(Entity _ (Session sessionId expiryTime value)) -> (sessionId, expiryTime, Just value))
           <$> withDatabase (selectList [] []),
       spc_store = \sessions -> withDatabase $ do
-        keys <- insertMany $ mapMaybe (\(sessionId, expiryTime, value) -> Session sessionId expiryTime <$> value) sessions
-        deleteWhere [SessionId /<-. keys]
+        existingSessions <- selectList [] []
+        let existingSessionIds = map (sessionSessionId . entityVal) existingSessions
+        keys <- insertMany $
+          mapMaybe (\(sessionId, expiryTime, value) -> Session sessionId expiryTime <$> value) $
+          filter (\(sessionId, _, _) -> sessionId `notElem` existingSessionIds)
+          sessions
+        deleteWhere [SessionId /<-. (keys ++ map entityKey existingSessions)]
     }
 
     withDatabase :: MonadIO m => SqlPersistM a -> m a

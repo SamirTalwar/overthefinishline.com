@@ -24,7 +24,7 @@ data Model =
     Unauthenticated
   | Dashboard {
       modelNow :: UTCTime,
-      modelLogin :: Text,
+      modelUsername :: Text,
       modelPullRequests :: [PullRequest]
     }
   deriving (Generic, Show)

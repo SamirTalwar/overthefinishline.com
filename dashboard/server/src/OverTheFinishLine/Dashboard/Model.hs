@@ -11,10 +11,14 @@ import Data.Time (UTCTime)
 import GHC.Generics
 
 data Exception =
-    UserIsUnauthenticated
+    UnauthenticatedUser
+  | MissingUser
   | MissingAuthenticationCode
   | InvalidAuthenticationCode Text
   | QueryFailure Text
+
+data ThirdPartyService = GitHub
+  deriving (Eq, Read, Show)
 
 data Model =
     Unauthenticated

@@ -1,28 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module OverTheFinishLine.Dashboard.GitHub where
+module OverTheFinishLine.Dashboard.GitHub (User (..)) where
 
 import Control.Monad (mzero)
 import Data.Aeson
 import Data.Text (Text, pack)
-import qualified Network.OAuth.OAuth2 as OAuth
 
-data AuthenticatedUser = AuthenticatedUser {
-  accessToken :: OAuth.AccessToken,
-  user :: User
-}
+import OverTheFinishLine.Dashboard.Model
 
 data User = User {
-  id :: Text,
-  login :: Text
+  userId :: Text,
+  userLogin :: Text
 }
 
 instance FromJSON User where
   parseJSON (Object v) =
     User
-      <$> (numberToString <$> v .: "id")
+      <$> (numberToText <$> v .: "id")
       <*> (v .: "login")
   parseJSON _ = mzero
 
-numberToString :: Integer -> Text
-numberToString = pack . show
+numberToText :: Integer -> Text
+numberToText = pack . show

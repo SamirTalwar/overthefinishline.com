@@ -11,7 +11,7 @@ import Data.Time (UTCTime)
 import GHC.Generics
 
 data Exception =
-    UnauthenticatedUser
+    Unauthenticated
   | MissingUser
   | MissingAuthenticationCode
   | InvalidAuthenticationCode Text
@@ -20,15 +20,26 @@ data Exception =
 data ThirdPartyService = GitHub
   deriving (Eq, Read, Show)
 
-data Model =
-    Unauthenticated
-  | Dashboard {
-      modelNow :: UTCTime,
-      modelUsername :: Text,
-      modelPullRequests :: [PullRequest]
+data UserProjects =
+    UnauthenticatedUser
+  | AuthenticatedUser {
+      userUsername :: Text,
+      userProjects :: [Project]
     }
   deriving (Generic, Show)
-instance ToJSON Model where toJSON = genericToJSON (stripPrefix "model")
+instance ToJSON UserProjects where toJSON = genericToJSON (stripPrefix "user")
+
+data Project = Project
+  deriving (Generic, Show)
+instance ToJSON Project where toJSON = genericToJSON (stripPrefix "project")
+
+data Dashboard =
+  Dashboard {
+    dashboardNow :: UTCTime,
+    dashboardPullRequests :: [PullRequest]
+  }
+  deriving (Generic, Show)
+instance ToJSON Dashboard where toJSON = genericToJSON (stripPrefix "dashboard")
 
 data PullRequest = PullRequest {
   prRepository :: Repository,

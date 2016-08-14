@@ -8,10 +8,26 @@ import Error exposing (Error)
 type Model = Loading
            | Error Error
            | Unauthenticated
-           | Dashboard {
-             now : Moment,
-             pullRequests : PullRequests
-           }
+           | Model Username Projects Dashboard
+
+type User = UnauthenticatedUser
+          | AuthenticatedUser {
+              username : String,
+              projects : List Project
+            }
+
+type alias Projects = List Project
+type alias Project = {
+    name : String,
+    link : Link
+  }
+
+type Dashboard =
+    DashboardLoading
+  | Dashboard {
+      now : Moment,
+      pullRequests : PullRequests
+    }
 
 type alias PullRequests = List PullRequest
 type alias PullRequest = {
@@ -21,20 +37,24 @@ type alias PullRequest = {
     updatedAt : Moment,
     link : Link
   }
+
 type alias Repository = {
     owner : String,
     name : String,
     link : Link
   }
+
+type alias Username = String
+
 type alias Link = String
 
-createDashboard : Moment -> PullRequests -> Model
+createDashboard : Moment -> PullRequests -> Dashboard
 createDashboard now pullRequests = Dashboard { now = now, pullRequests = pullRequests }
 
 dashboard
     : { now: Result String Moment,
         pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, link : Link } }
-    -> Result String Model
+    -> Result String Dashboard
 dashboard {now, pullRequests} =
   let
     pullRequestsResult = pullRequests

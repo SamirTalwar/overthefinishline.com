@@ -1,5 +1,6 @@
+import Error exposing (..)
 import Model exposing (..)
-import Server.Dashboard
+import Server.Me
 
 import Page.Authentication
 import Page.Dashboard
@@ -12,28 +13,7 @@ import Html.App exposing (program)
 import Http
 import Task exposing (Task)
 
-type alias Message = Model
-
-init : (Model, Cmd Message)
-init = (Loading, fetch)
-
-fetch : Cmd Message
-fetch =
-  Server.Dashboard.fetch Http.get |> Task.perform Error identity
-
-update : Message -> Model -> (Model, Cmd Message)
-update message model =
-  case message of
-    newModel -> (newModel, Cmd.none)
-
-view : Model -> Html Message
-view model =
-  Page.Frame.html
-    <| case model of
-      Loading -> Page.Loading.html
-      Error error -> Page.Error.html error
-      Unauthenticated -> Page.Authentication.html
-      Dashboard dashboard -> Page.Dashboard.html dashboard
+type Message = UserMessage User | ErrorMessage Error
 
 main : Program Never
 main =
@@ -43,3 +23,23 @@ main =
     view = view,
     subscriptions = always Sub.none
   }
+
+init : (Model, Cmd Message)
+init = (Loading, Server.Me.fetch Http.get |> Task.perform ErrorMessage UserMessage)
+
+update : Message -> Model -> (Model, Cmd Message)
+update message _ =
+  case message of
+    UserMessage (AuthenticatedUser {username, projects}) -> (Model username projects DashboardLoading, Cmd.none)
+    UserMessage UnauthenticatedUser -> (Unauthenticated, Cmd.none)
+    ErrorMessage error -> (Error error, Cmd.none)
+
+view : Model -> Html Message
+view model =
+  Page.Frame.html
+    <| case model of
+      Loading -> Page.Loading.html Nothing
+      Unauthenticated -> Page.Authentication.html
+      Error error -> Page.Error.html error
+      Model username _ DashboardLoading -> Page.Loading.html (Just username)
+      Model username _ (Dashboard dashboard) -> Page.Dashboard.html dashboard

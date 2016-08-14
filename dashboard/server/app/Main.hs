@@ -83,10 +83,13 @@ createApp configuration databaseConnectionPool httpManager =
       userId <- storeUser
       either handleException storeSession userId
 
+    get "/me" $ do
+      user <- readUser
+      either handleException renderUser user
+
     get "/dashboard" $ do
       now <- liftIO getCurrentTime
-      user <- readUser
-      either handleException (renderDashboard now) user
+      renderDashboard now
 
   where
     appHtml = file "text/html" (configurationClientPath configuration </> "index.html")
@@ -118,17 +121,19 @@ createApp configuration databaseConnectionPool httpManager =
             return userId
 
     readUser = runExceptT $ do
-      userId <- readSession `orException` UnauthenticatedUser
+      userId <- readSession `orException` Unauthenticated
       withDatabase (Database.get userId) `orException` MissingUser
 
-    renderDashboard now (User username) = json (Dashboard now username [])
+    renderUser (User username) = json (AuthenticatedUser username [])
+
+    renderDashboard now = json (Dashboard now [])
 
     maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)
 
-    handleException UnauthenticatedUser =
-      json Unauthenticated
+    handleException Unauthenticated =
+      json UnauthenticatedUser
     handleException MissingUser =
-      json Unauthenticated
+      json UnauthenticatedUser
     handleException MissingAuthenticationCode =
       setStatus badRequest400
     handleException (InvalidAuthenticationCode message) = do

@@ -74,7 +74,7 @@ webServer (Configuration port clientPath gitHubOAuthCredentials) httpManager =
     authenticateWithGitHub = redirect $ decodeUtf8 $ authorizationUrl gitHubOAuthCredentials
 
     retrieveAccessToken = runExceptT $ do
-      code <- maybeToExceptT MissingAuthenticationCode (MaybeT (param "code"))
+      code <- param "code" `orException` MissingAuthenticationCode
       withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
 
@@ -84,11 +84,13 @@ webServer (Configuration port clientPath gitHubOAuthCredentials) httpManager =
       redirect "/"
 
     retrieveGitHubUser = runExceptT $ do
-      session <- maybeToExceptT UserIsUnauthenticated (MaybeT readSession)
+      session <- readSession `orException` UserIsUnauthenticated
       withExceptT (QueryFailure . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ authGetJSON httpManager (gitHubAccessToken session) "https://api.github.com/user"
 
     renderDashboard now user = json (Dashboard now (login user) [])
+
+    maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)
 
     handleException UserIsUnauthenticated =
       json Unauthenticated

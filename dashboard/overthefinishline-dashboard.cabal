@@ -49,7 +49,9 @@ executable overthefinishline-dashboard-exe
                      , text
                      , time
                      , transformers
+                     , unix
                      , wai-middleware-static
+                     , warp
   default-language:    Haskell2010
 
 test-suite overthefinishline-dashboard-server-test

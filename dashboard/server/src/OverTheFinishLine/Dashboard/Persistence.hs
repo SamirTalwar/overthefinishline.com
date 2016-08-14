@@ -10,6 +10,7 @@ module OverTheFinishLine.Dashboard.Persistence where
 
 import Data.ByteString (ByteString)
 import Data.Text (Text)
+import Data.Time (UTCTime)
 import Database.Persist
 import Database.Persist.Postgresql
 import Database.Persist.TH
@@ -31,4 +32,9 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     UserService userId service
     ServiceUser service serviceUserId
     deriving Eq Show
+
+  Session
+    sessionId Text
+    expiryTime UTCTime
+    userId UserId
 |]

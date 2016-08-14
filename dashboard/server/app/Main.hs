@@ -44,6 +44,7 @@ data Configuration = Configuration {
   configurationGitHubOAuthCredentials :: OAuth2,
   configurationDatabaseConnectionString :: ConnectionString,
   configurationDatabasePoolSize :: Int,
+  configurationSessionTTL :: NominalDiffTime,
   configurationSessionStoreInterval :: NominalDiffTime
 }
 
@@ -139,6 +140,8 @@ createApp configuration databaseConnectionPool httpManager =
 
     spockConfiguration = (defaultSpockCfg Nothing PCNoDatabase ()) {
       spc_sessionCfg = (defaultSessionCfg Nothing) {
+        sc_sessionTTL = configurationSessionTTL configuration,
+        sc_sessionExpandTTL = True,
         sc_housekeepingInterval = configurationSessionStoreInterval configuration,
         sc_persistCfg = Just sessionPersistenceConfiguration
       }
@@ -185,6 +188,7 @@ readConfiguration =
         ("user", username),
         ("password", password)]
     <*> readEnv "DATABASE_POOL_SIZE"
+    <*> (fromInteger <$> readDefaultedEnv "SESSION_TTL" 3600)
     <*> (fromInteger <$> readDefaultedEnv "SESSION_STORE_INTERVAL" 10)
   where
     byteStringEnv name = ByteStringC.pack <$> getEnv name

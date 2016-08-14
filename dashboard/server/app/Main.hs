@@ -18,13 +18,14 @@ import Data.Time.Clock (getCurrentTime)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (badRequest400, internalServerError500)
-import Network.OAuth.OAuth2 as OAuth
+import Network.OAuth.OAuth2
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.Environment (getEnv)
 import System.FilePath
 import System.IO.Error
 import Web.Spock
 
+import qualified OverTheFinishLine.Dashboard.GitHub as GitHub
 import OverTheFinishLine.Dashboard.Model
 
 type Port = Int
@@ -34,16 +35,8 @@ data Configuration = Configuration {
   gitHubOAuthCredentials :: OAuth2
 }
 data Session = Session {
-  gitHubAccessToken :: OAuth.AccessToken
+  user :: GitHub.AuthenticatedUser
 }
-data User = User {
-  login :: String
-}
-
-instance FromJSON User where
-  parseJSON (Object v) =
-    User <$> v .: "login"
-  parseJSON _ = mzero
 
 main = readConfiguration >>= server
 
@@ -60,23 +53,18 @@ webServer (Configuration port clientPath gitHubOAuthCredentials) httpManager =
     get "/authentication/by/github" authenticateWithGitHub
 
     get "/authorization/by/github" $ do
-      accessToken <- retrieveAccessToken
-      either handleException store accessToken
+      user <- retrieveGitHubUser
+      either handleException store user
 
     get "/dashboard" $ do
       now <- liftIO getCurrentTime
-      result <- retrieveGitHubUser
-      either handleException (renderDashboard now) result
+      user <- readUser
+      either handleException (renderDashboard now) user
 
   where
     appHtml = file "text/html" (clientPath </> "index.html")
 
     authenticateWithGitHub = redirect $ decodeUtf8 $ authorizationUrl gitHubOAuthCredentials
-
-    retrieveAccessToken = runExceptT $ do
-      code <- param "code" `orException` MissingAuthenticationCode
-      withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
-        ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
 
     store token = do
       sessionRegenerateId
@@ -84,11 +72,18 @@ webServer (Configuration port clientPath gitHubOAuthCredentials) httpManager =
       redirect "/"
 
     retrieveGitHubUser = runExceptT $ do
-      session <- readSession `orException` UserIsUnauthenticated
-      withExceptT (QueryFailure . decodeUtf8 . toStrict) $
-        ExceptT $ liftIO $ authGetJSON httpManager (gitHubAccessToken session) "https://api.github.com/user"
+      code <- param "code" `orException` MissingAuthenticationCode
+      accessToken <- withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
+        ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
+      user <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
+        ExceptT $ liftIO $ authGetJSON httpManager accessToken "https://api.github.com/user"
+      return $ GitHub.AuthenticatedUser accessToken user
 
-    renderDashboard now user = json (Dashboard now (login user) [])
+    readUser = runExceptT $ do
+      session <- readSession `orException` UserIsUnauthenticated
+      return $ GitHub.user $ user session
+
+    renderDashboard now user = json (Dashboard now (GitHub.login user) [])
 
     maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)
 

@@ -20,7 +20,7 @@ data Model =
     Unauthenticated
   | Dashboard {
       modelNow :: UTCTime,
-      modelLogin :: String,
+      modelLogin :: Text,
       modelPullRequests :: [PullRequest]
     }
   deriving (Generic, Show)
@@ -29,7 +29,7 @@ instance ToJSON Model where toJSON = genericToJSON (stripPrefix "model")
 data PullRequest = PullRequest {
   prRepository :: Repository,
   prNumber :: Int,
-  prTitle :: String,
+  prTitle :: Text,
   prUpdatedAt :: UTCTime,
   prLink :: Link
 }
@@ -37,14 +37,14 @@ data PullRequest = PullRequest {
 instance ToJSON PullRequest where toJSON = genericToJSON (stripPrefix "pr")
 
 data Repository = Repository {
-  repoOwner :: String,
-  repoName :: String,
+  repoOwner :: Text,
+  repoName :: Text,
   repoLink :: Link
 }
   deriving (Generic, Show)
 instance ToJSON Repository where toJSON = genericToJSON (stripPrefix "repo")
 
-type Link = String
+type Link = Text
 
 stripPrefix :: String -> Options
 stripPrefix prefix = defaultOptions { fieldLabelModifier = stripPrefixFromFields prefix }

@@ -15,9 +15,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      server/src
-  exposed-modules:     OverTheFinishLine.Dashboard.Model
+  exposed-modules:     OverTheFinishLine.Dashboard.GitHub
+                     , OverTheFinishLine.Dashboard.Model
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , hoauth2
                      , text
                      , time
   default-language:    Haskell2010

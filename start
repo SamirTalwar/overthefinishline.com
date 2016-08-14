@@ -12,7 +12,7 @@ function run {
 }
 
 function terminate {
-    docker-compose down --volumes
+    docker-compose down
 }
 
 while ! $done; do

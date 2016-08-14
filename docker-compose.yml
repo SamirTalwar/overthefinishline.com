@@ -4,8 +4,19 @@ services:
   dashboard:
     image: overthefinishline.com/dashboard
     command: '/usr/local/bin/overthefinishline-dashboard-exe'
-    env_file: dashboard/development.env
+    env_file: development.env
     environment:
       'CLIENT_PATH': '/client'
     ports:
       - 8001:8001
+
+  database:
+    image: overthefinishline.com/database
+    ports:
+      - 5432
+    env_file: development.env
+    volumes:
+      - database-data:/var/lib/postgresql/data
+
+volumes:
+  database-data: {}

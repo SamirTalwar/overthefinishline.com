@@ -1,6 +1,3 @@
-# Local configuration
-*.env
-
 # Compiled native files
 /client/src/Native
 /client/test/Native

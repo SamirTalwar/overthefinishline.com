@@ -37,6 +37,7 @@ executable overthefinishline-dashboard-exe
                      , overthefinishline-dashboard
                      , aeson
                      , bytestring
+                     , containers
                      , filepath
                      , hoauth2
                      , http-client

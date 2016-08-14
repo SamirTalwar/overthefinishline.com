@@ -2,7 +2,7 @@
 
 module Main where
 
-import Control.Monad (mzero, void)
+import Control.Monad (forM_, mzero, unless, void)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (runStderrLoggingT)
 import Control.Monad.Trans.Class (lift)
@@ -13,7 +13,9 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as ByteStringC
 import Data.ByteString.Lazy (toStrict)
-import Data.Maybe (mapMaybe)
+import Data.List (partition)
+import qualified Data.Map as Map
+import Data.Maybe (fromJust, isJust, mapMaybe)
 import qualified Data.Text as Text
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Data.Time.Clock (NominalDiffTime, getCurrentTime)
@@ -153,13 +155,15 @@ createApp configuration databaseConnectionPool httpManager =
         map (\(Entity _ (Session sessionId expiryTime value)) -> (sessionId, expiryTime, Just value))
           <$> withDatabase (selectList [] []),
       spc_store = \sessions -> withDatabase $ do
-        existingSessions <- selectList [] []
-        let existingSessionIds = map (sessionSessionId . entityVal) existingSessions
-        keys <- insertMany $
-          mapMaybe (\(sessionId, expiryTime, value) -> Session sessionId expiryTime <$> value) $
-          filter (\(sessionId, _, _) -> sessionId `notElem` existingSessionIds)
-          sessions
-        deleteWhere [SessionId /<-. (keys ++ map entityKey existingSessions)]
+        existingSessionsById <- foldr (\s a -> Map.insert ((sessionSessionId . entityVal) s) s a) Map.empty <$> selectList [] []
+        let databaseSessions = mapMaybe (\(sessionId, expiryTime, value) -> Session sessionId expiryTime <$> value) sessions
+        let entities = map (\session@(Session sessionId _ _) -> (Map.lookup sessionId existingSessionsById, session)) databaseSessions
+        let (sessionsToUpdate, sessionsToInsert) = partition (isJust . fst) entities
+        insertedKeys <- insertMany (map snd sessionsToInsert)
+        forM_ sessionsToUpdate $ \(Just (Entity key oldValue), newValue) ->
+          unless (oldValue == newValue) (replace key newValue)
+        let updatedKeys = map (entityKey . fromJust . fst) sessionsToUpdate
+        deleteWhere [SessionId /<-. (insertedKeys ++ updatedKeys)]
     }
 
     withDatabase :: MonadIO m => SqlPersistM a -> m a

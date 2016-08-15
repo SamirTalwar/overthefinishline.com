@@ -1,2 +1,6 @@
+import Test.Hspec
+
+import Test.OverTheFinishLine.Dashboard.Model
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = hspec Test.OverTheFinishLine.Dashboard.Model.spec

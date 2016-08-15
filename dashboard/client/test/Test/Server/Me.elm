@@ -22,33 +22,33 @@ tests =
                    |> Task.mapError Http.UnexpectedPayload
             else Task.fail (Http.BadResponse 404 "Not Found")
 
-        expected : Task Error User
-        expected = Task.succeed (AuthenticatedUser "_why" [
+        expected : Task Error (Response User)
+        expected = Task.succeed (Response (User "_why" [
           Project "Camping" "/projects/camping",
           Project "Hpricot" "/projects/hpricot",
           Project "RedCloth" "/projects/redcloth",
           Project "Shoes" "/project/shoes"
-        ])
+        ]))
 
-        actual : Task Error User
+        actual : Task Error (Response User)
         actual = fetch get
       in
         assert actual (equals expected)
     ),
 
-    test "Server.Me.fetch: recognises an unauthenticated user" (
+    test "Server.Me.fetch: recognises an unauthenticated response" (
       let
         get : Decoder a -> String -> Task Http.Error a
         get decoder url =
           if url == "/me"
-            then Task.fromResult (decodeString decoder unauthenticatedUserJson)
+            then Task.fromResult (decodeString decoder unauthenticatedJson)
                    |> Task.mapError Http.UnexpectedPayload
             else Task.fail (Http.BadResponse 404 "Not Found")
 
-        expected : Task Error User
-        expected = Task.succeed UnauthenticatedUser
+        expected : Task Error (Response User)
+        expected = Task.succeed UnauthenticatedResponse
 
-        actual : Task Error User
+        actual : Task Error (Response User)
         actual = fetch get
       in
         assert actual (equals expected)
@@ -59,7 +59,7 @@ authenticatedUserJson : String
 authenticatedUserJson =
   """
     {
-      "tag": "AuthenticatedUser",
+      "state": "Authenticated",
       "username": "_why",
       "projects": [
           { "name": "Camping", "link": "/projects/camping" },
@@ -70,10 +70,10 @@ authenticatedUserJson =
     }
   """
 
-unauthenticatedUserJson : String
-unauthenticatedUserJson =
+unauthenticatedJson : String
+unauthenticatedJson =
   """
     {
-      "tag": "UnauthenticatedUser"
+      "state": "Unauthenticated"
     }
   """

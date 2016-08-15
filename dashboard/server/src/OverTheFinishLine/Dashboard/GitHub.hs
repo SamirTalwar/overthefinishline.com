@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module OverTheFinishLine.Dashboard.GitHub (User (..)) where
+module OverTheFinishLine.Dashboard.GitHub (GitHubUser (..)) where
 
 import Control.Monad (mzero)
 import Data.Aeson
@@ -8,14 +8,14 @@ import Data.Text (Text, pack)
 
 import OverTheFinishLine.Dashboard.Model
 
-data User = User {
+data GitHubUser = GitHubUser {
   userId :: Text,
   userLogin :: Text
 }
 
-instance FromJSON User where
+instance FromJSON GitHubUser where
   parseJSON (Object v) =
-    User
+    GitHubUser
       <$> (numberToText <$> v .: "id")
       <*> (v .: "login")
   parseJSON _ = mzero

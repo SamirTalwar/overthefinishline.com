@@ -23,10 +23,28 @@ tests =
                    |> Task.mapError Http.UnexpectedPayload
             else Task.fail (Http.BadResponse 404 "Not Found")
 
-        expected : Task Error Dashboard
-        expected = dashboard |> Result.formatError Error.UnexpectedResponse |> Task.fromResult
+        expected : Task Error (Response Dashboard)
+        expected = dashboard |> Result.map Response |> Result.formatError Error.UnexpectedResponse |> Task.fromResult
 
-        actual : Task Error Dashboard
+        actual : Task Error (Response Dashboard)
+        actual = fetch get
+      in
+        assert actual (equals expected)
+    ),
+
+    test "Server.Dashboard.fetch: recognises an unauthenticated response" (
+      let
+        get : Decoder a -> String -> Task Http.Error a
+        get decoder url =
+          if url == "/dashboard"
+            then Task.fromResult (decodeString decoder unauthenticatedJson)
+                   |> Task.mapError Http.UnexpectedPayload
+            else Task.fail (Http.BadResponse 404 "Not Found")
+
+        expected : Task Error (Response Dashboard)
+        expected = Task.succeed UnauthenticatedResponse
+
+        actual : Task Error (Response Dashboard)
         actual = fetch get
       in
         assert actual (equals expected)
@@ -67,7 +85,7 @@ dashboardJson : String
 dashboardJson =
   """
     {
-      "tag": "Dashboard",
+      "state": "Authenticated",
       "now": "2016-06-01T08:00:00Z",
       "pullRequests": [
         {
@@ -93,6 +111,14 @@ dashboardJson =
           "link": "https://github.com/sandwiches/cheese/pull/121"
         }
       ]
+    }
+  """
+
+unauthenticatedJson : String
+unauthenticatedJson =
+  """
+    {
+      "state": "Unauthenticated"
     }
   """
 

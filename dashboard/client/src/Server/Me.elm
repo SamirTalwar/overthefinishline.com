@@ -7,21 +7,21 @@ import HttpX
 import Json.Decode exposing (..)
 import Task exposing (Task)
 
-fetch : HttpX.Get User -> Task Error User
+fetch : HttpX.Get (Response User) -> Task Error (Response User)
 fetch get = get decoder "/me" |> Task.mapError HttpX.handleError
 
-decoder : Decoder User
+decoder : Decoder (Response User)
 decoder =
-  ("tag" := string) `andThen` \tag ->
-    case tag of
-      "AuthenticatedUser" ->
-        object2 AuthenticatedUser
+  ("state" := string) `andThen` \state ->
+    case state of
+      "Authenticated" ->
+        object1 Response <| object2 User
           ("username" := string)
           ("projects" := list
             (object2 Project
               ("name" := string)
               ("link" := string)))
-      "UnauthenticatedUser" ->
-        succeed UnauthenticatedUser
+      "Unauthenticated" ->
+        succeed UnauthenticatedResponse
       _ ->
-          fail (tag ++ " is not a recognized tag")
+          fail (state ++ " is not a recognized state")

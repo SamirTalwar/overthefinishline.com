@@ -4,13 +4,17 @@ import Moment exposing (Moment)
 
 import Error exposing (Error)
 
-type Model = Loading
-           | Error Error
-           | Unauthenticated
-           | Model Username Projects Dashboard
+type Response a =
+    UnauthenticatedResponse
+  | Response a
 
-type User = UnauthenticatedUser
-          | AuthenticatedUser Username Projects
+type Model =
+    Loading
+  | Error Error
+  | Unauthenticated
+  | Model User Dashboard
+
+type User = User Username Projects
 
 type alias Projects = List Project
 type Project = Project Name Link

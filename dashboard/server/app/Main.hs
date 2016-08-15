@@ -35,7 +35,7 @@ import System.IO.Error
 import System.Posix.Signals
 import Web.Spock
 
-import qualified OverTheFinishLine.Dashboard.GitHub as GitHub
+import OverTheFinishLine.Dashboard.GitHub
 import OverTheFinishLine.Dashboard.Model
 import OverTheFinishLine.Dashboard.Persistence
 
@@ -105,7 +105,7 @@ createApp configuration databaseConnectionPool httpManager =
       code <- param "code" `orException` MissingAuthenticationCode
       accessToken <- withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
-      (GitHub.User gitHubUserId gitHubLogin) <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
+      (GitHubUser gitHubUserId gitHubLogin) <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ authGetJSON httpManager accessToken "https://api.github.com/user"
       let accessTokenString = OAuth2.accessToken accessToken
       withDatabase $ do
@@ -113,7 +113,7 @@ createApp configuration databaseConnectionPool httpManager =
         serviceCredentials <- getBy serviceUser
         case serviceCredentials of
           Nothing -> do
-            userId <- insert $ User gitHubLogin
+            userId <- insert $ PersistedUser gitHubLogin
             insert $ ServiceCredentials userId GitHub gitHubUserId accessTokenString
             return userId
           Just (Entity serviceCredentialsId (ServiceCredentials userId _ _ _)) -> do
@@ -121,19 +121,19 @@ createApp configuration databaseConnectionPool httpManager =
             return userId
 
     readUser = runExceptT $ do
-      userId <- readSession `orException` Unauthenticated
+      userId <- readSession `orException` UnauthenticatedUser
       withDatabase (Database.get userId) `orException` MissingUser
 
-    renderUser (User username) = json (AuthenticatedUser username [])
+    renderUser (PersistedUser username) = json (AuthenticatedResponse (User username []))
 
-    renderDashboard now = json (Dashboard now [])
+    renderDashboard now = json (AuthenticatedResponse (Dashboard now []))
 
     maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)
 
-    handleException Unauthenticated =
-      json UnauthenticatedUser
+    handleException UnauthenticatedUser =
+      json unauthenticatedResponse
     handleException MissingUser =
-      json UnauthenticatedUser
+      json unauthenticatedResponse
     handleException MissingAuthenticationCode =
       setStatus badRequest400
     handleException (InvalidAuthenticationCode message) = do
@@ -154,7 +154,7 @@ createApp configuration databaseConnectionPool httpManager =
       }
     }
 
-    sessionPersistenceConfiguration :: SessionPersistCfg (Maybe UserId)
+    sessionPersistenceConfiguration :: SessionPersistCfg (Maybe PersistedUserId)
     sessionPersistenceConfiguration = SessionPersistCfg {
       spc_load =
         map (\(Entity _ (Session sessionId expiryTime value)) -> (sessionId, expiryTime, Just value))

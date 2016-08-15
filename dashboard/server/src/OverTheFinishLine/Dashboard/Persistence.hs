@@ -19,13 +19,13 @@ import OverTheFinishLine.Dashboard.Model
 import OverTheFinishLine.Dashboard.PersistentEnumerations
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-  User
+  PersistedUser
     name Text
     UniqueName name
     deriving Eq Show
 
   ServiceCredentials
-    userId UserId
+    userId PersistedUserId
     service ThirdPartyService
     serviceUserId Text
     accessToken ByteString
@@ -36,7 +36,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
   Session
     sessionId Text
     expiryTime UTCTime
-    userId UserId
+    userId PersistedUserId
     UniqueSessionId sessionId
     deriving Eq Show
 |]

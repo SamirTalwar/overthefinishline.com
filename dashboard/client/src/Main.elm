@@ -1,3 +1,5 @@
+module Main exposing (main)
+
 import Html exposing (Html, div)
 import Html.App exposing (program)
 import Http

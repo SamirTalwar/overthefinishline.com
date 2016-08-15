@@ -13,7 +13,7 @@ build: $(PRODUCTION_OUTPUT_FILES)
 check: test lint
 
 .PHONY: test
-test: client/build/test/run.js client/build/test/test.js
+test: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
 	node ./elm-stuff/packages/SamirTalwar/arborist/1.0.0/bin/run $(TEST_FILES)
 	stack test
 
@@ -24,22 +24,25 @@ lint:
 
 .PHONY: clean
 clean:
-	rm -f $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST_OUTPUT_FILES) $(TEST_NATIVE_FILES)
+	rm -rf client/build $(PRODUCTION_NATIVE_FILES)
 	rm -rf elm-stuff/build-artifacts
 
 client/build:
 	mkdir -p $@
 
-client/build/src/index.html: client/static/index.html client/build
+client/build/src:
+	mkdir -p $@
+
+client/build/src/index.html: client/static/index.html client/build/src
 	cp -f $< $@
 
-client/build/src/load.js: client/static/load.js client/build
+client/build/src/load.js: client/static/load.js client/build/src
 	cp -f $< $@
 
-client/build/src/application.js: elm-package.json $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) client/build
+client/build/src/application.js: elm-package.json $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) client/build/src
 	elm make --warn --yes --output=$@ $(PRODUCTION_FILES)
 
-client/build/src/stylesheet.css: elm-package.json client/src/stylesheet.scss client/build node_modules
+client/build/src/stylesheet.css: elm-package.json client/src/stylesheet.scss client/build/src node_modules
 	./node_modules/.bin/node-sass client/src/stylesheet.scss > $@
 
 client/src/Native:

@@ -4,6 +4,10 @@ build:
 	make -C database
 	touch .built
 
-.PHONY: test
-test:
-	make -C dashboard test
+.PHONY: check
+check:
+	make -C dashboard check
+
+.PHONY: clean
+clean:
+	make -C dashboard clean

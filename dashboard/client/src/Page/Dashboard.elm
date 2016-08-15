@@ -5,6 +5,9 @@ import Html.Attributes exposing (class, href)
 import List
 import Moment exposing (Moment)
 
+import Model exposing (PullRequests)
+
+html : Moment -> PullRequests -> List (Html a)
 html now pullRequests =
   [
     section [class "summary"] [

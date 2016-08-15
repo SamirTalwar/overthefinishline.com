@@ -63,6 +63,7 @@ dashboard =
     ]
   }
 
+dashboardJson : String
 dashboardJson =
   """
     {

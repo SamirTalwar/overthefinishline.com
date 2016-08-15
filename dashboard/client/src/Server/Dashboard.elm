@@ -3,7 +3,6 @@ module Server.Dashboard exposing (fetch)
 import Error exposing (Error)
 import Model exposing (..)
 
-import Http
 import HttpX
 import Json.Decode exposing (..)
 import Moment exposing (Moment)

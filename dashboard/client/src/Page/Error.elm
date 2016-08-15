@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class)
 import Page.Attributes exposing (role)
 
+html : Error -> List (Html a)
 html error =
   let message =
     case error of

@@ -1,3 +1,8 @@
+import Html exposing (Html, div)
+import Html.App exposing (program)
+import Http
+import Task exposing (Task)
+
 import Error exposing (..)
 import Model exposing (..)
 import Server.Me
@@ -7,11 +12,6 @@ import Page.Dashboard
 import Page.Error
 import Page.Frame
 import Page.Loading
-
-import Html exposing (Html, div)
-import Html.App exposing (program)
-import Http
-import Task exposing (Task)
 
 type Message = UserMessage User | ErrorMessage Error
 

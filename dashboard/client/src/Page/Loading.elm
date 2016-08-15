@@ -2,6 +2,7 @@ module Page.Loading exposing (html)
 
 import Html exposing (..)
 
+html : Maybe String -> List (Html a)
 html extraText =
   case extraText of
     Nothing ->

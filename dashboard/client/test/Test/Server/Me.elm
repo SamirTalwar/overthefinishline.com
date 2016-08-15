@@ -4,7 +4,6 @@ import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
 import Http
 import Json.Decode exposing (Decoder, decodeString)
-import Moment
 import Task exposing (Task)
 
 import Server.Me exposing (..)
@@ -56,6 +55,7 @@ tests =
     )
   ]
 
+authenticatedUserJson : String
 authenticatedUserJson =
   """
     {
@@ -70,6 +70,7 @@ authenticatedUserJson =
     }
   """
 
+unauthenticatedUserJson : String
 unauthenticatedUserJson =
   """
     {

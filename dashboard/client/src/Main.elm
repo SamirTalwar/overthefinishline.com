@@ -30,7 +30,7 @@ init = (Loading, Server.Me.fetch Http.get |> Task.perform ErrorMessage UserMessa
 update : Message -> Model -> (Model, Cmd Message)
 update message _ =
   case message of
-    UserMessage (AuthenticatedUser {username, projects}) -> (Model username projects DashboardLoading, Cmd.none)
+    UserMessage (AuthenticatedUser username projects) -> (Model username projects DashboardLoading, Cmd.none)
     UserMessage UnauthenticatedUser -> (Unauthenticated, Cmd.none)
     ErrorMessage error -> (Error error, Cmd.none)
 
@@ -42,4 +42,4 @@ view model =
       Unauthenticated -> Page.Authentication.html
       Error error -> Page.Error.html error
       Model username _ DashboardLoading -> Page.Loading.html (Just username)
-      Model username _ (Dashboard dashboard) -> Page.Dashboard.html dashboard
+      Model username _ (Dashboard now pullRequests) -> Page.Dashboard.html now pullRequests

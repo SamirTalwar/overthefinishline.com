@@ -14,7 +14,7 @@ fetch get = get decoder "/dashboard" |> Task.mapError HttpX.handleError
 
 decoder : Decoder Dashboard
 decoder =
-  object2 createDashboard
+  object2 Dashboard
     ("now" := Moment.decode)
     ("pullRequests" := list
       (object5 PullRequest

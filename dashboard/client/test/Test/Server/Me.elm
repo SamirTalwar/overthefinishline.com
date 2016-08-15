@@ -24,12 +24,12 @@ tests =
             else Task.fail (Http.BadResponse 404 "Not Found")
 
         expected : Task Error User
-        expected = Task.succeed (AuthenticatedUser { username = "_why", projects = [
-          { name = "Camping", link = "/projects/camping" },
-          { name = "Hpricot", link = "/projects/hpricot" },
-          { name = "RedCloth", link = "/projects/redcloth" },
-          { name = "Shoes", link = "/project/shoes" }
-        ]})
+        expected = Task.succeed (AuthenticatedUser "_why" [
+          Project "Camping" "/projects/camping",
+          Project "Hpricot" "/projects/hpricot",
+          Project "RedCloth" "/projects/redcloth",
+          Project "Shoes" "/project/shoes"
+        ])
 
         actual : Task Error User
         actual = fetch get

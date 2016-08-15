@@ -5,7 +5,7 @@ import Html.Attributes exposing (class, href)
 import List
 import Moment exposing (Moment)
 
-html { now, pullRequests } =
+html now pullRequests =
   [
     section [class "summary"] [
       span [] [text "You have"],

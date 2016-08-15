@@ -4,7 +4,7 @@ import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
 import Http
 import Json.Decode exposing (Decoder, decodeString)
-import Moment
+import Moment exposing (Moment)
 import Task exposing (Task)
 
 import Server.Dashboard exposing (..)
@@ -35,7 +35,7 @@ tests =
 
 dashboard : Result String Dashboard
 dashboard =
-  Model.dashboard {
+  dashboardResult {
     now = Moment.parse "2016-06-01T08:00:00Z",
     pullRequests = [
       {
@@ -94,3 +94,21 @@ dashboardJson =
       ]
     }
   """
+
+dashboardResult
+    : { now: Result String Moment,
+        pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, link : Link } }
+    -> Result String Dashboard
+dashboardResult {now, pullRequests} =
+  let
+    pullRequestsResult = pullRequests
+      |> List.map (\record ->
+           case record.updatedAt of
+             Ok updatedAtMoment -> Ok { record | updatedAt = updatedAtMoment }
+             Err error -> Err error)
+      |> sequenceResults
+  in
+    Result.map2 Dashboard now pullRequestsResult
+
+sequenceResults : List (Result a b) -> Result a (List b)
+sequenceResults = List.foldr (Result.map2 (::)) (Ok [])

@@ -17,7 +17,7 @@ decoder =
   ("tag" := string) `andThen` \tag ->
     case tag of
       "AuthenticatedUser" ->
-        object2 (\username projects -> AuthenticatedUser { username = username, projects = projects })
+        object2 AuthenticatedUser
           ("username" := string)
           ("projects" := list
             (object2 Project

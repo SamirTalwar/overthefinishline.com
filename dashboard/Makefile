@@ -25,6 +25,7 @@ lint:
 .PHONY: clean
 clean:
 	rm -f $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES) $(TEST_OUTPUT_FILES) $(TEST_NATIVE_FILES)
+	rm -rf elm-stuff/build-artifacts
 
 client/build:
 	mkdir -p $@

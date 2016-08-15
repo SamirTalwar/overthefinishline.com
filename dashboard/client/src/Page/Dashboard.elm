@@ -1,9 +1,10 @@
 module Page.Dashboard exposing (html)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, href)
+import Html.Attributes exposing (class)
 import List
 import Moment exposing (Moment)
+import Url exposing (href)
 
 import Model exposing (..)
 

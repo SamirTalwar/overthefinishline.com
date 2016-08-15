@@ -1,7 +1,7 @@
 module Model exposing (..)
 
-import Erl exposing (Url)
 import Moment exposing (Moment)
+import Url exposing (Url)
 
 import Error exposing (Error)
 
@@ -21,7 +21,7 @@ type Me = Me User Projects
 type User = User Username Avatar
 
 type alias Projects = List Project
-type Project = Project Name Link
+type Project = Project Name Url
 
 type Dashboard = Dashboard Moment PullRequests
 
@@ -31,20 +31,19 @@ type alias PullRequest = {
     number : Int,
     title : String,
     updatedAt : Moment,
-    link : Link
+    link : Url
   }
 
 type alias Repository = {
     owner : String,
     name : String,
-    link : Link
+    link : Url
   }
 
 type Avatar = GitHubAvatar Url
 
-avatarLink : Avatar -> Link
-avatarLink (GitHubAvatar url) = Erl.addQuery "s" "24" url |> Erl.toString
+avatarLink : Avatar -> Url
+avatarLink (GitHubAvatar url) = Url.addQuery "s" "24" url
 
 type alias Name = String
 type alias Username = String
-type alias Link = String

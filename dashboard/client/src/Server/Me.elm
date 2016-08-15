@@ -3,10 +3,10 @@ module Server.Me exposing (fetch)
 import Error exposing (Error)
 import Model exposing (..)
 
-import Erl exposing (Url)
 import HttpX
 import Json.Decode exposing (..)
 import Task exposing (Task)
+import Url exposing (Url)
 
 fetch : HttpX.Get (Response Me) -> Task Error (Response Me)
 fetch get = get decoder "/me" |> Task.mapError HttpX.handleError
@@ -19,11 +19,11 @@ decoder =
         object1 Response <| object2 Me
           ("user" := object2 User
             ("username" := string)
-            ("avatarUrl" := object1 (GitHubAvatar << Erl.parse) string))
+            ("avatarUrl" := object1 (GitHubAvatar << Url.parse) string))
           ("projects" := list
             (object2 Project
               ("name" := string)
-              ("link" := string)))
+              ("link" := Url.decoder)))
       "Unauthenticated" ->
         succeed UnauthenticatedResponse
       _ ->

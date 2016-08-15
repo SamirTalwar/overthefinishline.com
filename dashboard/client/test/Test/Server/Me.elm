@@ -2,10 +2,10 @@ module Test.Server.Me exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
-import Erl
 import Http
 import Json.Decode exposing (Decoder, decodeString)
 import Task exposing (Task)
+import Url
 
 import Server.Me exposing (..)
 import Error exposing (..)
@@ -24,11 +24,11 @@ tests =
             else Task.fail (Http.BadResponse 404 "Not Found")
 
         expected : Task Error (Response Me)
-        expected = Task.succeed (Response (Me (User "_why" (GitHubAvatar <| Erl.parse "https://example.com/avatars/_why.jpg")) [
-          Project "Camping" "/projects/camping",
-          Project "Hpricot" "/projects/hpricot",
-          Project "RedCloth" "/projects/redcloth",
-          Project "Shoes" "/project/shoes"
+        expected = Task.succeed (Response (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
+          Project "Camping" (Url.parse "/projects/camping"),
+          Project "Hpricot" (Url.parse "/projects/hpricot"),
+          Project "RedCloth" (Url.parse "/projects/redcloth"),
+          Project "Shoes" (Url.parse "/project/shoes")
         ]))
 
         actual : Task Error (Response Me)

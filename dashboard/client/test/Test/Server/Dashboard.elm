@@ -6,6 +6,7 @@ import Http
 import Json.Decode exposing (Decoder, decodeString)
 import Moment exposing (Moment)
 import Task exposing (Task)
+import Url exposing (Url)
 
 import Server.Dashboard exposing (..)
 import Error exposing (Error)
@@ -60,23 +61,23 @@ dashboard =
         repository = {
           owner = "sandwiches",
           name = "cheese",
-          link = "https://github.com/sandwiches/cheese"
+          link = Url.parse "https://github.com/sandwiches/cheese"
         },
         number = 123,
         title = "Add support for French cheese.",
         updatedAt = Moment.parse "2016-05-04T15:44:33Z",
-        link = "https://github.com/sandwiches/cheese/pull/123"
+        link = Url.parse "https://github.com/sandwiches/cheese/pull/123"
       },
       {
         repository = {
           owner = "sandwiches",
           name = "cheese",
-          link = "https://github.com/sandwiches/cheese"
+          link = Url.parse "https://github.com/sandwiches/cheese"
         },
         number = 121,
         title = "Discontinue pre-sliced cheese wrapped in plastic.",
         updatedAt = Moment.parse "2016-02-06T03:08:56Z",
-        link = "https://github.com/sandwiches/cheese/pull/121"
+        link = Url.parse "https://github.com/sandwiches/cheese/pull/121"
       }
     ]
   }
@@ -124,7 +125,7 @@ unauthenticatedJson =
 
 dashboardResult
     : { now: Result String Moment,
-        pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, link : Link } }
+        pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, link : Url } }
     -> Result String Dashboard
 dashboardResult {now, pullRequests} =
   let

@@ -7,6 +7,7 @@ import HttpX
 import Json.Decode exposing (..)
 import Moment exposing (Moment)
 import Task exposing (Task)
+import Url
 
 fetch : HttpX.Get (Response Dashboard) -> Task Error (Response Dashboard)
 fetch get = get decoder "/dashboard" |> Task.mapError HttpX.handleError
@@ -23,12 +24,12 @@ decoder =
               (object3 Repository
                 (at ["repository", "owner"] string)
                 (at ["repository", "name"] string)
-                (at ["repository", "link"] string)
+                (at ["repository", "link"] Url.decoder)
               )
               ("number" := int)
               ("title" := string)
               ("updatedAt" := Moment.decode)
-              ("link" := string)))
+              ("link" := Url.decoder)))
       "Unauthenticated" ->
         succeed UnauthenticatedResponse
       _ ->

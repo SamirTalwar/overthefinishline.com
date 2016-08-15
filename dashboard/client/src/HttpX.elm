@@ -1,9 +1,10 @@
 module HttpX exposing (..)
 
-import Error exposing (Error)
 import Http
 import Json.Decode exposing (Decoder)
 import Task exposing (Task)
+
+import Error exposing (Error)
 
 type alias Get a = Decoder a -> String -> Task Http.Error a
 

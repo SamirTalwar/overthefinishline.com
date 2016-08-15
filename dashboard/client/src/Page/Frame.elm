@@ -2,6 +2,7 @@ module Page.Frame exposing (html)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Url
 
 import Model exposing (..)
 
@@ -21,7 +22,7 @@ navigation me =
       Just (Me (User username avatar) projects) -> [
         li [class "nav-item"] [
           a [class "nav-link", href "#"] [
-            span [class "avatar"] [img [src (avatarLink avatar), alt ""] []],
+            span [class "avatar"] [img [src (avatarLink avatar |> Url.toString), alt ""] []],
             span [class "username"] [text username]
           ]
         ]

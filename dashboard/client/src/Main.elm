@@ -14,6 +14,7 @@ import Page.Dashboard
 import Page.Error
 import Page.Frame
 import Page.Loading
+import Page.SelectAProject
 
 type Message = MeMessage (Response Me) | ErrorMessage Error
 
@@ -42,5 +43,5 @@ view model =
     Loading -> Page.Frame.html Nothing Page.Loading.html
     Unauthenticated -> Page.Frame.html Nothing Page.Authentication.html
     Error error -> Page.Frame.html Nothing (Page.Error.html error)
-    NoProjectSelected me -> Page.Frame.html (Just me) Page.Loading.html
+    NoProjectSelected me -> Page.Frame.html (Just me) Page.SelectAProject.html
     ProjectDashboard me dashboard -> Page.Frame.html (Just me) (Page.Dashboard.html dashboard)

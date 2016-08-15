@@ -126,7 +126,13 @@ createApp configuration databaseConnectionPool httpManager =
       userId <- readSession `orException` UnauthenticatedUser
       withDatabase (Database.get userId) `orException` MissingUser
 
-    renderUser user = json (AuthenticatedResponse (UserProjects user []))
+    renderUser user = json (AuthenticatedResponse (UserProjects user (fakeProjects user)))
+
+    fakeProjects (User username _) = [
+        Project "Think Fast" (Text.concat ["/projects/", username, "/think-fast"]),
+        Project "Move Slow" (Text.concat ["/projects/", username, "/move-slow"]),
+        Project "Eat Pizza" (Text.concat ["/projects/", username, "/eat-pizza"])
+      ]
 
     renderDashboard now = json (AuthenticatedResponse (Dashboard now []))
 

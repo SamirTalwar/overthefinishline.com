@@ -4,6 +4,12 @@ import Moment exposing (Moment)
 import Url exposing (Url)
 
 import Error exposing (Error)
+import Navigation
+
+type Message =
+    MeMessage (Response Me)
+  | NavigationMessage Navigation.Message
+  | ErrorMessage Error
 
 type Response a =
     UnauthenticatedResponse
@@ -11,10 +17,8 @@ type Response a =
 
 type Model =
     Loading
-  | Error Error
   | Unauthenticated
-  | NoProjectSelected Me
-  | ProjectDashboard Me Dashboard
+  | Model Me Navigation.State (Maybe Dashboard) (Maybe Error)
 
 type Me = Me User Projects
 

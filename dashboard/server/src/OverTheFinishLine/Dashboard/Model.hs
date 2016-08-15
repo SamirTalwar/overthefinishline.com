@@ -23,6 +23,8 @@ import GHC.Generics
 
 import OverTheFinishLine.Dashboard.Enumerations
 
+type Url = Text
+
 data Exception =
     UnauthenticatedUser
   | MissingUser
@@ -44,7 +46,7 @@ unauthenticatedResponse = UnauthenticatedResponse
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
   User
     username Text
-    avatarUrl Text
+    avatarUrl Url
     UniqueUsername username
     deriving Eq Generic Show
 
@@ -77,7 +79,8 @@ instance ToJSON UserProjects where toJSON = genericToJSON (stripPrefix "userProj
 
 data Project =
   Project {
-    projectName :: Text
+    projectName :: Text,
+    projectUrl :: Url
   }
   deriving (Generic, Show)
 instance ToJSON Project where toJSON = genericToJSON (stripPrefix "project")
@@ -96,7 +99,7 @@ data PullRequest =
     prNumber :: Int,
     prTitle :: Text,
     prUpdatedAt :: UTCTime,
-    prLink :: Link
+    prUrl :: Url
   }
   deriving (Generic, Show)
 instance ToJSON PullRequest where toJSON = genericToJSON (stripPrefix "pr")
@@ -105,12 +108,10 @@ data Repository =
   Repository {
     repoOwner :: Text,
     repoName :: Text,
-    repoLink :: Link
+    repoLink :: Url
   }
   deriving (Generic, Show)
 instance ToJSON Repository where toJSON = genericToJSON (stripPrefix "repo")
-
-type Link = Text
 
 stripPrefix :: String -> Options
 stripPrefix prefix = defaultOptions { fieldLabelModifier = stripPrefixFromFields prefix }

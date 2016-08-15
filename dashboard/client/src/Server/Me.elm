@@ -23,7 +23,7 @@ decoder =
           ("projects" := list
             (object2 Project
               ("name" := string)
-              ("link" := Url.decoder)))
+              ("url" := Url.decoder)))
       "Unauthenticated" ->
         succeed UnauthenticatedResponse
       _ ->

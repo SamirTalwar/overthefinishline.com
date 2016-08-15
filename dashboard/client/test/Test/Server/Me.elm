@@ -66,10 +66,10 @@ authenticatedUserJson =
         "avatarUrl": "https://example.com/avatars/_why.jpg"
       },
       "projects": [
-          { "name": "Camping", "link": "/projects/camping" },
-          { "name": "Hpricot", "link": "/projects/hpricot" },
-          { "name": "RedCloth", "link": "/projects/redcloth" },
-          { "name": "Shoes", "link": "/project/shoes" }
+          { "name": "Camping", "url": "/projects/camping" },
+          { "name": "Hpricot", "url": "/projects/hpricot" },
+          { "name": "RedCloth", "url": "/projects/redcloth" },
+          { "name": "Shoes", "url": "/project/shoes" }
         ]
     }
   """

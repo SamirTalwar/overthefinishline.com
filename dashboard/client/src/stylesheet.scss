@@ -16,8 +16,12 @@ nav {
     position: fixed;
     width: 100%;
 
-    span {
-        padding-right: $spacer-x;
+    span:not(:first-child) {
+        padding-left: $spacer-x;
+    }
+
+    .dropdown-menu {
+        margin: 0;
     }
 }
 

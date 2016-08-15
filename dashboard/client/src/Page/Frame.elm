@@ -14,14 +14,16 @@ html me mainContent =
 
 navigation : Maybe Me -> Html a
 navigation me =
-  nav [] [
+  nav [class "navbar navbar-dark bg-inverse"] [
     a [class "navbar-brand", href "/"] [text "Over The Finish Line"],
-    ul [] <| case me of
-    Nothing -> []
-    Just (Me (User username avatar) _) -> [
-      li [] [
-        span [class "avatar"] [img [src (avatarLink avatar), alt ""] []],
-        span [class "username"] [text username]
+    ul [class "nav navbar-nav"] <| case me of
+      Nothing -> []
+      Just (Me (User username avatar) projects) -> [
+        li [class "nav-item"] [
+          a [class "nav-link", href "#"] [
+            span [class "avatar"] [img [src (avatarLink avatar), alt ""] []],
+            span [class "username"] [text username]
+          ]
+        ]
       ]
-    ]
   ]

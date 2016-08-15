@@ -13,27 +13,11 @@ html, body, #root, #container {
 }
 
 nav {
-    @extend .navbar;
-    @extend .navbar-light;
-    @extend .bg-faded;
-
     position: fixed;
     width: 100%;
 
-    > ul {
-        @extend .nav;
-        @extend .navbar-nav;
-
-        display: flex;
-        align-items: center;
-
-        > li {
-            @extend .nav-item;
-
-            span {
-                padding-right: $spacer-x;
-            }
-        }
+    span {
+        padding-right: $spacer-x;
     }
 }
 

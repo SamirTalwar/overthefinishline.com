@@ -43,7 +43,7 @@ type alias Repository = {
 type Avatar = GitHubAvatar Url
 
 avatarLink : Avatar -> Link
-avatarLink (GitHubAvatar url) = Erl.addQuery "s" "32" url |> Erl.toString
+avatarLink (GitHubAvatar url) = Erl.addQuery "s" "24" url |> Erl.toString
 
 type alias Name = String
 type alias Username = String

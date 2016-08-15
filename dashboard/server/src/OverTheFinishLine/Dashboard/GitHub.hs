@@ -8,16 +8,19 @@ import Data.Text (Text, pack)
 
 import OverTheFinishLine.Dashboard.Model
 
-data GitHubUser = GitHubUser {
-  userId :: Text,
-  userLogin :: Text
-}
+data GitHubUser =
+  GitHubUser {
+    gitHubUserId :: Text,
+    gitHubUserLogin :: Text,
+    gitHubUserAvatarUrl :: Text
+  }
 
 instance FromJSON GitHubUser where
   parseJSON (Object v) =
     GitHubUser
       <$> (numberToText <$> v .: "id")
       <*> (v .: "login")
+      <*> (v .: "avatar_url")
   parseJSON _ = mzero
 
 numberToText :: Integer -> Text

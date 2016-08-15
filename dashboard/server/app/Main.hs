@@ -35,9 +35,9 @@ import System.IO.Error
 import System.Posix.Signals
 import Web.Spock
 
+import OverTheFinishLine.Dashboard.Enumerations
 import OverTheFinishLine.Dashboard.GitHub
 import OverTheFinishLine.Dashboard.Model
-import OverTheFinishLine.Dashboard.Persistence
 
 type Port = Int
 data Configuration = Configuration {
@@ -105,18 +105,20 @@ createApp configuration databaseConnectionPool httpManager =
       code <- param "code" `orException` MissingAuthenticationCode
       accessToken <- withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
-      (GitHubUser gitHubUserId gitHubLogin) <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
+      (GitHubUser gitHubUserId gitHubUserLogin gitHubUserAvatarUrl) <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ authGetJSON httpManager accessToken "https://api.github.com/user"
       let accessTokenString = OAuth2.accessToken accessToken
       withDatabase $ do
+        let user = User gitHubUserLogin gitHubUserAvatarUrl
         let serviceUser = ServiceUser GitHub gitHubUserId
         serviceCredentials <- getBy serviceUser
         case serviceCredentials of
           Nothing -> do
-            userId <- insert $ PersistedUser gitHubLogin
+            userId <- insert user
             insert $ ServiceCredentials userId GitHub gitHubUserId accessTokenString
             return userId
           Just (Entity serviceCredentialsId (ServiceCredentials userId _ _ _)) -> do
+            repsert userId user
             update serviceCredentialsId [ServiceCredentialsAccessToken =. accessTokenString]
             return userId
 
@@ -124,7 +126,7 @@ createApp configuration databaseConnectionPool httpManager =
       userId <- readSession `orException` UnauthenticatedUser
       withDatabase (Database.get userId) `orException` MissingUser
 
-    renderUser (PersistedUser username) = json (AuthenticatedResponse (User username []))
+    renderUser user = json (AuthenticatedResponse (UserProjects user []))
 
     renderDashboard now = json (AuthenticatedResponse (Dashboard now []))
 
@@ -154,7 +156,7 @@ createApp configuration databaseConnectionPool httpManager =
       }
     }
 
-    sessionPersistenceConfiguration :: SessionPersistCfg (Maybe PersistedUserId)
+    sessionPersistenceConfiguration :: SessionPersistCfg (Maybe UserId)
     sessionPersistenceConfiguration = SessionPersistCfg {
       spc_load =
         map (\(Entity _ (Session sessionId expiryTime value)) -> (sessionId, expiryTime, Just value))

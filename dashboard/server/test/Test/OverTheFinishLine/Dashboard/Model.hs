@@ -9,11 +9,21 @@ import Test.Hspec
 import OverTheFinishLine.Dashboard.Model
 
 spec = describe "JSON serialization of the model" $ do
-  it "serializes authenticated users" $
-    toJSON (AuthenticatedResponse (User "Steve" [Project "Thing"]))
-      `shouldBe` object ["state" .= pack "Authenticated",
-                         "username" .= pack "Steve",
-                         "projects" .= [object ["name" .= pack "Thing"]]]
+  it "serializes authenticated users" $ do
+    let value = UserProjects (User "Steve" "https://example.com/avatars/Steve.jpg") [Project "Thing"]
+    toJSON (AuthenticatedResponse value)
+      `shouldBe` object [
+          "state" .= pack "Authenticated",
+          "user" .= object [
+            "username" .= pack "Steve",
+            "avatarUrl" .= pack "https://example.com/avatars/Steve.jpg"
+          ],
+          "projects" .= [
+            object [
+              "name" .= pack "Thing"
+            ]
+          ]
+        ]
 
   it "serializes an unauthenticated response" $
     toJSON unauthenticatedResponse

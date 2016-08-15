@@ -13,7 +13,7 @@ import Page.Error
 import Page.Frame
 import Page.Loading
 
-type Message = UserMessage (Response User) | ErrorMessage Error
+type Message = MeMessage (Response Me) | ErrorMessage Error
 
 main : Program Never
 main =
@@ -25,13 +25,13 @@ main =
   }
 
 init : (Model, Cmd Message)
-init = (Loading, Server.Me.fetch Http.get |> Task.perform ErrorMessage UserMessage)
+init = (Loading, Server.Me.fetch Http.get |> Task.perform ErrorMessage MeMessage)
 
 update : Message -> Model -> (Model, Cmd Message)
 update message _ =
   case message of
-    UserMessage (Response user) -> (Model user DashboardLoading, Cmd.none)
-    UserMessage UnauthenticatedResponse -> (Unauthenticated, Cmd.none)
+    MeMessage (Response me) -> (NoProjectSelected me, Cmd.none)
+    MeMessage UnauthenticatedResponse -> (Unauthenticated, Cmd.none)
     ErrorMessage error -> (Error error, Cmd.none)
 
 view : Model -> Html Message
@@ -40,5 +40,5 @@ view model =
     Loading -> Page.Frame.html Nothing Page.Loading.html
     Unauthenticated -> Page.Frame.html Nothing Page.Authentication.html
     Error error -> Page.Frame.html Nothing (Page.Error.html error)
-    Model user DashboardLoading -> Page.Frame.html (Just user) Page.Loading.html
-    Model user (Dashboard now pullRequests) -> Page.Frame.html (Just user) (Page.Dashboard.html now pullRequests)
+    NoProjectSelected me -> Page.Frame.html (Just me) Page.Loading.html
+    ProjectDashboard me dashboard -> Page.Frame.html (Just me) (Page.Dashboard.html dashboard)

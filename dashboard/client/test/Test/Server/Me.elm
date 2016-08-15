@@ -2,6 +2,7 @@ module Test.Server.Me exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
+import Erl
 import Http
 import Json.Decode exposing (Decoder, decodeString)
 import Task exposing (Task)
@@ -22,15 +23,15 @@ tests =
                    |> Task.mapError Http.UnexpectedPayload
             else Task.fail (Http.BadResponse 404 "Not Found")
 
-        expected : Task Error (Response User)
-        expected = Task.succeed (Response (User "_why" [
+        expected : Task Error (Response Me)
+        expected = Task.succeed (Response (Me (User "_why" (GitHubAvatar <| Erl.parse "https://example.com/avatars/_why.jpg")) [
           Project "Camping" "/projects/camping",
           Project "Hpricot" "/projects/hpricot",
           Project "RedCloth" "/projects/redcloth",
           Project "Shoes" "/project/shoes"
         ]))
 
-        actual : Task Error (Response User)
+        actual : Task Error (Response Me)
         actual = fetch get
       in
         assert actual (equals expected)
@@ -45,10 +46,10 @@ tests =
                    |> Task.mapError Http.UnexpectedPayload
             else Task.fail (Http.BadResponse 404 "Not Found")
 
-        expected : Task Error (Response User)
+        expected : Task Error (Response Me)
         expected = Task.succeed UnauthenticatedResponse
 
-        actual : Task Error (Response User)
+        actual : Task Error (Response Me)
         actual = fetch get
       in
         assert actual (equals expected)
@@ -60,7 +61,10 @@ authenticatedUserJson =
   """
     {
       "state": "Authenticated",
-      "username": "_why",
+      "user": {
+        "username": "_why",
+        "avatarUrl": "https://example.com/avatars/_why.jpg"
+      },
       "projects": [
           { "name": "Camping", "link": "/projects/camping" },
           { "name": "Hpricot", "link": "/projects/hpricot" },

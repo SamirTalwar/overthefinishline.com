@@ -1,5 +1,6 @@
 module Model exposing (..)
 
+import Erl exposing (Url)
 import Moment exposing (Moment)
 
 import Error exposing (Error)
@@ -12,16 +13,17 @@ type Model =
     Loading
   | Error Error
   | Unauthenticated
-  | Model User Dashboard
+  | NoProjectSelected Me
+  | ProjectDashboard Me Dashboard
 
-type User = User Username Projects
+type Me = Me User Projects
+
+type User = User Username Avatar
 
 type alias Projects = List Project
 type Project = Project Name Link
 
-type Dashboard =
-    DashboardLoading
-  | Dashboard Moment PullRequests
+type Dashboard = Dashboard Moment PullRequests
 
 type alias PullRequests = List PullRequest
 type alias PullRequest = {
@@ -37,6 +39,11 @@ type alias Repository = {
     name : String,
     link : Link
   }
+
+type Avatar = GitHubAvatar Url
+
+avatarLink : Avatar -> Link
+avatarLink (GitHubAvatar url) = Erl.addQuery "s" "32" url |> Erl.toString
 
 type alias Name = String
 type alias Username = String

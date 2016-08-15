@@ -5,10 +5,10 @@ import Html.Attributes exposing (class, href)
 import List
 import Moment exposing (Moment)
 
-import Model exposing (PullRequests)
+import Model exposing (..)
 
-html : Moment -> PullRequests -> List (Html a)
-html now pullRequests =
+html : Dashboard -> List (Html a)
+html (Dashboard now pullRequests) =
   [
     section [class "summary"] [
       span [] [text "You have"],

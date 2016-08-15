@@ -1,15 +1,27 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module OverTheFinishLine.Dashboard.Model where
 
 import Data.Aeson
 import Data.Aeson.Types
+import Data.ByteString (ByteString)
 import qualified Data.Char as Char
 import qualified Data.HashMap.Strict as HashMap
 import Data.Text (Text, pack)
 import Data.Time (UTCTime)
+import Database.Persist
+import Database.Persist.Postgresql
+import Database.Persist.TH
 import GHC.Generics
+
+import OverTheFinishLine.Dashboard.Enumerations
 
 data Exception =
     UnauthenticatedUser
@@ -29,16 +41,39 @@ instance ToJSON a => ToJSON (Response a) where
 unauthenticatedResponse :: Response ()
 unauthenticatedResponse = UnauthenticatedResponse
 
-data ThirdPartyService = GitHub
-  deriving (Eq, Read, Show)
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+  User
+    username Text
+    avatarUrl Text
+    UniqueUsername username
+    deriving Eq Generic Show
 
-data User =
-  User {
-    userUsername :: Text,
-    userProjects :: [Project]
+  ServiceCredentials
+    userId UserId
+    service ThirdPartyService
+    serviceUserId Text
+    accessToken ByteString
+    UserService userId service
+    ServiceUser service serviceUserId
+    deriving Eq Show
+
+  Session
+    sessionId Text
+    expiryTime UTCTime
+    userId UserId
+    UniqueSessionId sessionId
+    deriving Eq Show
+|]
+
+instance ToJSON User where toJSON = genericToJSON (stripPrefix "user")
+
+data UserProjects =
+  UserProjects {
+    userProjectsUser :: User,
+    userProjectsProjects :: [Project]
   }
   deriving (Generic, Show)
-instance ToJSON User where toJSON = genericToJSON (stripPrefix "user")
+instance ToJSON UserProjects where toJSON = genericToJSON (stripPrefix "userProjects")
 
 data Project =
   Project {

@@ -5,11 +5,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module OverTheFinishLine.Dashboard.PersistentEnumerations where
+module OverTheFinishLine.Dashboard.Enumerations where
 
 import Database.Persist
 import Database.Persist.TH
 
-import OverTheFinishLine.Dashboard.Model
+data ThirdPartyService = GitHub
+  deriving (Eq, Read, Show)
 
 derivePersistField "ThirdPartyService"

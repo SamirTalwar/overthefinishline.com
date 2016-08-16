@@ -1,4 +1,4 @@
-module Navigation exposing (..)
+module App.Navigation exposing (..)
 
 type alias Message = State
 

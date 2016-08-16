@@ -1,12 +1,12 @@
-module Page.Dashboard exposing (html)
+module App.Page.Dashboard exposing (html)
 
+import App.Page.Attributes exposing (href)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import List
 import Moment exposing (Moment)
-import Url exposing (href)
 
-import Model exposing (..)
+import App.Model exposing (..)
 
 html : Dashboard -> List (Html a)
 html (Dashboard now pullRequests) =

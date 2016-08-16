@@ -1,16 +1,16 @@
-module Server.Dashboard exposing (fetch)
+module App.Server.Dashboard exposing (fetch)
 
-import Error exposing (Error)
-import Model exposing (..)
+import App.Error exposing (Error)
+import App.Model exposing (..)
 
-import HttpX
+import App.Http exposing (Get, handleError)
 import Json.Decode exposing (..)
 import Moment exposing (Moment)
 import Task exposing (Task)
 import Url
 
-fetch : HttpX.Get (Response Dashboard) -> Task Error (Response Dashboard)
-fetch get = get decoder "/dashboard" |> Task.mapError HttpX.handleError
+fetch : Get (Response Dashboard) -> Task Error (Response Dashboard)
+fetch get = get decoder "/dashboard" |> Task.mapError handleError
 
 decoder : Decoder (Response Dashboard)
 decoder =

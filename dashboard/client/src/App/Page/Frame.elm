@@ -1,4 +1,4 @@
-module Page.Frame exposing (html)
+module App.Page.Frame exposing (html)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

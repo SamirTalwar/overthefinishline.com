@@ -1,4 +1,4 @@
-module Page.Authentication exposing (html)
+module App.Page.Authentication exposing (html)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, href)

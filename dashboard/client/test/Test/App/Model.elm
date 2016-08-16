@@ -2,10 +2,10 @@ module Test.Model exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
-import Url
 import Task
+import Url
 
-import Model exposing (Avatar (..), avatarLink)
+import App.Model exposing (Avatar (..), avatarLink)
 
 tests : Tests
 tests =

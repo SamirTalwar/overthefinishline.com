@@ -7,9 +7,9 @@ import Json.Decode exposing (Decoder, decodeString)
 import Task exposing (Task)
 import Url
 
-import Server.Me exposing (..)
-import Error exposing (..)
-import Model exposing (..)
+import App.Server.Me exposing (..)
+import App.Error exposing (..)
+import App.Model exposing (..)
 
 tests : Tests
 tests =

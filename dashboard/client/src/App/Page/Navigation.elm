@@ -1,13 +1,13 @@
-module Page.Navigation exposing (html)
+module App.Page.Navigation exposing (html)
 
+import App.Page.Attributes exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, style)
 import Html.Events exposing (..)
-import Page.Attributes exposing (..)
 import Url
 
-import Model exposing (..)
-import Navigation exposing (..)
+import App.Model exposing (..)
+import App.Navigation as Navigation exposing (..)
 
 html : Me -> State -> Html Navigation.Message
 html (Me (User username avatar) projects) (ProjectsShown projectsShown) =

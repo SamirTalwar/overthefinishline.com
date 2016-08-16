@@ -5,10 +5,7 @@ module Url exposing (
 
     addQuery,
 
-    decoder,
-
-    href,
-    src
+    decoder
   )
 
 import Erl
@@ -29,9 +26,3 @@ addQuery = Erl.addQuery
 
 decoder : Decoder Url
 decoder = object1 Erl.parse string
-
-href : Url -> Html.Attribute a
-href = Erl.toString >> Html.Attributes.href
-
-src : Url -> Html.Attribute a
-src = Erl.toString >> Html.Attributes.src

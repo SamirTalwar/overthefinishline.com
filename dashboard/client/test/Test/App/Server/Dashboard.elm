@@ -8,9 +8,9 @@ import Moment exposing (Moment)
 import Task exposing (Task)
 import Url exposing (Url)
 
-import Server.Dashboard exposing (..)
-import Error exposing (Error)
-import Model exposing (..)
+import App.Server.Dashboard exposing (..)
+import App.Error exposing (..)
+import App.Model exposing (..)
 
 tests : Tests
 tests =
@@ -25,7 +25,7 @@ tests =
             else Task.fail (Http.BadResponse 404 "Not Found")
 
         expected : Task Error (Response Dashboard)
-        expected = dashboard |> Result.map Response |> Result.formatError Error.UnexpectedResponse |> Task.fromResult
+        expected = dashboard |> Result.map Response |> Result.formatError UnexpectedResponse |> Task.fromResult
 
         actual : Task Error (Response Dashboard)
         actual = fetch get

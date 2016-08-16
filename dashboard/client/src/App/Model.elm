@@ -1,10 +1,10 @@
-module Model exposing (..)
+module App.Model exposing (..)
 
 import Moment exposing (Moment)
 import Url exposing (Url)
 
-import Error exposing (Error)
-import Navigation
+import App.Error exposing (Error)
+import App.Navigation as Navigation
 
 type Message =
     MeMessage (Response Me)

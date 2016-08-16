@@ -1,4 +1,4 @@
-module Page.Attributes exposing (..)
+module App.Page.Attributes exposing (..)
 
 import Html
 import Html.Attributes exposing (attribute, property)

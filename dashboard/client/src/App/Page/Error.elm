@@ -1,9 +1,10 @@
-module Page.Error exposing (html)
+module App.Page.Error exposing (html)
 
-import Error exposing (..)
+import App.Page.Attributes exposing (role)
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Page.Attributes exposing (role)
+
+import App.Error exposing (..)
 
 html : Error -> List (Html a)
 html error =

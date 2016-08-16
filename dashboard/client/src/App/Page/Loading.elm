@@ -1,4 +1,4 @@
-module Page.Loading exposing (html)
+module App.Page.Loading exposing (html)
 
 import Html exposing (..)
 

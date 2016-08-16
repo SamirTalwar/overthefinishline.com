@@ -5,17 +5,17 @@ import Html.App exposing (program)
 import Http
 import Task exposing (Task)
 
-import Model exposing (..)
-import Navigation
-import Server.Me
+import App.Model exposing (..)
+import App.Navigation
+import App.Server.Me as Me
 
-import Page.Authentication
-import Page.Dashboard
-import Page.Error
-import Page.Frame
-import Page.Loading
-import Page.Navigation
-import Page.SelectAProject
+import App.Page.Authentication
+import App.Page.Dashboard
+import App.Page.Error
+import App.Page.Frame
+import App.Page.Loading
+import App.Page.Navigation
+import App.Page.SelectAProject
 
 main : Program Never
 main =
@@ -27,7 +27,7 @@ main =
   }
 
 init : (Model, Cmd Message)
-init = (Loading, Server.Me.fetch Http.get |> Task.perform ErrorMessage MeMessage)
+init = (Loading, Me.fetch Http.get |> Task.perform ErrorMessage MeMessage)
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
@@ -35,9 +35,9 @@ update message model =
     (MeMessage UnauthenticatedResponse, _) ->
       (Unauthenticated, Cmd.none)
     (MeMessage (Response me), _) ->
-      (Model me Navigation.initialState Nothing Nothing, Cmd.none)
+      (Model me App.Navigation.initialState Nothing Nothing, Cmd.none)
     (NavigationMessage message, Model me _ dashboard error) ->
-      (Model me (Navigation.state message) dashboard error, Cmd.none)
+      (Model me (App.Navigation.state message) dashboard error, Cmd.none)
     (ErrorMessage error, Model me navigationState dashboard _) ->
       (Model me navigationState dashboard (Just error), Cmd.none)
     (_, model) ->
@@ -46,15 +46,15 @@ update message model =
 view : Model -> Html Message
 view model =
   case model of
-    Loading -> Page.Frame.html [] Page.Loading.html
-    Unauthenticated -> Page.Frame.html [] Page.Authentication.html
+    Loading -> App.Page.Frame.html [] App.Page.Loading.html
+    Unauthenticated -> App.Page.Frame.html [] App.Page.Authentication.html
     Model me navigationState _ (Just error) ->
-      Page.Frame.html [navigation me navigationState] (Page.Error.html error)
+      App.Page.Frame.html [navigation me navigationState] (App.Page.Error.html error)
     Model me navigationState Nothing Nothing ->
       let (Me _ projects) = me
-      in Page.Frame.html [navigation me navigationState] (Page.SelectAProject.html projects)
+      in App.Page.Frame.html [navigation me navigationState] (App.Page.SelectAProject.html projects)
     Model me navigationState (Just dashboard) Nothing ->
-      Page.Frame.html [navigation me navigationState] (Page.Dashboard.html dashboard)
+      App.Page.Frame.html [navigation me navigationState] (App.Page.Dashboard.html dashboard)
 
-navigation : Me -> Navigation.State -> Html Message
-navigation me state = Html.App.map NavigationMessage (Page.Navigation.html me state)
+navigation : Me -> App.Navigation.State -> Html Message
+navigation me state = Html.App.map NavigationMessage (App.Page.Navigation.html me state)

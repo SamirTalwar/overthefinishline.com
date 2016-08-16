@@ -1,15 +1,15 @@
-module Server.Me exposing (fetch)
+module App.Server.Me exposing (fetch)
 
-import Error exposing (Error)
-import Model exposing (..)
+import App.Error exposing (Error)
+import App.Model exposing (..)
 
-import HttpX
 import Json.Decode exposing (..)
+import App.Http exposing (Get, handleError)
 import Task exposing (Task)
 import Url exposing (Url)
 
-fetch : HttpX.Get (Response Me) -> Task Error (Response Me)
-fetch get = get decoder "/me" |> Task.mapError HttpX.handleError
+fetch : Get (Response Me) -> Task Error (Response Me)
+fetch get = get decoder "/me" |> Task.mapError handleError
 
 decoder : Decoder (Response Me)
 decoder =

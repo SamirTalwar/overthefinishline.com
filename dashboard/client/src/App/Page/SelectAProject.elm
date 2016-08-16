@@ -1,11 +1,11 @@
-module Page.SelectAProject exposing (html)
+module App.Page.SelectAProject exposing (html)
 
+import App.Page.Attributes exposing (href)
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Page.Attributes exposing (href)
 import Url
 
-import Model exposing (..)
+import App.Model exposing (..)
 
 html : Projects -> List (Html a)
 html projects =

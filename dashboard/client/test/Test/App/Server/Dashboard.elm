@@ -2,51 +2,36 @@ module Test.Server.Dashboard exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
-import Http
-import Json.Decode exposing (Decoder, decodeString)
 import Moment exposing (Moment)
 import Task exposing (Task)
 import Url exposing (Url)
 
-import App.Server.Dashboard exposing (..)
 import App.Error exposing (..)
+import App.Http exposing (..)
 import App.Model exposing (..)
+import App.Server.Dashboard exposing (..)
 
 tests : Tests
 tests =
   [
     test "Server.Dashboard.fetch: fetches a dashboard full of pull requests" (
       let
-        get : Decoder a -> String -> Task Http.Error a
-        get decoder url =
-          if url == "/dashboard"
-            then Task.fromResult (decodeString decoder dashboardJson)
-                   |> Task.mapError Http.UnexpectedPayload
-            else Task.fail (Http.BadResponse 404 "Not Found")
-
         expected : Task Error (Response Dashboard)
         expected = dashboard |> Result.map Response |> Result.formatError UnexpectedResponse |> Task.fromResult
 
         actual : Task Error (Response Dashboard)
-        actual = fetch get
+        actual = fetch (App.Http.stubGet "/dashboard" dashboardJson)
       in
         assert actual (equals expected)
     ),
 
     test "Server.Dashboard.fetch: recognises an unauthenticated response" (
       let
-        get : Decoder a -> String -> Task Http.Error a
-        get decoder url =
-          if url == "/dashboard"
-            then Task.fromResult (decodeString decoder unauthenticatedJson)
-                   |> Task.mapError Http.UnexpectedPayload
-            else Task.fail (Http.BadResponse 404 "Not Found")
-
         expected : Task Error (Response Dashboard)
         expected = Task.succeed UnauthenticatedResponse
 
         actual : Task Error (Response Dashboard)
-        actual = fetch get
+        actual = fetch (App.Http.stubGet "/dashboard" unauthenticatedJson)
       in
         assert actual (equals expected)
     )

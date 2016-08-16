@@ -4,16 +4,13 @@ import Moment exposing (Moment)
 import Url exposing (Url)
 
 import App.Error exposing (Error)
+import App.Http exposing (Response)
 import App.Navigation as Navigation
 
 type Message =
     MeMessage (Response Me)
   | NavigationMessage Navigation.Message
   | ErrorMessage Error
-
-type Response a =
-    UnauthenticatedResponse
-  | Response a
 
 type Model =
     Loading

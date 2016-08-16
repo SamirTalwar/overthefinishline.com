@@ -9,8 +9,6 @@ module Url exposing (
   )
 
 import Erl
-import Html
-import Html.Attributes
 import Json.Decode exposing (..)
 
 type alias Url = Erl.Url

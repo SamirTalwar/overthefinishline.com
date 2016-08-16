@@ -2,9 +2,9 @@ module Main exposing (main)
 
 import Html exposing (Html, div)
 import Html.App exposing (program)
-import Http
 import Task exposing (Task)
 
+import App.Http exposing (Response (..))
 import App.Model exposing (..)
 import App.Navigation
 import App.Server.Me as Me
@@ -27,7 +27,7 @@ main =
   }
 
 init : (Model, Cmd Message)
-init = (Loading, Me.fetch Http.get |> Task.perform ErrorMessage MeMessage)
+init = (Loading, Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage)
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =

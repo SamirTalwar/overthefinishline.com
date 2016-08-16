@@ -51,7 +51,8 @@ view model =
     Model me navigationState _ (Just error) ->
       Page.Frame.html [navigation me navigationState] (Page.Error.html error)
     Model me navigationState Nothing Nothing ->
-      Page.Frame.html [navigation me navigationState] Page.SelectAProject.html
+      let (Me _ projects) = me
+      in Page.Frame.html [navigation me navigationState] (Page.SelectAProject.html projects)
     Model me navigationState (Just dashboard) Nothing ->
       Page.Frame.html [navigation me navigationState] (Page.Dashboard.html dashboard)
 

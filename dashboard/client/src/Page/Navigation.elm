@@ -25,12 +25,10 @@ html (Me (User username avatar) projects) (ProjectsShown projectsShown) =
           text "Projects"
         ],
         div [class "dropdown-menu", style [("display", if projectsShown then "block" else "none")]] (
-          if List.isEmpty projects then
-            [span [class "dropdown-item"] [text "You have no projects."]]
-          else
-            (projects |> List.map (\(Project name url) ->
-              a [class "dropdown-item", href url] [text name]
-            ))
+          (projects |> List.map (\(Project name url) ->
+            a [class "dropdown-item", href url] [text name]
+          )) ++
+          [a [class "dropdown-item", href (Url.parse "/projects/new")] [text "Create a project"]]
         )
       ]
     ]

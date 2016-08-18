@@ -1,7 +1,8 @@
 module Main exposing (main)
 
 import Html exposing (Html, div)
-import Html.App exposing (program)
+import Html.App
+import Navigation exposing (program)
 import Task exposing (Task)
 
 import App.Http exposing (Response (..))
@@ -17,17 +18,23 @@ import App.Page.Loading
 import App.Page.Navigation
 import App.Page.SelectAProject
 
+type alias Location = ()
+
 main : Program Never
 main =
-  program {
+  program urlParser {
     init = init,
     update = update,
+    urlUpdate = urlUpdate,
     view = view,
     subscriptions = always Sub.none
   }
 
-init : (Model, Cmd Message)
-init = (Loading, Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage)
+urlParser : Navigation.Parser Location
+urlParser = Navigation.makeParser (always ())
+
+init : Location -> (Model, Cmd Message)
+init = always (Loading, Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage)
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
@@ -42,6 +49,9 @@ update message model =
       (Model me navigationState dashboard (Just error), Cmd.none)
     (_, model) ->
       (model, Cmd.none)
+
+urlUpdate : Location -> Model -> (Model, Cmd Message)
+urlUpdate _ model = (model, Cmd.none)
 
 view : Model -> Html Message
 view model =

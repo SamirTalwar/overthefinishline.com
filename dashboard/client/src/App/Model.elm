@@ -10,6 +10,7 @@ import App.Navigation as Navigation
 type Message =
     MeMessage (Response Me)
   | NavigationMessage Navigation.Message
+  | NavigateTo Url
   | ErrorMessage Error
 
 type Model =

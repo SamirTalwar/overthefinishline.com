@@ -1,6 +1,6 @@
 module App.Page.Error exposing (html)
 
-import App.Page.Attributes exposing (role)
+import App.Page.Html exposing (role)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 

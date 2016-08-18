@@ -4,6 +4,7 @@ import Html exposing (Html, div)
 import Html.App
 import Navigation exposing (program)
 import Task exposing (Task)
+import Url
 
 import App.Http exposing (Response (..))
 import App.Model exposing (..)
@@ -43,14 +44,17 @@ update message model =
       (Unauthenticated, Cmd.none)
     (MeMessage (Response me), _) ->
       (Model me App.Navigation.initialState Nothing Nothing, Cmd.none)
-    (NavigationMessage message, Model me _ dashboard error) ->
-      (Model me (App.Navigation.state message) dashboard error, Cmd.none)
+    (NavigationMessage message, Model me navigationState dashboard error) ->
+      let (state, command) = App.Navigation.update message navigationState
+      in (Model me state dashboard error, Cmd.map NavigationMessage command)
     (NavigationMessage _, model) ->
       (model, Cmd.none)
     (ErrorMessage error, Model me navigationState dashboard _) ->
       (Model me navigationState dashboard (Just error), Cmd.none)
     (ErrorMessage error, _) ->
       (CatastrophicFailure error, Cmd.none)
+    (NavigateTo url, model) ->
+      (model, Navigation.newUrl (Url.toString url))
 
 urlUpdate : Location -> Model -> (Model, Cmd Message)
 urlUpdate _ model = (model, Cmd.none)

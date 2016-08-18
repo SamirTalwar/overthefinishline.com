@@ -1,6 +1,6 @@
 module App.Page.Dashboard exposing (html)
 
-import App.Page.Attributes exposing (href)
+import App.Page.Html exposing (href)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import List

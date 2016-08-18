@@ -15,6 +15,7 @@ type Message =
 type Model =
     Loading
   | Unauthenticated
+  | CatastrophicFailure Error
   | Model Me Navigation.State (Maybe Dashboard) (Maybe Error)
 
 type Me = Me User Projects

@@ -6,7 +6,7 @@ TEST_FILES = $(shell find client/test -name '*.elm')
 
 .PHONY: build
 build: $(PRODUCTION_OUTPUT_FILES)
-	stack build
+	stack build --test --no-run-tests
 	stack image container
 
 .PHONY: check
@@ -15,7 +15,7 @@ check: test lint
 .PHONY: test
 test: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
 	node ./elm-stuff/packages/SamirTalwar/arborist/1.0.0/bin/run $(TEST_FILES)
-	stack test
+	stack runhaskell -- -iserver/app:server/src:server/test server/test/Spec.hs
 
 .PHONY: lint
 lint:

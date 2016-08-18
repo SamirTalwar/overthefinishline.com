@@ -1,4 +1,4 @@
-port module Main exposing (main)
+module Tests exposing (tests)
 
 import Arborist.Framework exposing (..)
 import List
@@ -16,8 +16,3 @@ tests =
     Test.Server.Dashboard.tests,
     Test.Server.Me.tests
   ]
-
-port output : String -> Cmd message
-
-main : Program Never
-main = run tests output

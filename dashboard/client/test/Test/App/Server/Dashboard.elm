@@ -1,4 +1,4 @@
-module Test.Server.Dashboard exposing (tests)
+module Test.App.Server.Dashboard exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)

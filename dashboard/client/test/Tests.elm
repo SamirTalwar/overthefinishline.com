@@ -3,16 +3,16 @@ module Tests exposing (tests)
 import Arborist.Framework exposing (..)
 import List
 
-import Test.Model
+import Test.App.Model
+import Test.App.Server.Dashboard
+import Test.App.Server.Me
 import Test.Moment
-import Test.Server.Dashboard
-import Test.Server.Me
 
 tests : List Test
 tests =
   List.concat [
-    Test.Model.tests,
-    Test.Moment.tests,
-    Test.Server.Dashboard.tests,
-    Test.Server.Me.tests
+    Test.App.Model.tests,
+    Test.App.Server.Dashboard.tests,
+    Test.App.Server.Me.tests,
+    Test.Moment.tests
   ]

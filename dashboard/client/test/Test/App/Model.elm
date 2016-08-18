@@ -1,4 +1,4 @@
-module Test.Model exposing (tests)
+module Test.App.Model exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)

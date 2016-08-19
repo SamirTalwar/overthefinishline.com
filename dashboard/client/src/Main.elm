@@ -3,7 +3,9 @@ module Main exposing (main)
 import Html exposing (Html, div)
 import Html.App
 import Navigation
+import Process
 import Task exposing (Task)
+import Time
 
 import App.Http exposing (Response (..))
 import App.Location exposing (Location (..))
@@ -30,30 +32,46 @@ main =
   }
 
 init : Location -> (Model, Cmd Message)
-init = always (Loading, Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage)
+init location =
+  Loading ! [
+    Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage,
+    load location
+  ]
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
   case (message, model) of
-    (MeMessage UnauthenticatedResponse, _) ->
-      (Unauthenticated, Cmd.none)
-    (MeMessage (Response me), _) ->
+    (Load _, Model me navigationState _) ->
       let (Me _ projects) = me
-      in (Model me App.Navigation.initialState (SelectAProjectPage projects), Cmd.none)
-    (NavigationMessage message, Model me navigationState dashboard) ->
-      let (state, command) = App.Navigation.update message navigationState
-      in (Model me state dashboard, Cmd.map NavigationMessage command)
-    (NavigationMessage _, model) ->
-      (model, Cmd.none)
-    (ErrorMessage error, Model me navigationState _) ->
-      (Model me navigationState (ErrorPage error), Cmd.none)
-    (ErrorMessage error, _) ->
-      (CatastrophicFailure error, Cmd.none)
+      in Model me navigationState (SelectAProjectPage projects) ! []
+    (Load location, Loading) ->
+      Loading ! [load location]
+    (Load location, model) ->
+      model ! []
     (NavigateTo location, model) ->
-      (model, App.Location.navigateTo location)
+      model ! [App.Location.navigateTo location]
+    (MeMessage UnauthenticatedResponse, _) ->
+      Unauthenticated ! []
+    (MeMessage (Response me), _) ->
+      (Model me App.Navigation.initialState LoadingPage ! [])
+    (NavigationMessage message, Model me navigationState page) ->
+      let (state, command) = App.Navigation.update message navigationState
+      in Model me state page ! [Cmd.map NavigationMessage command]
+    (NavigationMessage _, model) ->
+      model ! []
+    (ErrorMessage error, Model me navigationState _) ->
+      Model me navigationState (ErrorPage error) ! []
+    (ErrorMessage error, _) ->
+      CatastrophicFailure error ! []
 
 urlUpdate : Location -> Model -> (Model, Cmd Message)
-urlUpdate _ model = (model, Cmd.none)
+urlUpdate _ model = (model ! [])
+
+load : Location -> Cmd Message
+load location =
+  Process.sleep (100 * Time.millisecond)
+    |> Task.map (always location)
+    |> Task.perform ErrorMessage Load
 
 view : Model -> Html Message
 view model =
@@ -63,6 +81,7 @@ view model =
     CatastrophicFailure error -> App.Page.Frame.html [navigationSignedOut] (App.Page.Error.html error)
     Model me navigationState page ->
       App.Page.Frame.html [navigationSignedIn me navigationState] <| case page of
+        LoadingPage -> App.Page.Loading.html
         SelectAProjectPage projects -> App.Page.SelectAProject.html projects
         DashboardPage dashboard -> App.Page.Dashboard.html dashboard
         ErrorPage error -> App.Page.Error.html error

@@ -9,9 +9,10 @@ import App.Http exposing (Response)
 import App.Navigation as Navigation
 
 type Message =
-    MeMessage (Response Me)
-  | NavigationMessage Navigation.Message
+    Load Location
   | NavigateTo Location
+  | MeMessage (Response Me)
+  | NavigationMessage Navigation.Message
   | ErrorMessage Error
 
 type Model =
@@ -21,7 +22,8 @@ type Model =
   | Model Me Navigation.State Page
 
 type Page =
-    SelectAProjectPage Projects
+    LoadingPage
+  | SelectAProjectPage Projects
   | DashboardPage Dashboard
   | ErrorPage Error
 
@@ -40,13 +42,13 @@ type alias PullRequest = {
     number : Int,
     title : String,
     updatedAt : Moment,
-    link : Location
+    link : Url
   }
 
 type alias Repository = {
     owner : String,
     name : String,
-    link : Location
+    link : Url
   }
 
 type Avatar = GitHubAvatar Url

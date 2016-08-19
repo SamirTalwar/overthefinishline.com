@@ -1,7 +1,5 @@
 module App.Navigation exposing (..)
 
-import Navigation
-
 import App.Location exposing (Location)
 
 type Message = ShowProjects | HideProjects | NavigateTo Location

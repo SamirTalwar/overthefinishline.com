@@ -20,6 +20,7 @@ import App.Page.Error
 import App.Page.Frame
 import App.Page.Loading
 import App.Page.Navigation
+import App.Page.NewProject
 import App.Page.SelectAProject
 
 main : Program Never
@@ -47,7 +48,7 @@ update message model =
       in Model me navigationState (SelectAProjectPage projects) ! []
     (Load Location.NewProject, Model me navigationState _) ->
       let (Me _ projects) = me
-      in Model me navigationState (ErrorPage (MissingPage "new project")) ! []
+      in Model me navigationState (NewProjectPage []) ! []
     (Load (Location.Project url), Model me navigationState _) ->
       let (Me _ projects) = me
       in Model me navigationState (ErrorPage (MissingPage "project")) ! []
@@ -69,10 +70,15 @@ update message model =
     (MeMessage (Response me), _) ->
       (Model me App.Navigation.initialState LoadingPage ! [])
 
-    (NavigationMessage message, Model me navigationState page) ->
-      let (state, command) = App.Navigation.update message navigationState
-      in Model me state page ! [Cmd.map NavigationMessage command]
+    (NavigationMessage message, Model me oldNavigationState page) ->
+      let (navigationState, command) = App.Navigation.update message oldNavigationState
+      in Model me navigationState page ! [Cmd.map NavigationMessage command]
     (NavigationMessage _, model) ->
+      model ! []
+
+    (NewProjectMessage repositoryNames, Model me navigationState (NewProjectPage _)) ->
+      Model me navigationState (NewProjectPage repositoryNames) ! []
+    (NewProjectMessage repositoryNames, _) ->
       model ! []
 
     (ErrorMessage error, Model me navigationState _) ->
@@ -99,6 +105,7 @@ view model =
       App.Page.Frame.html [navigationSignedIn me navigationState] <| case page of
         LoadingPage -> App.Page.Loading.html
         SelectAProjectPage projects -> App.Page.SelectAProject.html projects
+        NewProjectPage repositoryNames -> App.Page.NewProject.html repositoryNames
         DashboardPage dashboard -> App.Page.Dashboard.html dashboard
         ErrorPage error -> App.Page.Error.html error
 

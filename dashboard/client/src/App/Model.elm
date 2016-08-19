@@ -13,6 +13,7 @@ type Message =
   | NavigateTo Location
   | MeMessage (Response Me)
   | NavigationMessage Navigation.Message
+  | NewProjectMessage (List Name)
   | ErrorMessage Error
 
 type Model =
@@ -24,6 +25,7 @@ type Model =
 type Page =
     LoadingPage
   | SelectAProjectPage Projects
+  | NewProjectPage (List Name)
   | DashboardPage Dashboard
   | ErrorPage Error
 

@@ -1,4 +1,4 @@
-module App.Location exposing (Location (..), parser, href, navigateTo)
+module App.Location exposing (Location (..), parser, navigateTo, url)
 
 import Html exposing (Attribute)
 import Html.Attributes
@@ -24,9 +24,6 @@ locationParser =
     format Home (s ""),
     format NewProject (s "projects" </> s "new")
   ]
-
-href : Location -> Html.Attribute a
-href = url >> Url.toString >> Html.Attributes.href
 
 navigateTo : Location -> Cmd a
 navigateTo location = case location of

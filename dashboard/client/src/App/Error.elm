@@ -1,3 +1,7 @@
 module App.Error exposing (..)
 
-type Error = FailureToConnect | UnexpectedResponse String
+type Error =
+    UnknownError String
+  | MissingPage String
+  | FailureToConnect
+  | UnexpectedResponse String

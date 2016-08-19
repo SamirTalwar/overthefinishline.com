@@ -7,8 +7,9 @@ import Process
 import Task exposing (Task)
 import Time
 
+import App.Error exposing (..)
 import App.Http exposing (Response (..))
-import App.Location exposing (Location (..))
+import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 import App.Navigation
 import App.Server.Me as Me
@@ -23,7 +24,7 @@ import App.Page.SelectAProject
 
 main : Program Never
 main =
-  Navigation.program (Navigation.makeParser App.Location.parser) {
+  Navigation.program (Navigation.makeParser Location.parser) {
     init = init,
     update = update,
     urlUpdate = urlUpdate,
@@ -41,31 +42,46 @@ init location =
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
   case (message, model) of
-    (Load _, Model me navigationState _) ->
+    (Load Location.Home, Model me navigationState _) ->
       let (Me _ projects) = me
       in Model me navigationState (SelectAProjectPage projects) ! []
+    (Load Location.NewProject, Model me navigationState _) ->
+      let (Me _ projects) = me
+      in Model me navigationState (ErrorPage (MissingPage "new project")) ! []
+    (Load (Location.Project url), Model me navigationState _) ->
+      let (Me _ projects) = me
+      in Model me navigationState (ErrorPage (MissingPage "project")) ! []
+    (Load (Location.Error log), Model me navigationState _) ->
+      let (Me _ projects) = me
+      in Model me navigationState (ErrorPage (UnknownError log)) ! []
     (Load location, Loading) ->
       Loading ! [load location]
-    (Load location, model) ->
-      model ! []
+    (Load location, Unauthenticated) ->
+      Unauthenticated ! []
+    (Load location, CatastrophicFailure error) ->
+      CatastrophicFailure error ! []
+
     (NavigateTo location, model) ->
-      model ! [App.Location.navigateTo location]
+      model ! [Location.navigateTo location]
+
     (MeMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
     (MeMessage (Response me), _) ->
       (Model me App.Navigation.initialState LoadingPage ! [])
+
     (NavigationMessage message, Model me navigationState page) ->
       let (state, command) = App.Navigation.update message navigationState
       in Model me state page ! [Cmd.map NavigationMessage command]
     (NavigationMessage _, model) ->
       model ! []
+
     (ErrorMessage error, Model me navigationState _) ->
       Model me navigationState (ErrorPage error) ! []
     (ErrorMessage error, _) ->
       CatastrophicFailure error ! []
 
 urlUpdate : Location -> Model -> (Model, Cmd Message)
-urlUpdate _ model = (model ! [])
+urlUpdate location model = (model ! [load location])
 
 load : Location -> Cmd Message
 load location =

@@ -17,16 +17,21 @@ type Model =
     Loading
   | Unauthenticated
   | CatastrophicFailure Error
-  | Model Me Navigation.State (Maybe Dashboard) (Maybe Error)
+  | Model Me Navigation.State Page
+
+type Page =
+    SelectAProjectPage Projects
+  | DashboardPage Dashboard
+  | ErrorPage Error
 
 type Me = Me User Projects
 
 type User = User Username Avatar
 
+type Dashboard = Dashboard Moment PullRequests
+
 type alias Projects = List Project
 type Project = Project Name Url
-
-type Dashboard = Dashboard Moment PullRequests
 
 type alias PullRequests = List PullRequest
 type alias PullRequest = {

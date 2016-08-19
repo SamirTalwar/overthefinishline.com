@@ -39,14 +39,15 @@ update message model =
     (MeMessage UnauthenticatedResponse, _) ->
       (Unauthenticated, Cmd.none)
     (MeMessage (Response me), _) ->
-      (Model me App.Navigation.initialState Nothing Nothing, Cmd.none)
-    (NavigationMessage message, Model me navigationState dashboard error) ->
+      let (Me _ projects) = me
+      in (Model me App.Navigation.initialState (SelectAProjectPage projects), Cmd.none)
+    (NavigationMessage message, Model me navigationState dashboard) ->
       let (state, command) = App.Navigation.update message navigationState
-      in (Model me state dashboard error, Cmd.map NavigationMessage command)
+      in (Model me state dashboard, Cmd.map NavigationMessage command)
     (NavigationMessage _, model) ->
       (model, Cmd.none)
-    (ErrorMessage error, Model me navigationState dashboard _) ->
-      (Model me navigationState dashboard (Just error), Cmd.none)
+    (ErrorMessage error, Model me navigationState _) ->
+      (Model me navigationState (ErrorPage error), Cmd.none)
     (ErrorMessage error, _) ->
       (CatastrophicFailure error, Cmd.none)
     (NavigateTo url, model) ->
@@ -61,13 +62,11 @@ view model =
     Loading -> App.Page.Frame.html [] App.Page.Loading.html
     Unauthenticated -> App.Page.Frame.html [] App.Page.Authentication.html
     CatastrophicFailure error -> App.Page.Frame.html [] (App.Page.Error.html error)
-    Model me navigationState _ (Just error) ->
-      App.Page.Frame.html [navigation me navigationState] (App.Page.Error.html error)
-    Model me navigationState Nothing Nothing ->
-      let (Me _ projects) = me
-      in App.Page.Frame.html [navigation me navigationState] (App.Page.SelectAProject.html projects)
-    Model me navigationState (Just dashboard) Nothing ->
-      App.Page.Frame.html [navigation me navigationState] (App.Page.Dashboard.html dashboard)
+    Model me navigationState page ->
+      App.Page.Frame.html [navigation me navigationState] <| case page of
+        SelectAProjectPage projects -> App.Page.SelectAProject.html projects
+        DashboardPage dashboard -> App.Page.Dashboard.html dashboard
+        ErrorPage error -> App.Page.Error.html error
 
 navigation : Me -> App.Navigation.State -> Html Message
 navigation me state = Html.App.map NavigationMessage (App.Page.Navigation.html me state)

@@ -10,7 +10,7 @@ import OverTheFinishLine.Dashboard.Model
 
 spec = describe "JSON serialization of the model" $ do
   it "serializes authenticated users" $ do
-    let value = UserProjects (User "Steve" "https://example.com/avatars/Steve.jpg") [UserProject "Thing" "/projects/steve/thing"]
+    let value = Me (User "Steve" "https://example.com/avatars/Steve.jpg") [MyProject "Thing" "/projects/steve/thing"]
     toJSON (AuthenticatedResponse value)
       `shouldBe` object [
           "state" .= pack "Authenticated",

@@ -90,8 +90,13 @@ createApp configuration databaseConnectionPool httpManager =
       either handleException storeSession userId
 
     get "me" $ do
-      user <- runExceptT (entityVal <$> readUser)
-      either handleException renderUser user
+      me <- runExceptT $ do
+        Entity userId user <- readUser
+        projects <- withDatabase $ selectList [ProjectUserId ==. userId] [Asc ProjectName]
+        let myProject project = MyProject (projectName project) (projectUrl user project)
+        let myProjects = map (myProject . entityVal) projects
+        return (user, myProjects)
+      either handleException (uncurry renderMe) me
 
     get "projects" appHtml
 
@@ -180,12 +185,13 @@ createApp configuration databaseConnectionPool httpManager =
     readUser :: ExceptT Exception Context (Entity User)
     readUser = do
       userId <- readUserId
-      Entity userId <$> (withDatabase (Database.get userId) `orException` MissingUser)
+      user <- withDatabase (Database.get userId) `orException` MissingUser
+      return $ Entity userId user
 
     readUserId :: ExceptT Exception Context UserId
     readUserId = readSession `orException` UnauthenticatedUser
 
-    renderUser user = json (AuthenticatedResponse (UserProjects user []))
+    renderMe user projects = json (AuthenticatedResponse (Me user projects))
 
     renderDashboard dashboard = json (AuthenticatedResponse dashboard)
 
@@ -195,7 +201,7 @@ createApp configuration databaseConnectionPool httpManager =
     textListParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a [Text]
     textListParam name params = return values `onEmpty` MissingParam name
       where
-      values = map snd $ filter ((== name) . fst) params
+        values = map snd $ filter ((== name) . fst) params
 
     orException :: Monad m => m (Maybe a) -> e -> ExceptT e m a
     maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)

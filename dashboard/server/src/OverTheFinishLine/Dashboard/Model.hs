@@ -85,21 +85,21 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 
 instance ToJSON User where toJSON = genericToJSON (stripPrefix "user")
 
-data UserProjects =
-  UserProjects {
-    userProjectsUser :: User,
-    userProjectsProjects :: [UserProject]
+data Me =
+  Me {
+    meUser :: User,
+    meProjects :: [MyProject]
   }
   deriving (Eq, Generic, Show)
-instance ToJSON UserProjects where toJSON = genericToJSON (stripPrefix "userProjects")
+instance ToJSON Me where toJSON = genericToJSON (stripPrefix "me")
 
-data UserProject =
-  UserProject {
-    userProjectName :: Text,
-    userProjectUrl :: Url
+data MyProject =
+  MyProject {
+    myProjectName :: Text,
+    myProjectUrl :: Url
   }
   deriving (Eq, Generic, Show)
-instance ToJSON UserProject where toJSON = genericToJSON (stripPrefix "userProject")
+instance ToJSON MyProject where toJSON = genericToJSON (stripPrefix "myProject")
 
 data Dashboard =
   Dashboard {

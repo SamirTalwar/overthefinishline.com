@@ -22,7 +22,7 @@ locationParser : Parser (Location -> a) a
 locationParser =
   oneOf [
     format Home (s ""),
-    format NewProject (s "projects" </> s "new")
+    format NewProject (s "projects")
   ]
 
 navigateTo : Location -> Cmd a
@@ -33,7 +33,7 @@ navigateTo location = case location of
 url : Location -> Url
 url location = case location of
   Home -> Url.parse "/"
-  NewProject -> Url.parse "/projects/new"
+  NewProject -> Url.parse "/projects"
   Project url -> Url.parse url
   Error _ -> Url.empty
 

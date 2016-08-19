@@ -35,7 +35,7 @@ repositoryField : List Name -> Name -> List Name -> Html Message
 repositoryField before repositoryName after =
   p [] [
     input
-      [type' "text", class "form-control", name "repository[]", placeholder "elm-lang/core", value repositoryName,
+      [type' "text", class "form-control", name "repository-names[]", placeholder "elm-lang/core", value repositoryName,
        onInput (\newName -> NewProjectMessage (before ++ [newName] ++ after))]
       []
   ]

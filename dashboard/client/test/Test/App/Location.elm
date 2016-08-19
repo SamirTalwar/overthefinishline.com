@@ -21,7 +21,7 @@ tests =
     test "Location: parses the new project URL" (
       let
         expected = NewProject |> Task.succeed
-        actual = parser (locationWithPath "/projects/new") |> Task.succeed
+        actual = parser (locationWithPath "/projects") |> Task.succeed
       in
         assert actual (equals expected)
     ),

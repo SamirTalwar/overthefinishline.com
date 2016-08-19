@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
-import Control.Monad (forM_, mzero, unless, void)
+import Control.Monad (forM_, mzero, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (runStderrLoggingT)
 import Control.Monad.Trans.Class (lift)
@@ -17,6 +18,7 @@ import Data.List (partition)
 import qualified Data.Map as Map
 import Data.Maybe (fromJust, isJust, mapMaybe)
 import qualified Data.Text as Text
+import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Data.Time.Clock (NominalDiffTime, getCurrentTime)
 import qualified Database.Persist as Database
@@ -27,6 +29,7 @@ import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (badRequest400, internalServerError500)
 import Network.OAuth.OAuth2 as OAuth2
+import qualified Network.Wai.Parse as Parse
 import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.Environment (getEnv, lookupEnv)
@@ -76,17 +79,22 @@ createApp configuration databaseConnectionPool httpManager =
     middleware $ staticPolicy (noDots >-> addBase (configurationClientPath configuration))
 
     get "/" appHtml
-    get "/projects/new" appHtml
+    get "/projects" appHtml
 
     get "/authentication/by/github" authenticateWithGitHub
 
     get "/authorization/by/github" $ do
-      userId <- storeUser
+      userId <- runExceptT storeUser
       either handleException storeSession userId
 
     get "/me" $ do
-      user <- readUser
+      user <- runExceptT $ (entityVal <$> readUser)
       either handleException renderUser user
+
+    post "/projects" $ do
+      requestParams <- params
+      project <- runExceptT $ storeProject requestParams
+      either handleException (redirect . uncurry projectUrl) project
 
     get "/dashboard" $ do
       now <- liftIO getCurrentTime
@@ -102,8 +110,8 @@ createApp configuration databaseConnectionPool httpManager =
       writeSession $ Just userId
       redirect "/"
 
-    storeUser = runExceptT $ do
-      code <- param "code" `orException` MissingAuthenticationCode
+    storeUser = do
+      code <- param "code" `orException` MissingParam "code"
       accessToken <- withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
       (GitHubUser gitHubUserId gitHubUserLogin gitHubUserAvatarUrl) <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
@@ -123,13 +131,35 @@ createApp configuration databaseConnectionPool httpManager =
             update serviceCredentialsId [ServiceCredentialsAccessToken =. accessTokenString]
             return userId
 
-    readUser = runExceptT $ do
-      userId <- readSession `orException` UnauthenticatedUser
-      withDatabase (Database.get userId) `orException` MissingUser
+    storeProject requestParams = do
+      Entity userId user <- readUser
+      projectName <- textParam "project-name" requestParams
+      repositoryNames <- filter (/= "") <$> textListParam "repository-names[]" requestParams
+      let project = Project userId projectName
+      withDatabase $ do
+        projectId <- insert project
+        mapM_ insert $ map (ProjectRepository projectId) repositoryNames
+      return (user, project)
+
+    readUser = do
+      userId <- readUserId
+      Entity userId <$> (withDatabase (Database.get userId) `orException` MissingUser)
+
+    readUserId = readSession `orException` UnauthenticatedUser
 
     renderUser user = json (AuthenticatedResponse (UserProjects user []))
 
     renderDashboard now = json (AuthenticatedResponse (Dashboard now []))
+
+    textParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a Text
+    textParam name params = (return $ lookup name params) `orException` MissingParam name
+
+    textListParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a [Text]
+    textListParam name params = do
+      when (null values) $ throwE (MissingParam name)
+      return values
+        where
+        values = map snd $ filter ((== name) . fst) params
 
     maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)
 
@@ -137,14 +167,17 @@ createApp configuration databaseConnectionPool httpManager =
       json unauthenticatedResponse
     handleException MissingUser =
       json unauthenticatedResponse
-    handleException MissingAuthenticationCode =
+    handleException (MissingParam param) = do
       setStatus badRequest400
+      errorJson "missing param" ["param" .= param]
     handleException (InvalidAuthenticationCode message) = do
       setStatus badRequest400
-      text message
+      errorJson "invalid authentication code" ["message" .= message]
     handleException (QueryFailure message) = do
       setStatus internalServerError500
-      text message
+      errorJson "query failure" ["message" .= message]
+
+    errorJson message extras = json $ object (["error" .= (message :: Text)] ++ extras)
 
     gitHubOAuthCredentials = configurationGitHubOAuthCredentials configuration
 

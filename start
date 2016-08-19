@@ -16,6 +16,8 @@ function terminate {
 }
 
 while ! $done; do
+    echo
+    date
     run || true
     fswatch --one-event .built >/dev/null
 done

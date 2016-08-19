@@ -12,14 +12,18 @@ module OverTheFinishLine.Dashboard.Model where
 import Data.Aeson
 import Data.Aeson.Types
 import Data.ByteString (ByteString)
+import Data.ByteString.Builder (toLazyByteString)
+import Data.ByteString.Lazy (toStrict)
 import qualified Data.Char as Char
 import qualified Data.HashMap.Strict as HashMap
 import Data.Text (Text, pack)
+import Data.Text.Encoding (decodeUtf8)
 import Data.Time (UTCTime)
 import Database.Persist
 import Database.Persist.Postgresql
 import Database.Persist.TH
 import GHC.Generics
+import Network.HTTP.Types.URI (encodePathSegments)
 
 import OverTheFinishLine.Dashboard.Enumerations
 
@@ -28,11 +32,11 @@ type Url = Text
 data Exception =
     UnauthenticatedUser
   | MissingUser
-  | MissingAuthenticationCode
+  | MissingParam Text
   | InvalidAuthenticationCode Text
   | QueryFailure Text
 
-data Response a = AuthenticatedResponse a | UnauthenticatedResponse
+data Response a = AuthenticatedResponse a | UnauthenticatedResponse | Error String
   deriving (Generic, Show)
 instance ToJSON a => ToJSON (Response a) where
   toJSON (AuthenticatedResponse value) =
@@ -65,6 +69,18 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     userId UserId
     UniqueSessionId sessionId
     deriving Eq Show
+
+  Project
+    userId UserId
+    name Text
+    UniqueProjectName name
+    deriving Eq Show
+
+  ProjectRepository
+    projectId ProjectId
+    name Text
+    UniqueProjectRepositoryName name
+    deriving Eq Show
 |]
 
 instance ToJSON User where toJSON = genericToJSON (stripPrefix "user")
@@ -72,18 +88,18 @@ instance ToJSON User where toJSON = genericToJSON (stripPrefix "user")
 data UserProjects =
   UserProjects {
     userProjectsUser :: User,
-    userProjectsProjects :: [Project]
+    userProjectsProjects :: [UserProject]
   }
   deriving (Generic, Show)
 instance ToJSON UserProjects where toJSON = genericToJSON (stripPrefix "userProjects")
 
-data Project =
-  Project {
-    projectName :: Text,
-    projectUrl :: Url
+data UserProject =
+  UserProject {
+    userProjectName :: Text,
+    userProjectUrl :: Url
   }
   deriving (Generic, Show)
-instance ToJSON Project where toJSON = genericToJSON (stripPrefix "project")
+instance ToJSON UserProject where toJSON = genericToJSON (stripPrefix "userProject")
 
 data Dashboard =
   Dashboard {
@@ -112,6 +128,11 @@ data Repository =
   }
   deriving (Generic, Show)
 instance ToJSON Repository where toJSON = genericToJSON (stripPrefix "repo")
+
+projectUrl :: User -> Project -> Url
+projectUrl user project =
+  decodeUtf8 $ toStrict $ toLazyByteString
+    $ encodePathSegments ["projects", userUsername user, projectName project]
 
 stripPrefix :: String -> Options
 stripPrefix prefix = defaultOptions { fieldLabelModifier = stripPrefixFromFields prefix }

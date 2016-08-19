@@ -90,7 +90,7 @@ data UserProjects =
     userProjectsUser :: User,
     userProjectsProjects :: [UserProject]
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 instance ToJSON UserProjects where toJSON = genericToJSON (stripPrefix "userProjects")
 
 data UserProject =
@@ -98,7 +98,7 @@ data UserProject =
     userProjectName :: Text,
     userProjectUrl :: Url
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 instance ToJSON UserProject where toJSON = genericToJSON (stripPrefix "userProject")
 
 data Dashboard =
@@ -106,7 +106,7 @@ data Dashboard =
     dashboardNow :: UTCTime,
     dashboardPullRequests :: [PullRequest]
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 instance ToJSON Dashboard where toJSON = genericToJSON (stripPrefix "dashboard")
 
 data PullRequest =
@@ -117,16 +117,16 @@ data PullRequest =
     prUpdatedAt :: UTCTime,
     prUrl :: Url
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 instance ToJSON PullRequest where toJSON = genericToJSON (stripPrefix "pr")
 
 data Repository =
   Repository {
     repoOwner :: Text,
     repoName :: Text,
-    repoLink :: Url
+    repoUrl :: Url
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 instance ToJSON Repository where toJSON = genericToJSON (stripPrefix "repo")
 
 projectUrl :: User -> Project -> Url

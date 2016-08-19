@@ -20,7 +20,7 @@ tests =
         expected = dashboard |> Result.map Response |> Result.formatError UnexpectedResponse |> Task.fromResult
 
         actual : Task Error (Response Dashboard)
-        actual = fetch (App.Http.stubGet "/dashboard" dashboardJson)
+        actual = fetch (App.Http.stubGet "/projects/sandwiches/cheese" dashboardJson) (Url.parse "/projects/sandwiches/cheese")
       in
         assert actual (equals expected)
     ),
@@ -31,7 +31,7 @@ tests =
         expected = Task.succeed UnauthenticatedResponse
 
         actual : Task Error (Response Dashboard)
-        actual = fetch (App.Http.stubGet "/dashboard" unauthenticatedJson)
+        actual = fetch (App.Http.stubGet "/projects/dan/what" unauthenticatedJson) (Url.parse "/projects/dan/what")
       in
         assert actual (equals expected)
     )
@@ -46,23 +46,23 @@ dashboard =
         repository = {
           owner = "sandwiches",
           name = "cheese",
-          link = Url.parse "https://github.com/sandwiches/cheese"
+          url = Url.parse "https://github.com/sandwiches/cheese"
         },
         number = 123,
         title = "Add support for French cheese.",
         updatedAt = Moment.parse "2016-05-04T15:44:33Z",
-        link = Url.parse "https://github.com/sandwiches/cheese/pull/123"
+        url = Url.parse "https://github.com/sandwiches/cheese/pull/123"
       },
       {
         repository = {
           owner = "sandwiches",
           name = "cheese",
-          link = Url.parse "https://github.com/sandwiches/cheese"
+          url = Url.parse "https://github.com/sandwiches/cheese"
         },
         number = 121,
         title = "Discontinue pre-sliced cheese wrapped in plastic.",
         updatedAt = Moment.parse "2016-02-06T03:08:56Z",
-        link = Url.parse "https://github.com/sandwiches/cheese/pull/121"
+        url = Url.parse "https://github.com/sandwiches/cheese/pull/121"
       }
     ]
   }
@@ -78,23 +78,23 @@ dashboardJson =
           "repository": {
             "owner": "sandwiches",
             "name": "cheese",
-            "link": "https://github.com/sandwiches/cheese"
+            "url": "https://github.com/sandwiches/cheese"
           },
           "number": 123,
           "title": "Add support for French cheese.",
           "updatedAt": "2016-05-04T15:44:33Z",
-          "link": "https://github.com/sandwiches/cheese/pull/123"
+          "url": "https://github.com/sandwiches/cheese/pull/123"
         },
         {
           "repository": {
             "owner": "sandwiches",
             "name": "cheese",
-            "link": "https://github.com/sandwiches/cheese"
+            "url": "https://github.com/sandwiches/cheese"
           },
           "number": 121,
           "title": "Discontinue pre-sliced cheese wrapped in plastic.",
           "updatedAt": "2016-02-06T03:08:56Z",
-          "link": "https://github.com/sandwiches/cheese/pull/121"
+          "url": "https://github.com/sandwiches/cheese/pull/121"
         }
       ]
     }
@@ -110,7 +110,7 @@ unauthenticatedJson =
 
 dashboardResult
     : { now: Result String Moment,
-        pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, link : Url } }
+        pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, url : Url } }
     -> Result String Dashboard
 dashboardResult {now, pullRequests} =
   let

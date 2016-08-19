@@ -8,6 +8,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (runStderrLoggingT)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except
+import Control.Monad.Trans.List
 import Control.Monad.Trans.Maybe
 import Data.Aeson hiding (json)
 import Data.ByteString (ByteString)
@@ -53,6 +54,8 @@ data Configuration = Configuration {
   configurationSessionStoreInterval :: NominalDiffTime
 }
 
+type Context = SpockActionCtx () () (Maybe UserId) ()
+
 main :: IO ()
 main = readConfiguration >>= server
 
@@ -78,27 +81,44 @@ createApp configuration databaseConnectionPool httpManager =
   spockAsApp $ spock spockConfiguration $ do
     middleware $ staticPolicy (noDots >-> addBase (configurationClientPath configuration))
 
-    get "/" appHtml
-    get "/projects" appHtml
+    get root appHtml
 
-    get "/authentication/by/github" authenticateWithGitHub
+    get ("authentication" <//> "by" <//> "github") authenticateWithGitHub
 
-    get "/authorization/by/github" $ do
+    get ("authorization" <//> "by" <//> "github") $ do
       userId <- runExceptT storeUser
       either handleException storeSession userId
 
-    get "/me" $ do
-      user <- runExceptT $ (entityVal <$> readUser)
+    get "me" $ do
+      user <- runExceptT (entityVal <$> readUser)
       either handleException renderUser user
 
-    post "/projects" $ do
+    get "projects" appHtml
+
+    post "projects" $ do
       requestParams <- params
       project <- runExceptT $ storeProject requestParams
       either handleException (redirect . uncurry projectUrl) project
 
-    get "/dashboard" $ do
-      now <- liftIO getCurrentTime
-      renderDashboard now
+    get ("projects" <//> var <//> var) $ \username projectName -> do
+      format <- preferredFormat
+      case format of
+        PrefHTML -> appHtml
+        _ -> do
+          now <- liftIO getCurrentTime
+          pullRequests <- runExceptT $ do
+            accessToken <- readAccessToken
+            repositories <- withDatabase (rawSql (Text.pack $
+                  "SELECT ??"
+               ++ " FROM \"user\""
+               ++ " JOIN \"project\" ON \"user\".\"id\" = \"project\".\"user_id\""
+               ++ " JOIN \"project_repository\" ON \"project\".\"id\" = \"project_repository\".\"project_id\""
+               ++ " WHERE \"user\".\"username\" = ?"
+               ++ " AND \"project\".\"name\" = ?") [username, projectName]
+              ) `onEmpty` QueryFailure "No repositories found."
+            concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
+          let dashboard = Dashboard now <$> pullRequests
+          either handleException renderDashboard dashboard
 
   where
     appHtml = file "text/html" (configurationClientPath configuration </> "index.html")
@@ -114,8 +134,7 @@ createApp configuration databaseConnectionPool httpManager =
       code <- param "code" `orException` MissingParam "code"
       accessToken <- withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
-      (GitHubUser gitHubUserId gitHubUserLogin gitHubUserAvatarUrl) <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
-        ExceptT $ liftIO $ authGetJSON httpManager accessToken "https://api.github.com/user"
+      (GitHubUser gitHubUserId gitHubUserLogin gitHubUserAvatarUrl) <- fetchGitHubUser accessToken
       let accessTokenString = OAuth2.accessToken accessToken
       withDatabase $ do
         let user = User gitHubUserLogin gitHubUserAvatarUrl
@@ -138,30 +157,51 @@ createApp configuration databaseConnectionPool httpManager =
       let project = Project userId projectName
       withDatabase $ do
         projectId <- insert project
-        mapM_ insert $ map (ProjectRepository projectId) repositoryNames
+        mapM_ (insert . ProjectRepository projectId) repositoryNames
       return (user, project)
 
+    fetchGitHubUser accessToken =
+      fetch accessToken "https://api.github.com/user"
+
+    fetchGitHubPullRequests accessToken repositoryName =
+      fetch accessToken $ mconcat ["https://api.github.com/repos/", encodeUtf8 repositoryName, "/pulls"]
+
+    fetch accessToken =
+      withExceptT (QueryFailure . decodeUtf8 . toStrict)
+        . ExceptT . liftIO . authGetJSON httpManager accessToken
+
+    readAccessToken :: ExceptT Exception Context AccessToken
+    readAccessToken = do
+      userId <- readUserId
+      let userService = UserService userId GitHub
+      (Entity _ (ServiceCredentials _ _ _ accessToken)) <- withDatabase (getBy userService) `orException` MissingUser
+      return $ AccessToken accessToken Nothing Nothing Nothing Nothing
+
+    readUser :: ExceptT Exception Context (Entity User)
     readUser = do
       userId <- readUserId
       Entity userId <$> (withDatabase (Database.get userId) `orException` MissingUser)
 
+    readUserId :: ExceptT Exception Context UserId
     readUserId = readSession `orException` UnauthenticatedUser
 
     renderUser user = json (AuthenticatedResponse (UserProjects user []))
 
-    renderDashboard now = json (AuthenticatedResponse (Dashboard now []))
+    renderDashboard dashboard = json (AuthenticatedResponse dashboard)
 
     textParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a Text
-    textParam name params = (return $ lookup name params) `orException` MissingParam name
+    textParam name params = return (lookup name params) `orException` MissingParam name
 
     textListParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a [Text]
-    textListParam name params = do
-      when (null values) $ throwE (MissingParam name)
-      return values
-        where
-        values = map snd $ filter ((== name) . fst) params
+    textListParam name params = return values `onEmpty` MissingParam name
+      where
+      values = map snd $ filter ((== name) . fst) params
 
+    orException :: Monad m => m (Maybe a) -> e -> ExceptT e m a
     maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)
+
+    onEmpty :: Monad m => m [a] -> e -> ExceptT e m [a]
+    list `onEmpty` exception = ExceptT ((\l -> when (null l) (Left exception) >> Right l) <$> list)
 
     handleException UnauthenticatedUser =
       json unauthenticatedResponse
@@ -175,9 +215,9 @@ createApp configuration databaseConnectionPool httpManager =
       errorJson "invalid authentication code" ["message" .= message]
     handleException (QueryFailure message) = do
       setStatus internalServerError500
-      errorJson "query failure" ["message" .= message]
+      errorJson "internal failure" ["message" .= message]
 
-    errorJson message extras = json $ object (["error" .= (message :: Text)] ++ extras)
+    errorJson message extras = json $ object (("error" .= (message :: Text)) : extras)
 
     gitHubOAuthCredentials = configurationGitHubOAuthCredentials configuration
 

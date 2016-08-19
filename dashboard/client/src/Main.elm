@@ -12,7 +12,8 @@ import App.Http exposing (Response (..))
 import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 import App.Navigation
-import App.Server.Me as Me
+import App.Server.Dashboard
+import App.Server.Me
 
 import App.Page.Authentication
 import App.Page.Dashboard
@@ -36,7 +37,7 @@ main =
 init : Location -> (Model, Cmd Message)
 init location =
   Loading ! [
-    Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage,
+    App.Server.Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage,
     load location
   ]
 
@@ -47,14 +48,12 @@ update message model =
       let (Me _ projects) = me
       in Model me navigationState (SelectAProjectPage projects) ! []
     (Load Location.NewProject, Model me navigationState _) ->
-      let (Me _ projects) = me
-      in Model me navigationState (NewProjectPage []) ! []
-    (Load (Location.Project url), Model me navigationState _) ->
-      let (Me _ projects) = me
-      in Model me navigationState (ErrorPage (MissingPage "project")) ! []
+      Model me navigationState (NewProjectPage []) ! []
+    (Load (Location.Project url), Model me navigationState page) ->
+      Model me navigationState page
+        ! [App.Server.Dashboard.fetch App.Http.get url |> Task.perform ErrorMessage DashboardMessage]
     (Load (Location.Error log), Model me navigationState _) ->
-      let (Me _ projects) = me
-      in Model me navigationState (ErrorPage (UnknownError log)) ! []
+      Model me navigationState (ErrorPage (UnknownError log)) ! []
     (Load location, Loading) ->
       Loading ! [load location]
     (Load location, Unauthenticated) ->
@@ -68,7 +67,14 @@ update message model =
     (MeMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
     (MeMessage (Response me), _) ->
-      (Model me App.Navigation.initialState LoadingPage ! [])
+      Model me App.Navigation.initialState LoadingPage ! []
+
+    (DashboardMessage UnauthenticatedResponse, _) ->
+      Unauthenticated ! []
+    (DashboardMessage (Response dashboard), Model me navigationState _) ->
+      Model me navigationState (DashboardPage dashboard) ! []
+    (DashboardMessage _, model) ->
+      model ! []
 
     (NavigationMessage message, Model me oldNavigationState page) ->
       let (navigationState, command) = App.Navigation.update message oldNavigationState

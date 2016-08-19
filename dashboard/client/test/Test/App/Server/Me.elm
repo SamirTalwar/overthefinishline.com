@@ -18,10 +18,10 @@ tests =
       let
         expected : Task Error (Response Me)
         expected = Task.succeed (Response (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
-          Project "Camping" (Location.Project "/projects/_why/camping"),
-          Project "Hpricot" (Location.Project "/projects/_why/hpricot"),
-          Project "RedCloth" (Location.Project "/projects/_why/redcloth"),
-          Project "Shoes" (Location.Project "/project/_why/shoes")
+          Project "Camping" (Location.Project (Url.parse "/projects/_why/camping")),
+          Project "Hpricot" (Location.Project (Url.parse "/projects/_why/hpricot")),
+          Project "RedCloth" (Location.Project (Url.parse "/projects/_why/redcloth")),
+          Project "Shoes" (Location.Project (Url.parse "/project/_why/shoes"))
         ]))
 
         actual : Task Error (Response Me)

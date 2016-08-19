@@ -6,6 +6,7 @@ import Task
 
 import App.Location exposing (..)
 import Navigation
+import Url
 
 tests : Tests
 tests =
@@ -22,6 +23,14 @@ tests =
       let
         expected = NewProject |> Task.succeed
         actual = parser (locationWithPath "/projects") |> Task.succeed
+      in
+        assert actual (equals expected)
+    ),
+
+    test "Location: parses a project URL" (
+      let
+        expected = Project (Url.parse "/projects/sandwiches/pickles") |> Task.succeed
+        actual = parser (locationWithPath "/projects/sandwiches/pickles") |> Task.succeed
       in
         assert actual (equals expected)
     ),

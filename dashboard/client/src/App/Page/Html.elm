@@ -12,17 +12,17 @@ import App.Location as Location exposing (Location)
 
 link : (Location -> message) -> Location -> List (Attribute message) -> List (Html message) -> Html message
 link navigateTo location attributes =
-  Html.a ([href location, onClick (navigateTo location)] ++ attributes)
+  Html.a ([href (Location.url location), onClick (navigateTo location)] ++ attributes)
 
 formFor : (Location -> message) -> Location -> List (Attribute message) -> List (Html message) -> Html message
 formFor navigateTo location attributes =
-  Html.form ([Attributes.method "post", action location] ++ attributes)
+  Html.form ([Attributes.method "post", action (Location.url location)] ++ attributes)
 
-href : Location -> Attribute a
-href = Location.url >> Url.toString >> Attributes.href
+href : Url -> Attribute a
+href = Url.toString >> Attributes.href
 
-action : Location -> Attribute a
-action = Location.url >> Url.toString >> Attributes.action
+action : Url -> Attribute a
+action = Url.toString >> Attributes.action
 
 emptyHref : Attribute a
 emptyHref = Attributes.href "#"

@@ -18,7 +18,15 @@ type Response a =
 type alias Get a = Decoder a -> String -> Task Error (Response a)
 
 get : Get a
-get decoder url = Http.get (authenticationDecoder decoder) url |> Task.mapError handleError
+get decoder url =
+  let request = {
+        verb = "GET",
+        headers = [("Accept", "application/json")],
+        url = url,
+        body = Http.empty
+      }
+  in Http.fromJson (authenticationDecoder decoder) (Http.send Http.defaultSettings request)
+      |> Task.mapError handleError
 
 stubGet : String -> String -> Get a
 stubGet stubPath stubResponse decoder url =

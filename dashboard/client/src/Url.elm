@@ -1,6 +1,7 @@
 module Url exposing (
     Url,
     empty,
+    withPath,
     parse,
     toString,
 
@@ -16,6 +17,9 @@ type alias Url = Erl.Url
 
 empty : Url
 empty = Erl.new
+
+withPath : List String -> Url
+withPath path = let url = parse "/" in { url | path = path, hasTrailingSlash = False }
 
 parse : String -> Url
 parse = Erl.parse

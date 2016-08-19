@@ -14,6 +14,7 @@ type Message =
   | MeMessage (Response Me)
   | NavigationMessage Navigation.Message
   | NewProjectMessage (List Name)
+  | DashboardMessage (Response Dashboard)
   | ErrorMessage Error
 
 type Model =
@@ -44,13 +45,13 @@ type alias PullRequest = {
     number : Int,
     title : String,
     updatedAt : Moment,
-    link : Url
+    url : Url
   }
 
 type alias Repository = {
     owner : String,
     name : String,
-    link : Url
+    url : Url
   }
 
 type Avatar = GitHubAvatar Url

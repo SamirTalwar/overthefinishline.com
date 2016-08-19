@@ -1,7 +1,5 @@
 module App.Location exposing (Location (..), parser, navigateTo, url)
 
-import Html exposing (Attribute)
-import Html.Attributes
 import Navigation
 import String
 import Url exposing (Url)
@@ -10,7 +8,7 @@ import UrlParser exposing (..)
 type Location =
     Home
   | NewProject
-  | Project String
+  | Project Url
   | Error String
 
 parser : Navigation.Location -> Location
@@ -22,6 +20,7 @@ locationParser : Parser (Location -> a) a
 locationParser =
   oneOf [
     format Home (s ""),
+    format (\username projectName -> Project <| Url.withPath ["projects", username, projectName]) (s "projects" </> string </> string),
     format NewProject (s "projects")
   ]
 
@@ -34,7 +33,7 @@ url : Location -> Url
 url location = case location of
   Home -> Url.parse "/"
   NewProject -> Url.parse "/projects"
-  Project url -> Url.parse url
+  Project url -> url
   Error _ -> Url.empty
 
 resultCase : (a -> c) -> (b -> c) -> Result a b -> c

@@ -1,6 +1,6 @@
 module App.Page.Dashboard exposing (html)
 
-import App.Page.Html exposing (link)
+import App.Page.Html exposing (href)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import List
@@ -26,13 +26,13 @@ html (Dashboard now pullRequests) =
             in
               tr [] [
                 td [class "link"] [
-                  link NavigateTo pullRequest.repository.link [] [
+                  a [href pullRequest.repository.url] [
                     text (pullRequest.repository.owner ++ " / " ++ pullRequest.repository.name)]],
                 td [class "link"] [
-                  link NavigateTo pullRequest.link [] [
+                  a [href pullRequest.url] [
                     text ("#" ++ (toString pullRequest.number))]],
                 td [class "link"] [
-                  link NavigateTo pullRequest.link [] [
+                  a [href pullRequest.url] [
                     text pullRequest.title]],
                 td (if old then [class "old"] else []) [
                   text ("updated " ++ pullRequest.updatedAt `Moment.from` now)]

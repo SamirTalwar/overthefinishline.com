@@ -7,10 +7,10 @@ import App.Http exposing (..)
 import Json.Decode exposing (..)
 import Moment exposing (Moment)
 import Task exposing (Task)
-import Url
+import Url exposing (Url)
 
-fetch : Get Dashboard -> Task Error (Response Dashboard)
-fetch get = get decoder "/dashboard"
+fetch : Get Dashboard -> Url -> Task Error (Response Dashboard)
+fetch get url = get decoder (Url.toString url)
 
 decoder : Decoder Dashboard
 decoder = object2 Dashboard
@@ -20,9 +20,9 @@ decoder = object2 Dashboard
       (object3 Repository
         (at ["repository", "owner"] string)
         (at ["repository", "name"] string)
-        (at ["repository", "link"] Url.decoder)
+        (at ["repository", "url"] Url.decoder)
       )
       ("number" := int)
       ("title" := string)
       ("updatedAt" := Moment.decode)
-      ("link" := Url.decoder)))
+      ("url" := Url.decoder)))

@@ -20,4 +20,4 @@ decoder = object2 Me
   ("projects" := list
     (object2 Project
       ("name" := string)
-      ("url" := object1 Location.Project string)))
+      ("url" := object1 (Location.Project << Url.parse) string)))

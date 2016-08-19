@@ -7,6 +7,7 @@ import Url
 
 import App.Http exposing (..)
 import App.Error exposing (..)
+import App.Location as Location
 import App.Model exposing (..)
 import App.Server.Me exposing (..)
 
@@ -17,10 +18,10 @@ tests =
       let
         expected : Task Error (Response Me)
         expected = Task.succeed (Response (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
-          Project "Camping" (Url.parse "/projects/camping"),
-          Project "Hpricot" (Url.parse "/projects/hpricot"),
-          Project "RedCloth" (Url.parse "/projects/redcloth"),
-          Project "Shoes" (Url.parse "/project/shoes")
+          Project "Camping" (Location.Project "/projects/_why/camping"),
+          Project "Hpricot" (Location.Project "/projects/_why/hpricot"),
+          Project "RedCloth" (Location.Project "/projects/_why/redcloth"),
+          Project "Shoes" (Location.Project "/project/_why/shoes")
         ]))
 
         actual : Task Error (Response Me)
@@ -51,10 +52,10 @@ authenticatedUserJson =
         "avatarUrl": "https://example.com/avatars/_why.jpg"
       },
       "projects": [
-          { "name": "Camping", "url": "/projects/camping" },
-          { "name": "Hpricot", "url": "/projects/hpricot" },
-          { "name": "RedCloth", "url": "/projects/redcloth" },
-          { "name": "Shoes", "url": "/project/shoes" }
+          { "name": "Camping", "url": "/projects/_why/camping" },
+          { "name": "Hpricot", "url": "/projects/_why/hpricot" },
+          { "name": "RedCloth", "url": "/projects/_why/redcloth" },
+          { "name": "Shoes", "url": "/project/_why/shoes" }
         ]
     }
   """

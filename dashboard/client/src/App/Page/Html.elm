@@ -8,11 +8,10 @@ import Json.Decode
 import String
 import Url exposing (Url)
 
-link : (Url -> message) -> Url -> List (Attribute message) -> List (Html message) -> Html message
-link navigateTo url attributes = Html.a ([href url, onClick (navigateTo url)] ++ attributes)
+import App.Location exposing (Location)
 
-href : Url -> Attribute a
-href = Url.toString >> Html.Attributes.href
+link : (Location -> message) -> Location -> List (Attribute message) -> List (Html message) -> Html message
+link navigateTo location attributes = Html.a ([App.Location.href location, onClick (navigateTo location)] ++ attributes)
 
 emptyHref : Attribute a
 emptyHref = Html.Attributes.href "#"

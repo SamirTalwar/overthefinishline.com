@@ -1,5 +1,6 @@
 module Url exposing (
     Url,
+    empty,
     parse,
     toString,
 
@@ -12,6 +13,9 @@ import Erl
 import Json.Decode exposing (..)
 
 type alias Url = Erl.Url
+
+empty : Url
+empty = Erl.new
 
 parse : String -> Url
 parse = Erl.parse

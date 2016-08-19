@@ -5,6 +5,7 @@ import App.Model exposing (..)
 
 import Json.Decode exposing (..)
 import App.Http exposing (..)
+import App.Location as Location
 import Task exposing (Task)
 import Url exposing (Url)
 
@@ -19,4 +20,4 @@ decoder = object2 Me
   ("projects" := list
     (object2 Project
       ("name" := string)
-      ("url" := Url.decoder)))
+      ("url" := object1 Location.Project string)))

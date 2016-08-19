@@ -5,11 +5,11 @@ import Html exposing (..)
 import Html.Attributes exposing (alt, class, style)
 import Html.Events exposing (..)
 
+import App.Location as Location
 import App.Model exposing (Me (..), User (..), Project (..), avatarLink)
-import App.Navigation as Navigation exposing (..)
-import App.Urls exposing (..)
+import App.Navigation exposing (..)
 
-signedIn : Me -> State -> Html Navigation.Message
+signedIn : Me -> State -> Html Message
 signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
   navigationBar [
     li [class "nav-item"] [
@@ -26,20 +26,20 @@ signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
         (projects |> List.map (\(Project name url) ->
           link NavigateTo url [class "dropdown-item"] [text name]
         )) ++
-        [link NavigateTo newProject [class "dropdown-item"] [text "Create a project"]]
+        [link NavigateTo Location.NewProject [class "dropdown-item"] [text "Create a project"]]
       )
     ]
   ]
 
-signedOut : Html Navigation.Message
+signedOut : Html Message
 signedOut = navigationBar []
 
-navigationBar : List (Html Navigation.Message) -> Html Navigation.Message
+navigationBar : List (Html Message) -> Html Message
 navigationBar items =
   nav [class "navbar navbar-dark bg-inverse"] [
     title,
     ul [class "nav navbar-nav"] items
   ]
 
-title : Html Navigation.Message
-title = link NavigateTo root [class "navbar-brand"] [text "Over The Finish Line"]
+title : Html Message
+title = link NavigateTo Location.Home [class "navbar-brand"] [text "Over The Finish Line"]

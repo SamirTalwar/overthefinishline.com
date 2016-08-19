@@ -1,18 +1,18 @@
 module App.Page.SelectAProject exposing (html)
 
-import App.Page.Html exposing (href, link)
+import App.Page.Html exposing (link)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 
+import App.Location as Location
 import App.Model exposing (..)
-import App.Urls exposing (..)
 
 html : Projects -> List (Html Message)
 html projects =
   if List.isEmpty projects then
     [
       h1 [] [text "Welcome to Over The Finish Line."],
-      h2 [] [link NavigateTo newProject [] [text "Start by creating a project."]]
+      h2 [] [link NavigateTo Location.NewProject [] [text "Start by creating a project."]]
     ]
   else
     [

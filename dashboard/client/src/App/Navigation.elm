@@ -1,9 +1,10 @@
 module App.Navigation exposing (..)
 
 import Navigation
-import Url exposing (Url)
 
-type Message = ShowProjects | HideProjects | NavigateTo Url
+import App.Location exposing (Location)
+
+type Message = ShowProjects | HideProjects | NavigateTo Location
 
 type State = ProjectsShown Bool
 
@@ -15,4 +16,4 @@ update message state =
   case (message, state) of
     (ShowProjects, _) -> (ProjectsShown True, Cmd.none)
     (HideProjects, _) -> (ProjectsShown False, Cmd.none)
-    (NavigateTo url, state) -> (state, Navigation.newUrl (Url.toString url))
+    (NavigateTo location, state) -> (state, App.Location.navigateTo location)

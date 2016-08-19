@@ -4,10 +4,9 @@ import Html exposing (Html, div)
 import Html.App
 import Navigation
 import Task exposing (Task)
-import Url
 
 import App.Http exposing (Response (..))
-import App.Location exposing (Location)
+import App.Location exposing (Location (..))
 import App.Model exposing (..)
 import App.Navigation
 import App.Server.Me as Me
@@ -50,8 +49,8 @@ update message model =
       (Model me navigationState (ErrorPage error), Cmd.none)
     (ErrorMessage error, _) ->
       (CatastrophicFailure error, Cmd.none)
-    (NavigateTo url, model) ->
-      (model, Navigation.newUrl (Url.toString url))
+    (NavigateTo location, model) ->
+      (model, App.Location.navigateTo location)
 
 urlUpdate : Location -> Model -> (Model, Cmd Message)
 urlUpdate _ model = (model, Cmd.none)

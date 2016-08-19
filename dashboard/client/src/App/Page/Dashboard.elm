@@ -1,6 +1,6 @@
 module App.Page.Dashboard exposing (html)
 
-import App.Page.Html exposing (href)
+import App.Page.Html exposing (link)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import List
@@ -8,7 +8,7 @@ import Moment exposing (Moment)
 
 import App.Model exposing (..)
 
-html : Dashboard -> List (Html a)
+html : Dashboard -> List (Html Message)
 html (Dashboard now pullRequests) =
   [
     section [class "summary"] [
@@ -26,13 +26,13 @@ html (Dashboard now pullRequests) =
             in
               tr [] [
                 td [class "link"] [
-                  a [href pullRequest.repository.link] [
+                  link NavigateTo pullRequest.repository.link [] [
                     text (pullRequest.repository.owner ++ " / " ++ pullRequest.repository.name)]],
                 td [class "link"] [
-                  a [href pullRequest.link] [
+                  link NavigateTo pullRequest.link [] [
                     text ("#" ++ (toString pullRequest.number))]],
                 td [class "link"] [
-                  a [href pullRequest.link] [
+                  link NavigateTo pullRequest.link [] [
                     text pullRequest.title]],
                 td (if old then [class "old"] else []) [
                   text ("updated " ++ pullRequest.updatedAt `Moment.from` now)]

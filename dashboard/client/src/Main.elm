@@ -59,14 +59,17 @@ urlUpdate _ model = (model, Cmd.none)
 view : Model -> Html Message
 view model =
   case model of
-    Loading -> App.Page.Frame.html [] App.Page.Loading.html
-    Unauthenticated -> App.Page.Frame.html [] App.Page.Authentication.html
-    CatastrophicFailure error -> App.Page.Frame.html [] (App.Page.Error.html error)
+    Loading -> App.Page.Frame.html [navigationSignedOut] App.Page.Loading.html
+    Unauthenticated -> App.Page.Frame.html [navigationSignedOut] App.Page.Authentication.html
+    CatastrophicFailure error -> App.Page.Frame.html [navigationSignedOut] (App.Page.Error.html error)
     Model me navigationState page ->
-      App.Page.Frame.html [navigation me navigationState] <| case page of
+      App.Page.Frame.html [navigationSignedIn me navigationState] <| case page of
         SelectAProjectPage projects -> App.Page.SelectAProject.html projects
         DashboardPage dashboard -> App.Page.Dashboard.html dashboard
         ErrorPage error -> App.Page.Error.html error
 
-navigation : Me -> App.Navigation.State -> Html Message
-navigation me state = Html.App.map NavigationMessage (App.Page.Navigation.html me state)
+navigationSignedIn : Me -> App.Navigation.State -> Html Message
+navigationSignedIn me state = Html.App.map NavigationMessage (App.Page.Navigation.signedIn me state)
+
+navigationSignedOut : Html Message
+navigationSignedOut = Html.App.map NavigationMessage App.Page.Navigation.signedOut

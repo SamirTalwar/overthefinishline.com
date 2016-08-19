@@ -1,6 +1,9 @@
 import Test.Hspec
 
-import Test.OverTheFinishLine.Dashboard.Model
+import qualified Test.OverTheFinishLine.Dashboard.GitHub
+import qualified Test.OverTheFinishLine.Dashboard.Model
 
 main :: IO ()
-main = hspec Test.OverTheFinishLine.Dashboard.Model.spec
+main = hspec $ do
+  Test.OverTheFinishLine.Dashboard.GitHub.spec
+  Test.OverTheFinishLine.Dashboard.Model.spec

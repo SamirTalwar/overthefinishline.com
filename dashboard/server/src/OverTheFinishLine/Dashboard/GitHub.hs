@@ -14,6 +14,7 @@ data GitHubUser =
     gitHubUserLogin :: Text,
     gitHubUserAvatarUrl :: Text
   }
+  deriving (Eq, Show)
 
 instance FromJSON GitHubUser where
   parseJSON (Object v) =

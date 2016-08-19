@@ -65,6 +65,7 @@ test-suite overthefinishline-dashboard-server-test
                      , overthefinishline-dashboard
                      , hspec
                      , aeson
+                     , heredoc
                      , text
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010

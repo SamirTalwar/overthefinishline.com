@@ -76,6 +76,7 @@ createApp configuration databaseConnectionPool httpManager =
     middleware $ staticPolicy (noDots >-> addBase (configurationClientPath configuration))
 
     get "/" appHtml
+    get "/projects/new" appHtml
 
     get "/authentication/by/github" authenticateWithGitHub
 

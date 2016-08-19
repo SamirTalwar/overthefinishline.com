@@ -2,11 +2,12 @@ module Main exposing (main)
 
 import Html exposing (Html, div)
 import Html.App
-import Navigation exposing (program)
+import Navigation
 import Task exposing (Task)
 import Url
 
 import App.Http exposing (Response (..))
+import App.Location exposing (Location)
 import App.Model exposing (..)
 import App.Navigation
 import App.Server.Me as Me
@@ -19,20 +20,15 @@ import App.Page.Loading
 import App.Page.Navigation
 import App.Page.SelectAProject
 
-type alias Location = ()
-
 main : Program Never
 main =
-  program urlParser {
+  Navigation.program (Navigation.makeParser App.Location.parser) {
     init = init,
     update = update,
     urlUpdate = urlUpdate,
     view = view,
     subscriptions = always Sub.none
   }
-
-urlParser : Navigation.Parser Location
-urlParser = Navigation.makeParser (always ())
 
 init : Location -> (Model, Cmd Message)
 init = always (Loading, Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage)

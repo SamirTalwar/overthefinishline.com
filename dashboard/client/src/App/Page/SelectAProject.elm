@@ -3,7 +3,6 @@ module App.Page.SelectAProject exposing (html)
 import App.Page.Html exposing (href, link)
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Url
 
 import App.Model exposing (..)
 import App.Urls exposing (..)

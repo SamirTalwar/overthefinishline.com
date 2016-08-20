@@ -16,7 +16,7 @@ tests =
   [
     test "App.Server.Dashboard.decoder: decodes a dashboard full of pull requests" (
       let
-        location = Location.Project (Url.parse "/projects/sandwiches/cheese")
+        location = Location.Project "sandwiches" "cheese"
 
         expected : Task String Dashboard
         expected = dashboard location |> Task.fromResult
@@ -62,7 +62,6 @@ dashboardJson : String
 dashboardJson =
   """
     {
-      "state": "Authenticated",
       "now": "2016-06-01T08:00:00Z",
       "pullRequests": [
         {

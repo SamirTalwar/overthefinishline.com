@@ -9,7 +9,7 @@ type Location =
     Home
   | Me
   | NewProject
-  | Project Url
+  | Project String String
   | Error String
 
 parser : Navigation.Location -> Location
@@ -21,7 +21,7 @@ locationParser : Parser (Location -> a) a
 locationParser =
   oneOf [
     format Home (s ""),
-    format (\username projectName -> Project <| Url.withPath ["projects", username, projectName]) (s "projects" </> string </> string),
+    format Project (s "projects" </> string </> string),
     format NewProject (s "projects")
   ]
 
@@ -31,12 +31,13 @@ navigateTo location = case location of
   _ -> Navigation.newUrl (Url.toString (url location))
 
 url : Location -> Url
-url location = case location of
-  Home -> Url.parse "/"
-  Me -> Url.parse "/me"
-  NewProject -> Url.parse "/projects"
-  Project url -> url
-  Error _ -> Url.empty
+url location =
+  Url.withPath <| case location of
+    Home -> []
+    Me -> ["me"]
+    NewProject -> ["projects"]
+    Project username name -> ["projects", username, name]
+    Error _ -> []
 
 resultCase : (a -> c) -> (b -> c) -> Result a b -> c
 resultCase errFunction okFunction result =

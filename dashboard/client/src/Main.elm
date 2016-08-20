@@ -104,8 +104,8 @@ fetch (Me _ projects) location =
       Task.succeed (SelectAProjectPage projects) |> send Render
     Location.NewProject ->
       Task.succeed (NewProjectPage []) |> send Render
-    Location.Project url ->
-      App.Http.get location (App.Server.Dashboard.decoder (Location.Project url)) |> send DashboardMessage
+    Location.Project _ _ ->
+      App.Http.get location (App.Server.Dashboard.decoder location) |> send DashboardMessage
     Location.Error error ->
       Task.succeed (ErrorPage (UnknownError error)) |> send Render
 

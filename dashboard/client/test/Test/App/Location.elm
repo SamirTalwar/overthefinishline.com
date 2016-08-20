@@ -29,7 +29,7 @@ tests =
 
     test "App.Location: parses the URL for Project" (
       let
-        expected = Project (Url.parse "/projects/sandwiches/pickles") |> Task.succeed
+        expected = Project "sandwiches" "pickles" |> Task.succeed
         actual = parser (locationWithPath "/projects/sandwiches/pickles") |> Task.succeed
       in
         assert actual (equals expected)

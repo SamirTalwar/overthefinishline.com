@@ -17,7 +17,7 @@ html projects =
   else
     [
       h1 [] [text "Please select a project."],
-      div [class "project-list list-group"] (projects |> List.map (\(Project name url) ->
-        link NavigateTo url [class "list-group-item list-group-item-action"] [text name]
+      div [class "project-list list-group"] (projects |> List.map (\(Project username name) ->
+        link NavigateTo (Location.Project username name) [class "list-group-item list-group-item-action"] [text name]
       ))
     ]

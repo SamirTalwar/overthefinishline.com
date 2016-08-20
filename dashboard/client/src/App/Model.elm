@@ -38,7 +38,7 @@ type User = User Username Avatar
 type Dashboard = Dashboard Location Moment PullRequests
 
 type alias Projects = List Project
-type Project = Project Name Location
+type Project = Project Username Name
 
 type alias PullRequests = List PullRequest
 type alias PullRequest = {

@@ -16,11 +16,12 @@ tests =
     test "App.Server.Me.decoder: decodes the user and projects" (
       let
         expected : Task String Me
-        expected = Task.succeed (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
-          Project "Camping" (Location.Project (Url.parse "/projects/_why/camping")),
-          Project "Hpricot" (Location.Project (Url.parse "/projects/_why/hpricot")),
-          Project "RedCloth" (Location.Project (Url.parse "/projects/_why/redcloth")),
-          Project "Shoes" (Location.Project (Url.parse "/project/_why/shoes"))
+        expected =
+          Task.succeed (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
+            Project "_why" "Camping",
+            Project "_why" "Hpricot",
+            Project "_why" "RedCloth",
+            Project "_why" "Shoes"
           ])
 
         actual : Task String Me
@@ -34,7 +35,6 @@ meJson : String
 meJson =
   """
     {
-      "state": "Authenticated",
       "user": {
         "username": "_why",
         "avatarUrl": "https://example.com/avatars/_why.jpg"

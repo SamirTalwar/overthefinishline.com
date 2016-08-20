@@ -15,9 +15,10 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as ByteStringC
 import Data.ByteString.Lazy (toStrict)
-import Data.List (partition)
+import qualified Data.Function as Function
+import qualified Data.List as List
 import qualified Data.Map as Map
-import Data.Maybe (fromJust, isJust, mapMaybe)
+import Data.Maybe (catMaybes, fromJust, isJust, listToMaybe, mapMaybe)
 import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
@@ -98,18 +99,14 @@ createApp configuration databaseConnectionPool httpManager =
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text)) $ const $ const appHtml
 
+    get ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ const $ const appHtml
+
     subcomponent "api" $ do
       get "me" $ do
         me <- runExceptT $ do
           Entity userId user <- readUser
-          projects <- withDatabase $
-            select $ from $ \project -> do
-              where_ (project ^. ProjectUserId ==. val userId)
-              orderBy [asc (project ^. ProjectName)]
-              return project
-          let myProject project = MyProject (projectName project) (projectUrl user project)
-          let myProjects = map (myProject . entityVal) projects
-          return (user, myProjects)
+          projects <- readMyProjects userId user
+          return (user, projects)
         either handleException (uncurry renderMe) me
 
       get ("projects" <//> var <//> var) $ \username projectName -> do
@@ -127,7 +124,15 @@ createApp configuration databaseConnectionPool httpManager =
             ) `onEmpty` QueryFailure "No repositories found."
           concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
         let dashboard = Dashboard now <$> pullRequests
-        either handleException renderDashboard dashboard
+        either handleException render dashboard
+
+      get ("projects" <//> var <//> var <//> "edit") $ \username projectName -> do
+        project <- runExceptT $ do
+          userId <- readUserId
+          Entity _ user <- readUserByName userId username
+          project <- readProject user projectName
+          return $ MySingleProject user project
+        either handleException render project
 
   where
     appHtml = file "text/html" (configurationClientPath configuration </> "index.html")
@@ -188,18 +193,52 @@ createApp configuration databaseConnectionPool httpManager =
       (Entity _ (ServiceCredentials _ _ _ accessToken)) <- withDatabase (getBy userService) `orException` MissingUser
       return $ AccessToken accessToken Nothing Nothing Nothing Nothing
 
+    readUserId :: ExceptT Exception Context UserId
+    readUserId = readSession `orException` UnauthenticatedUser
+
     readUser :: ExceptT Exception Context (Entity User)
     readUser = do
       userId <- readUserId
       user <- withDatabase (Database.get userId) `orException` MissingUser
       return $ Entity userId user
 
-    readUserId :: ExceptT Exception Context UserId
-    readUserId = readSession `orException` UnauthenticatedUser
+    readUserByName :: Key User -> Text -> ExceptT Exception Context (Entity User)
+    readUserByName userId username = do
+      users <- withDatabase $
+        select $ from $ \user -> do
+          where_ (user ^. UserId ==. val userId &&. user ^. UserUsername ==. val username)
+          return user
+      return (listToMaybe users) `orException` QueryFailure "Invalid user."
 
-    renderMe user projects = json (AuthenticatedResponse (Me user projects))
+    readMyProjects :: Key User -> User -> ExceptT Exception Context [MyProject]
+    readMyProjects userId user = do
+      projectsAndRepositoryEntities <- withDatabase $
+        select $ from $ \(project `LeftOuterJoin` repository) -> do
+          on (just (project ^. ProjectId) ==. repository ?. ProjectRepositoryProjectId)
+          where_ (project ^. ProjectUserId ==. val userId)
+          orderBy [asc (project ^. ProjectName), asc (repository ?. ProjectRepositoryName)]
+          return (project, repository)
+      let projectsAndRepositories = map (\(p, r) -> (entityVal p, entityVal <$> r)) projectsAndRepositoryEntities
+      let groupedProjectsAndRepositories = groupQueryBy fst snd projectsAndRepositories
+      let myProject project repositories = MyProject (projectName project) (projectUrl user project) (map projectRepositoryName (catMaybes repositories))
+      return $ map (uncurry myProject) groupedProjectsAndRepositories
 
-    renderDashboard dashboard = json (AuthenticatedResponse dashboard)
+    readProject :: User -> Text -> ExceptT Exception Context MyProject
+    readProject user projectName = do
+      projectAndRepositories :: [(Entity Project, Maybe (Entity ProjectRepository))] <- withDatabase $
+        select $ from $ \(project `LeftOuterJoin` repository) -> do
+          on (just (project ^. ProjectId) ==. repository ?. ProjectRepositoryProjectId)
+          where_ (project ^. ProjectName ==. val projectName)
+          orderBy [asc (repository ?. ProjectRepositoryName)]
+          return (project, repository)
+      project <- return (entityVal . fst <$> listToMaybe projectAndRepositories)
+                   `orException` QueryFailure "Invalid project."
+      let repositories = map entityVal $ mapMaybe snd projectAndRepositories
+      return $ MyProject projectName (projectUrl user project) (map projectRepositoryName repositories)
+
+    renderMe user projects = render (Me user projects)
+
+    render value = json (AuthenticatedResponse value)
 
     textParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a Text
     textParam name params = return (lookup name params) `orException` MissingParam name
@@ -251,13 +290,13 @@ createApp configuration databaseConnectionPool httpManager =
         existingSessionsById <- foldr (\s a -> Map.insert ((sessionSessionId . entityVal) s) s a) Map.empty <$> (select $ from return)
         let databaseSessions = mapMaybe (\(sessionId, expiryTime, value) -> Session sessionId expiryTime <$> value) sessions
         let entities = map (\session@(Session sessionId _ _) -> (Map.lookup sessionId existingSessionsById, session)) databaseSessions
-        let (sessionsToUpdate, sessionsToInsert) = partition (isJust . fst) entities
+        let (sessionsToUpdate, sessionsToInsert) = List.partition (isJust . fst) entities
         insertedKeys <- insertMany (map snd sessionsToInsert)
         forM_ sessionsToUpdate $ \(Just (Entity key oldValue), newValue) ->
           unless (oldValue == newValue) (replace key newValue)
         let updatedKeys = map (entityKey . fromJust . fst) sessionsToUpdate
         Sql.delete $ from $ \session ->
-          where_ (session ^. SessionId `notIn_` valList (insertedKeys ++ updatedKeys))
+          where_ (session ^. SessionId `notIn` valList (insertedKeys ++ updatedKeys))
     }
 
     withDatabase :: MonadIO m => SqlPersistM a -> m a
@@ -306,5 +345,11 @@ readConfiguration =
           putStrLn $ "Failed to parse the variable " ++ name ++ " with the value \"" ++ value ++ "\"."
           ioError theError
         ) value
+
+groupQueryBy :: Eq k => (v -> k) -> (v -> w) -> [v] -> [(k, [w])]
+groupQueryBy keyFunction valueFunction list =
+  map (\g -> (keyFunction (List.head g), map valueFunction g)) grouped
+  where
+    grouped = List.groupBy ((==) `Function.on` keyFunction) list
 
 (|>) = flip ($)

@@ -93,10 +93,19 @@ data Me =
   deriving (Eq, Generic, Show)
 instance ToJSON Me where toJSON = genericToJSON (stripPrefix "me")
 
+data MySingleProject =
+  MySingleProject {
+    mySingleProjectUser :: User,
+    mySingleProjectProject :: MyProject
+  }
+  deriving (Eq, Generic, Show)
+instance ToJSON MySingleProject where toJSON = genericToJSON (stripPrefix "mySingleProject")
+
 data MyProject =
   MyProject {
     myProjectName :: Text,
-    myProjectUrl :: Url
+    myProjectUrl :: Url,
+    myProjectRepositories :: [Text]
   }
   deriving (Eq, Generic, Show)
 instance ToJSON MyProject where toJSON = genericToJSON (stripPrefix "myProject")

@@ -40,7 +40,7 @@ type User = User Username Avatar
 type Dashboard = Dashboard Location Moment PullRequests
 
 type alias Projects = List Project
-type Project = Project Username Name Repositories
+type Project = Project Username ProjectName (List RepositoryName)
 
 type alias PullRequests = List PullRequest
 type alias PullRequest = {
@@ -65,3 +65,5 @@ avatarLink (GitHubAvatar url) = Url.addQuery "s" "24" url
 
 type alias Name = String
 type alias Username = String
+type alias ProjectName = String
+type alias RepositoryName = String

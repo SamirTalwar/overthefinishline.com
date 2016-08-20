@@ -53,6 +53,7 @@ executable overthefinishline-dashboard-exe
                      , time
                      , transformers
                      , unix
+                     , unordered-containers
                      , wai-extra
                      , wai-middleware-static
                      , warp

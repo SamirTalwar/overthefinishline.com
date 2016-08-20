@@ -2,12 +2,11 @@ module Test.App.Server.Dashboard exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
+import Json.Decode exposing (decodeString)
 import Moment exposing (Moment)
 import Task exposing (Task)
 import Url exposing (Url)
 
-import App.Error exposing (..)
-import App.Http exposing (..)
 import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 import App.Server.Dashboard exposing (..)
@@ -15,28 +14,16 @@ import App.Server.Dashboard exposing (..)
 tests : Tests
 tests =
   [
-    test "App.Server.Dashboard.fetch: fetches a dashboard full of pull requests" (
+    test "App.Server.Dashboard.decoder: decodes a dashboard full of pull requests" (
       let
         location = Location.Project (Url.parse "/projects/sandwiches/cheese")
+        (_, decoder) = endpoint location
 
-        expected : Task Error (Response Dashboard)
-        expected = dashboard location |> Result.map Response |> Result.formatError UnexpectedResponse |> Task.fromResult
+        expected : Task String Dashboard
+        expected = dashboard location |> Task.fromResult
 
-        actual : Task Error (Response Dashboard)
-        actual = fetch (App.Http.stubGet "/projects/sandwiches/cheese" dashboardJson) location
-      in
-        assert actual (equals expected)
-    ),
-
-    test "App.Server.Dashboard.fetch: recognises an unauthenticated response" (
-      let
-        location = Location.Project (Url.parse "/projects/dan/what")
-
-        expected : Task Error (Response Dashboard)
-        expected = Task.succeed UnauthenticatedResponse
-
-        actual : Task Error (Response Dashboard)
-        actual = fetch (App.Http.stubGet "/projects/dan/what" unauthenticatedJson) location
+        actual : Task String Dashboard
+        actual = decodeString decoder dashboardJson |> Task.fromResult
       in
         assert actual (equals expected)
     )
@@ -102,14 +89,6 @@ dashboardJson =
           "url": "https://github.com/sandwiches/cheese/pull/121"
         }
       ]
-    }
-  """
-
-unauthenticatedJson : String
-unauthenticatedJson =
-  """
-    {
-      "state": "Unauthenticated"
     }
   """
 

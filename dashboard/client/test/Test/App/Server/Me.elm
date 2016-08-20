@@ -2,11 +2,10 @@ module Test.App.Server.Me exposing (tests)
 
 import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
+import Json.Decode exposing (decodeString)
 import Task exposing (Task)
 import Url
 
-import App.Http exposing (..)
-import App.Error exposing (..)
 import App.Location as Location
 import App.Model exposing (..)
 import App.Server.Me exposing (..)
@@ -14,36 +13,27 @@ import App.Server.Me exposing (..)
 tests : Tests
 tests =
   [
-    test "App.Server.Me.fetch: fetches the user" (
+    test "App.Server.Me.decoder: decodes the user and projects" (
       let
-        expected : Task Error (Response Me)
-        expected = Task.succeed (Response (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
+        (_, decoder) = endpoint
+
+        expected : Task String Me
+        expected = Task.succeed (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
           Project "Camping" (Location.Project (Url.parse "/projects/_why/camping")),
           Project "Hpricot" (Location.Project (Url.parse "/projects/_why/hpricot")),
           Project "RedCloth" (Location.Project (Url.parse "/projects/_why/redcloth")),
           Project "Shoes" (Location.Project (Url.parse "/project/_why/shoes"))
-        ]))
+          ])
 
-        actual : Task Error (Response Me)
-        actual = fetch (stubGet "/me" authenticatedUserJson)
-      in
-        assert actual (equals expected)
-    ),
-
-    test "App.Server.Me.fetch: recognises an unauthenticated response" (
-      let
-        expected : Task Error (Response Me)
-        expected = Task.succeed UnauthenticatedResponse
-
-        actual : Task Error (Response Me)
-        actual = fetch (stubGet "/me" unauthenticatedJson)
+        actual : Task String Me
+        actual = decodeString decoder meJson |> Task.fromResult
       in
         assert actual (equals expected)
     )
   ]
 
-authenticatedUserJson : String
-authenticatedUserJson =
+meJson : String
+meJson =
   """
     {
       "state": "Authenticated",
@@ -57,13 +47,5 @@ authenticatedUserJson =
           { "name": "RedCloth", "url": "/projects/_why/redcloth" },
           { "name": "Shoes", "url": "/project/_why/shoes" }
         ]
-    }
-  """
-
-unauthenticatedJson : String
-unauthenticatedJson =
-  """
-    {
-      "state": "Unauthenticated"
     }
   """

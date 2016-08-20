@@ -1,18 +1,14 @@
-module App.Server.Dashboard exposing (fetch)
+module App.Server.Dashboard exposing (endpoint)
 
-import App.Error exposing (Error)
 import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 
-import App.Http exposing (..)
 import Json.Decode exposing (..)
 import Moment exposing (Moment)
-import Task exposing (Task)
 import Url exposing (Url)
 
-fetch : Get Dashboard -> Location -> Task Error (Response Dashboard)
-fetch get location =
-  get (decoder location) (Url.toString (Location.url location))
+endpoint : Location -> (Location, Decoder Dashboard)
+endpoint location = (location, decoder location)
 
 decoder : Location -> Decoder Dashboard
 decoder location = object2 (Dashboard location)

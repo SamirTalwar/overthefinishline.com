@@ -7,6 +7,7 @@ import UrlParser exposing (..)
 
 type Location =
     Home
+  | Me
   | NewProject
   | Project Url
   | Error String
@@ -32,6 +33,7 @@ navigateTo location = case location of
 url : Location -> Url
 url location = case location of
   Home -> Url.parse "/"
+  Me -> Url.parse "/me"
   NewProject -> Url.parse "/projects"
   Project url -> url
   Error _ -> Url.empty

@@ -36,10 +36,7 @@ main =
 
 init : Location -> (Model, Cmd Message)
 init location =
-  Loading ! [
-    App.Server.Me.fetch App.Http.get |> Task.perform ErrorMessage MeMessage,
-    load location
-  ]
+  Loading ! [load Location.Me, load location]
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
@@ -47,11 +44,13 @@ update message model =
     (Load Location.Home, Model me navigationState _) ->
       let (Me _ projects) = me
       in Model me navigationState (SelectAProjectPage projects) ! []
+    (Load Location.Me, model) ->
+      model ! [App.Http.get App.Server.Me.endpoint |> Task.perform ErrorMessage MeMessage]
     (Load Location.NewProject, Model me navigationState _) ->
       Model me navigationState (NewProjectPage []) ! []
     (Load (Location.Project url), Model me navigationState page) ->
       Model me navigationState page
-        ! [App.Server.Dashboard.fetch App.Http.get (Location.Project url) |> Task.perform ErrorMessage DashboardMessage]
+        ! [App.Http.get (App.Server.Dashboard.endpoint (Location.Project url)) |> Task.perform ErrorMessage DashboardMessage]
     (Load (Location.Error log), Model me navigationState _) ->
       Model me navigationState (ErrorPage (UnknownError log)) ! []
     (Load location, Loading) ->

@@ -1,16 +1,13 @@
-module App.Server.Me exposing (fetch)
-
-import App.Error exposing (Error)
-import App.Model exposing (..)
+module App.Server.Me exposing (endpoint)
 
 import Json.Decode exposing (..)
-import App.Http exposing (..)
-import App.Location as Location
-import Task exposing (Task)
 import Url exposing (Url)
 
-fetch : Get Me -> Task Error (Response Me)
-fetch get = get decoder "/me"
+import App.Location as Location exposing (Location)
+import App.Model exposing (..)
+
+endpoint : (Location, Decoder Me)
+endpoint = (Location.Me, decoder)
 
 decoder : Decoder Me
 decoder = object2 Me

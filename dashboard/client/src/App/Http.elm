@@ -1,43 +1,34 @@
 module App.Http exposing (
     Response (..),
-    Get,
     get,
-    stubGet
+    decoder
   )
 
 import Http
 import Json.Decode exposing (..)
 import Task exposing (Task)
+import Url
 
 import App.Error exposing (..)
+import App.Location as Location exposing (Location)
 
 type Response a =
     UnauthenticatedResponse
   | Response a
 
-type alias Get a = Decoder a -> String -> Task Error (Response a)
-
-get : Get a
-get decoder url =
+get : (Location, Decoder a) -> Task Error (Response a)
+get (location, underlyingDecoder) =
   let request = {
         verb = "GET",
         headers = [("Accept", "application/json")],
-        url = url,
+        url = Url.toString (Location.url location),
         body = Http.empty
       }
-  in Http.fromJson (authenticationDecoder decoder) (Http.send Http.defaultSettings request)
+  in Http.fromJson (decoder underlyingDecoder) (Http.send Http.defaultSettings request)
       |> Task.mapError handleError
 
-stubGet : String -> String -> Get a
-stubGet stubPath stubResponse decoder url =
-  if url == stubPath then
-    Task.fromResult (decodeString (authenticationDecoder decoder) stubResponse)
-      |> Task.mapError UnexpectedResponse
-  else
-    Task.fail (UnexpectedResponse "Not Found")
-
-authenticationDecoder : Decoder a -> Decoder (Response a)
-authenticationDecoder wrapped =
+decoder : Decoder a -> Decoder (Response a)
+decoder wrapped =
   ("state" := string) `andThen` \state ->
     case state of
       "Authenticated" ->

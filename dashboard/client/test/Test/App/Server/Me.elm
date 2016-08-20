@@ -14,7 +14,7 @@ import App.Server.Me exposing (..)
 tests : Tests
 tests =
   [
-    test "Server.Me.fetch: fetches the user" (
+    test "App.Server.Me.fetch: fetches the user" (
       let
         expected : Task Error (Response Me)
         expected = Task.succeed (Response (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
@@ -30,7 +30,7 @@ tests =
         assert actual (equals expected)
     ),
 
-    test "Server.Me.fetch: recognises an unauthenticated response" (
+    test "App.Server.Me.fetch: recognises an unauthenticated response" (
       let
         expected : Task Error (Response Me)
         expected = Task.succeed UnauthenticatedResponse

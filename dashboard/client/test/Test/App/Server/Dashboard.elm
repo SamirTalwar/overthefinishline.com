@@ -15,7 +15,7 @@ import App.Server.Dashboard exposing (..)
 tests : Tests
 tests =
   [
-    test "Server.Dashboard.fetch: fetches a dashboard full of pull requests" (
+    test "App.Server.Dashboard.fetch: fetches a dashboard full of pull requests" (
       let
         location = Location.Project (Url.parse "/projects/sandwiches/cheese")
 
@@ -28,7 +28,7 @@ tests =
         assert actual (equals expected)
     ),
 
-    test "Server.Dashboard.fetch: recognises an unauthenticated response" (
+    test "App.Server.Dashboard.fetch: recognises an unauthenticated response" (
       let
         location = Location.Project (Url.parse "/projects/dan/what")
 

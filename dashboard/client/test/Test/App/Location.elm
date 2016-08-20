@@ -11,7 +11,7 @@ import Url
 tests : Tests
 tests =
   [
-    test "Location: parses the root URL" (
+    test "App.Location: parses the root URL" (
       let
         expected = Home |> Task.succeed
         actual = parser (locationWithPath "/") |> Task.succeed
@@ -19,7 +19,7 @@ tests =
         assert actual (equals expected)
     ),
 
-    test "Location: parses the new project URL" (
+    test "App.Location: parses the new project URL" (
       let
         expected = NewProject |> Task.succeed
         actual = parser (locationWithPath "/projects") |> Task.succeed
@@ -27,7 +27,7 @@ tests =
         assert actual (equals expected)
     ),
 
-    test "Location: parses a project URL" (
+    test "App.Location: parses a project URL" (
       let
         expected = Project (Url.parse "/projects/sandwiches/pickles") |> Task.succeed
         actual = parser (locationWithPath "/projects/sandwiches/pickles") |> Task.succeed
@@ -35,7 +35,7 @@ tests =
         assert actual (equals expected)
     ),
 
-    test "Location: fails when the URL could not be parsed" (
+    test "App.Location: fails when the URL could not be parsed" (
       let
         actual = parser (locationWithPath "/not/gonna/work")
       in

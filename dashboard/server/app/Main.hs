@@ -1,16 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
 import Control.Monad (forM_, mzero, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Logger (runStderrLoggingT)
+import Control.Monad.Logger
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.List
 import Control.Monad.Trans.Maybe
-import Data.Aeson hiding (json)
+import Data.Aeson as Aeson hiding (json)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as ByteStringC
@@ -29,7 +30,7 @@ import Database.Esqueleto hiding (delete, get)
 import Database.Persist.Postgresql (ConnectionString, runMigration, runSqlPersistMPool, withPostgresqlPool)
 import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Network.HTTP.Types.Status (badRequest400, internalServerError500)
+import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, internalServerError500)
 import Network.OAuth.OAuth2 as OAuth2
 import qualified Network.Wai.Parse as Parse
 import qualified Network.Wai.Handler.Warp as Warp
@@ -61,12 +62,15 @@ data Configuration = Configuration {
 
 type Context = SpockActionCtx () () (Maybe UserId) ()
 
+instance ToJSON Status where
+  toJSON (Status code message) = object ["code" .= code, "message" .= decodeUtf8 message]
+
 main :: IO ()
 main = readConfiguration >>= server
 
 server :: Configuration -> IO ()
 server configuration =
-  runStderrLoggingT $ withPostgresqlPool databaseConnectionString databasePoolSize $ \pool -> liftIO $ do
+  runStdoutLoggingT $ withPostgresqlPool databaseConnectionString databasePoolSize $ \pool -> liftIO $ do
     putStrLn ("Application starting on port " ++ show port ++ ".")
     flip runSqlPersistMPool pool $ runMigration migrateAll
     httpManager <- newManager tlsManagerSettings
@@ -284,24 +288,31 @@ createApp configuration databaseConnectionPool httpManager =
     onEmpty :: Monad m => m [a] -> e -> ExceptT e m [a]
     list `onEmpty` exception = ExceptT ((\l -> when (null l) (Left exception) >> Right l) <$> list)
 
-    handleException UnauthenticatedUser =
-      json unauthenticatedResponse
-    handleException MissingUser =
-      json unauthenticatedResponse
-    handleException (MissingProject project) = do
-      setStatus badRequest400
-      errorJson "missing project" ["project" .= project]
-    handleException (MissingParam param) = do
-      setStatus badRequest400
-      errorJson "missing param" ["param" .= param]
-    handleException (InvalidAuthenticationCode message) = do
-      setStatus badRequest400
-      errorJson "invalid authentication code" ["message" .= message]
-    handleException (QueryFailure message) = do
-      setStatus internalServerError500
-      errorJson "internal failure" ["message" .= message]
+    handleException exception = do
+      let (status, response) = exceptionResponse exception
+      runStdoutLoggingT $ $logDebugS "Web" (decodeUtf8 $ toStrict $ encode response)
+      setStatus status
+      json response
 
-    errorJson message extras = json $ object (("error" .= (message :: Text)) : extras)
+    exceptionResponse :: Exception -> (Status, Aeson.Value)
+    exceptionResponse UnauthenticatedUser =
+      (unauthorized401, toJSON unauthenticatedResponse)
+    exceptionResponse MissingUser =
+      (unauthorized401, toJSON unauthenticatedResponse)
+    exceptionResponse (MissingProject project) =
+      exceptionJSON badRequest400 "missing project" ["project" .= project]
+    exceptionResponse (MissingParam param) =
+      exceptionJSON badRequest400 "missing param" ["param" .= param]
+    exceptionResponse (InvalidAuthenticationCode message) =
+      exceptionJSON badRequest400 "invalid authentication code" ["message" .= message]
+    exceptionResponse (QueryFailure message) =
+      exceptionJSON internalServerError500 "internal failure" ["message" .= message]
+
+    exceptionJSON status message extras =
+      (status, object ([
+        "error" .= (message :: Text),
+        "status" .= status
+      ] ++ extras))
 
     gitHubOAuthCredentials = configurationGitHubOAuthCredentials configuration
 

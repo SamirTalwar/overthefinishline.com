@@ -98,6 +98,8 @@ createApp configuration databaseConnectionPool httpManager =
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text)) $ const $ const appHtml
 
+    get ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ const $ const appHtml
+
     subcomponent "api" $ do
       get "me" $ do
         me <- runExceptT $ do

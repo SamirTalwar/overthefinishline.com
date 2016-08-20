@@ -23,7 +23,7 @@ signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
         text "Projects"
       ],
       div [class "dropdown-menu", style [("display", if projectsShown then "block" else "none")]] (
-        (projects |> List.map (\(Project username name) ->
+        (projects |> List.map (\(Project username name _) ->
           link NavigateTo (Location.Project username name) [class "dropdown-item"] [text name]
         )) ++
         [link NavigateTo Location.NewProject [class "dropdown-item"] [text "Create a project"]]

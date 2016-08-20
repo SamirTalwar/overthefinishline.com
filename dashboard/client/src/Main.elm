@@ -12,8 +12,10 @@ import App.Http exposing (Response (..))
 import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 import App.Navigation
+
 import App.Server.Dashboard
 import App.Server.Me
+import App.Server.Project
 
 import App.Page.Authentication
 import App.Page.Dashboard
@@ -81,6 +83,13 @@ update message model =
     (NewProjectMessage repositoryNames, _) ->
       model ! []
 
+    (EditProjectMessage UnauthenticatedResponse, _) ->
+      Unauthenticated ! []
+    (EditProjectMessage (Response project), Model me navigationState _) ->
+      Model me navigationState (EditProjectPage project) ! []
+    (EditProjectMessage _, _) ->
+      model ! []
+
     (ErrorMessage error, Model me navigationState _) ->
       Model me navigationState (ErrorPage error) ! []
     (ErrorMessage error, _) ->
@@ -104,7 +113,9 @@ fetch (Me _ projects) location =
       Task.succeed (SelectAProjectPage projects) |> send Render
     Location.NewProject ->
       Task.succeed (NewProjectPage []) |> send Render
-    Location.Project _ _ ->
+    Location.EditProject username projectName ->
+      App.Http.get location App.Server.Project.decoder |> send EditProjectMessage
+    Location.Project username name ->
       App.Http.get location (App.Server.Dashboard.decoder location) |> send DashboardMessage
     Location.Error error ->
       Task.succeed (ErrorPage (UnknownError error)) |> send Render
@@ -126,6 +137,7 @@ view model =
         LoadingPage -> App.Page.Loading.html
         SelectAProjectPage projects -> App.Page.SelectAProject.html projects
         NewProjectPage repositoryNames -> App.Page.NewProject.html repositoryNames
+        EditProjectPage (Project username name _) -> App.Page.Error.html (MissingPage (Location.EditProject username name))
         DashboardPage dashboard -> App.Page.Dashboard.html dashboard
         ErrorPage error -> App.Page.Error.html error
 

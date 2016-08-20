@@ -8,6 +8,7 @@ import Test.App.Location
 import Test.App.Model
 import Test.App.Server.Dashboard
 import Test.App.Server.Me
+import Test.App.Server.Project
 import Test.Moment
 
 tests : List Test
@@ -18,5 +19,6 @@ tests =
     Test.App.Model.tests,
     Test.App.Server.Dashboard.tests,
     Test.App.Server.Me.tests,
+    Test.App.Server.Project.tests,
     Test.Moment.tests
   ]

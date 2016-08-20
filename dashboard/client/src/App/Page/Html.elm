@@ -40,4 +40,4 @@ ariaHaspopup : Bool -> Attribute a
 ariaHaspopup value = attribute "aria-haspopup" (String.toLower (toString value))
 
 onClick : message -> Attribute message
-onClick = onWithOptions "click" { defaultOptions | preventDefault = True } << Json.Decode.succeed
+onClick = onWithOptions "click" { stopPropagation = True, preventDefault = True } << Json.Decode.succeed

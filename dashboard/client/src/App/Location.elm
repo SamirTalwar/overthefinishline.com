@@ -9,6 +9,7 @@ type Location =
     Home
   | Me
   | NewProject
+  | EditProject String String
   | Project String String
   | Error String
 
@@ -21,6 +22,7 @@ locationParser : Parser (Location -> a) a
 locationParser =
   oneOf [
     format Home (s ""),
+    format EditProject (s "projects" </> string </> string </> s "edit"),
     format Project (s "projects" </> string </> string),
     format NewProject (s "projects")
   ]
@@ -36,6 +38,7 @@ url location =
     Home -> []
     Me -> ["me"]
     NewProject -> ["projects"]
+    EditProject username projectName -> ["projects", username, projectName, "edit"]
     Project username name -> ["projects", username, name]
     Error _ -> []
 

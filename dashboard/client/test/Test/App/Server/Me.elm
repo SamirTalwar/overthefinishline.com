@@ -6,7 +6,6 @@ import Json.Decode exposing (decodeString)
 import Task exposing (Task)
 import Url
 
-import App.Location as Location
 import App.Model exposing (..)
 import App.Server.Me exposing (..)
 
@@ -18,10 +17,10 @@ tests =
         expected : Task String Me
         expected =
           Task.succeed (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
-            Project "_why" "Camping",
-            Project "_why" "Hpricot",
-            Project "_why" "RedCloth",
-            Project "_why" "Shoes"
+            Project "_why" "Camping" [],
+            Project "_why" "Hpricot" [],
+            Project "_why" "RedCloth" [],
+            Project "_why" "Shoes" []
           ])
 
         actual : Task String Me

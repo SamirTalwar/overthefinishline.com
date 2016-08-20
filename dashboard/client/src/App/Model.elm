@@ -15,6 +15,7 @@ type Message =
   | MeMessage (Response Me)
   | NavigationMessage Navigation.Message
   | NewProjectMessage (List Name)
+  | EditProjectMessage (Response Project)
   | DashboardMessage (Response Dashboard)
   | ErrorMessage Error
 
@@ -28,6 +29,7 @@ type Page =
     LoadingPage
   | SelectAProjectPage Projects
   | NewProjectPage (List Name)
+  | EditProjectPage Project
   | DashboardPage Dashboard
   | ErrorPage Error
 
@@ -38,7 +40,7 @@ type User = User Username Avatar
 type Dashboard = Dashboard Location Moment PullRequests
 
 type alias Projects = List Project
-type Project = Project Username Name
+type Project = Project Username Name Repositories
 
 type alias PullRequests = List PullRequest
 type alias PullRequest = {
@@ -49,6 +51,7 @@ type alias PullRequest = {
     url : Url
   }
 
+type alias Repositories = List Repository
 type alias Repository = {
     owner : String,
     name : String,

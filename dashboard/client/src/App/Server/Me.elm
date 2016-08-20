@@ -9,8 +9,11 @@ decoder : Decoder Me
 decoder =
   at ["user", "username"] string `andThen` \username ->
     object2 Me
-      ("user" := object1 (User username)
+      ("user" := object2 User
+        (succeed username)
         ("avatarUrl" := object1 (GitHubAvatar << Url.parse) string))
       ("projects" := list
-        (object1 (Project username)
-          ("name" := string)))
+        (object3 Project
+          (succeed username)
+          ("name" := string)
+          (succeed [])))

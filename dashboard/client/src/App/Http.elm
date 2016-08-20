@@ -16,8 +16,8 @@ type Response a =
     UnauthenticatedResponse
   | Response a
 
-get : (Location, Decoder a) -> Task Error (Response a)
-get (location, underlyingDecoder) =
+get : Location -> Decoder a -> Task Error (Response a)
+get location underlyingDecoder =
   let prependPath segment url = { url | path = segment :: url.path }
       url = Url.toString (prependPath "api" (Location.url location))
       request = {

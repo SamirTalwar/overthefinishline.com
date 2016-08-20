@@ -15,8 +15,6 @@ tests =
   [
     test "App.Server.Me.decoder: decodes the user and projects" (
       let
-        (_, decoder) = endpoint
-
         expected : Task String Me
         expected = Task.succeed (Me (User "_why" (GitHubAvatar <| Url.parse "https://example.com/avatars/_why.jpg")) [
           Project "Camping" (Location.Project (Url.parse "/projects/_why/camping")),

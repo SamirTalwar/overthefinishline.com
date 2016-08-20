@@ -1,13 +1,10 @@
-module App.Server.Me exposing (endpoint)
+module App.Server.Me exposing (decoder)
 
 import Json.Decode exposing (..)
 import Url exposing (Url)
 
 import App.Location as Location exposing (Location)
 import App.Model exposing (..)
-
-endpoint : (Location, Decoder Me)
-endpoint = (Location.Me, decoder)
 
 decoder : Decoder Me
 decoder = object2 Me

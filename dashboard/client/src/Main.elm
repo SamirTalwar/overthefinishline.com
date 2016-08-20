@@ -98,14 +98,19 @@ delay message =
 fetch : Me -> Location -> Cmd Message
 fetch (Me _ projects) location =
   case location of
-    Location.Me -> fetchMe
-    Location.Home -> Task.succeed (SelectAProjectPage projects) |> send Render
-    Location.NewProject -> Task.succeed (NewProjectPage []) |> send Render
-    Location.Project url -> App.Http.get (App.Server.Dashboard.endpoint (Location.Project url)) |> send DashboardMessage
-    Location.Error error -> Task.succeed (ErrorPage (UnknownError error)) |> send Render
+    Location.Me ->
+      fetchMe
+    Location.Home ->
+      Task.succeed (SelectAProjectPage projects) |> send Render
+    Location.NewProject ->
+      Task.succeed (NewProjectPage []) |> send Render
+    Location.Project url ->
+      App.Http.get location (App.Server.Dashboard.decoder (Location.Project url)) |> send DashboardMessage
+    Location.Error error ->
+      Task.succeed (ErrorPage (UnknownError error)) |> send Render
 
 fetchMe : Cmd Message
-fetchMe = App.Http.get App.Server.Me.endpoint |> send MeMessage
+fetchMe = App.Http.get Location.Me App.Server.Me.decoder |> send MeMessage
 
 send : (a -> Message) -> Task Error a -> Cmd Message
 send = Task.perform ErrorMessage

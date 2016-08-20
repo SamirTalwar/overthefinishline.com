@@ -17,13 +17,12 @@ tests =
     test "App.Server.Dashboard.decoder: decodes a dashboard full of pull requests" (
       let
         location = Location.Project (Url.parse "/projects/sandwiches/cheese")
-        (_, decoder) = endpoint location
 
         expected : Task String Dashboard
         expected = dashboard location |> Task.fromResult
 
         actual : Task String Dashboard
-        actual = decodeString decoder dashboardJson |> Task.fromResult
+        actual = decodeString (decoder location) dashboardJson |> Task.fromResult
       in
         assert actual (equals expected)
     )

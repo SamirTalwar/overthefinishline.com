@@ -8,6 +8,7 @@ import Url exposing (Url)
 
 import App.Error exposing (..)
 import App.Http exposing (..)
+import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 import App.Server.Dashboard exposing (..)
 
@@ -16,30 +17,34 @@ tests =
   [
     test "Server.Dashboard.fetch: fetches a dashboard full of pull requests" (
       let
+        location = Location.Project (Url.parse "/projects/sandwiches/cheese")
+
         expected : Task Error (Response Dashboard)
-        expected = dashboard |> Result.map Response |> Result.formatError UnexpectedResponse |> Task.fromResult
+        expected = dashboard location |> Result.map Response |> Result.formatError UnexpectedResponse |> Task.fromResult
 
         actual : Task Error (Response Dashboard)
-        actual = fetch (App.Http.stubGet "/projects/sandwiches/cheese" dashboardJson) (Url.parse "/projects/sandwiches/cheese")
+        actual = fetch (App.Http.stubGet "/projects/sandwiches/cheese" dashboardJson) location
       in
         assert actual (equals expected)
     ),
 
     test "Server.Dashboard.fetch: recognises an unauthenticated response" (
       let
+        location = Location.Project (Url.parse "/projects/dan/what")
+
         expected : Task Error (Response Dashboard)
         expected = Task.succeed UnauthenticatedResponse
 
         actual : Task Error (Response Dashboard)
-        actual = fetch (App.Http.stubGet "/projects/dan/what" unauthenticatedJson) (Url.parse "/projects/dan/what")
+        actual = fetch (App.Http.stubGet "/projects/dan/what" unauthenticatedJson) location
       in
         assert actual (equals expected)
     )
   ]
 
-dashboard : Result String Dashboard
-dashboard =
-  dashboardResult {
+dashboard : Location -> Result String Dashboard
+dashboard location =
+  dashboardResult location {
     now = Moment.parse "2016-06-01T08:00:00Z",
     pullRequests = [
       {
@@ -109,10 +114,11 @@ unauthenticatedJson =
   """
 
 dashboardResult
-    : { now: Result String Moment,
+    : Location
+    -> { now: Result String Moment,
         pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, url : Url } }
     -> Result String Dashboard
-dashboardResult {now, pullRequests} =
+dashboardResult location {now, pullRequests} =
   let
     pullRequestsResult = pullRequests
       |> List.map (\record ->
@@ -121,7 +127,7 @@ dashboardResult {now, pullRequests} =
              Err error -> Err error)
       |> sequenceResults
   in
-    Result.map2 Dashboard now pullRequestsResult
+    Result.map2 (Dashboard location) now pullRequestsResult
 
 sequenceResults : List (Result a b) -> Result a (List b)
 sequenceResults = List.foldr (Result.map2 (::)) (Ok [])

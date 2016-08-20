@@ -9,7 +9,7 @@ import Moment exposing (Moment)
 import App.Model exposing (..)
 
 html : Dashboard -> List (Html Message)
-html (Dashboard now pullRequests) =
+html (Dashboard _ now pullRequests) =
   [
     section [class "summary"] [
       span [] [text "You have"],

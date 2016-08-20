@@ -1,6 +1,7 @@
 module App.Server.Dashboard exposing (fetch)
 
 import App.Error exposing (Error)
+import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 
 import App.Http exposing (..)
@@ -9,11 +10,12 @@ import Moment exposing (Moment)
 import Task exposing (Task)
 import Url exposing (Url)
 
-fetch : Get Dashboard -> Url -> Task Error (Response Dashboard)
-fetch get url = get decoder (Url.toString url)
+fetch : Get Dashboard -> Location -> Task Error (Response Dashboard)
+fetch get location =
+  get (decoder location) (Url.toString (Location.url location))
 
-decoder : Decoder Dashboard
-decoder = object2 Dashboard
+decoder : Location -> Decoder Dashboard
+decoder location = object2 (Dashboard location)
   ("now" := Moment.decode)
   ("pullRequests" := list
     (object5 PullRequest

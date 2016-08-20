@@ -5,7 +5,7 @@ import Html.App
 import Navigation
 import Process
 import Task exposing (Task)
-import Time
+import Time exposing (every, minute)
 
 import App.Error exposing (..)
 import App.Http exposing (Response (..))
@@ -31,7 +31,7 @@ main =
     update = update,
     urlUpdate = urlUpdate,
     view = view,
-    subscriptions = always Sub.none
+    subscriptions = subscriptions
   }
 
 init : Location -> (Model, Cmd Message)
@@ -51,7 +51,7 @@ update message model =
       Model me navigationState (NewProjectPage []) ! []
     (Load (Location.Project url), Model me navigationState page) ->
       Model me navigationState page
-        ! [App.Server.Dashboard.fetch App.Http.get url |> Task.perform ErrorMessage DashboardMessage]
+        ! [App.Server.Dashboard.fetch App.Http.get (Location.Project url) |> Task.perform ErrorMessage DashboardMessage]
     (Load (Location.Error log), Model me navigationState _) ->
       Model me navigationState (ErrorPage (UnknownError log)) ! []
     (Load location, Loading) ->
@@ -114,6 +114,13 @@ view model =
         NewProjectPage repositoryNames -> App.Page.NewProject.html repositoryNames
         DashboardPage dashboard -> App.Page.Dashboard.html dashboard
         ErrorPage error -> App.Page.Error.html error
+
+subscriptions : Model -> Sub Message
+subscriptions model =
+  case model of
+    Model me navigationState (DashboardPage (Dashboard location _ _)) ->
+      every minute (always (Load location))
+    _ -> Sub.none
 
 navigationSignedIn : Me -> App.Navigation.State -> Html Message
 navigationSignedIn me state = Html.App.map NavigationMessage (App.Page.Navigation.signedIn me state)

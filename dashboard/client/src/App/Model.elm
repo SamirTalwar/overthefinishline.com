@@ -34,7 +34,7 @@ type Me = Me User Projects
 
 type User = User Username Avatar
 
-type Dashboard = Dashboard Moment PullRequests
+type Dashboard = Dashboard Location Moment PullRequests
 
 type alias Projects = List Project
 type Project = Project Name Location

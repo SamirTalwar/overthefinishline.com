@@ -7,6 +7,7 @@ services:
       - '/usr/local/bin/overthefinishline-dashboard-exe'
     env_file: development.env
     environment:
+      'ENVIRONMENT': 'Development'
       'CLIENT_PATH': '/client'
     ports:
       - 8001:8001

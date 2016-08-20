@@ -33,6 +33,7 @@ import Network.HTTP.Types.Status (badRequest400, internalServerError500)
 import Network.OAuth.OAuth2 as OAuth2
 import qualified Network.Wai.Parse as Parse
 import qualified Network.Wai.Handler.Warp as Warp
+import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.Environment (getEnv, lookupEnv)
 import System.FilePath
@@ -44,8 +45,11 @@ import OverTheFinishLine.Dashboard.Enumerations
 import OverTheFinishLine.Dashboard.GitHub
 import OverTheFinishLine.Dashboard.Model
 
+data Environment = Development | Production
+  deriving (Eq, Read, Show)
 type Port = Int
 data Configuration = Configuration {
+  configurationEnvironment :: Environment,
   configurationPort :: Port,
   configurationClientPath :: FilePath,
   configurationGitHubOAuthCredentials :: OAuth2,
@@ -80,6 +84,10 @@ server configuration =
 
 createApp configuration databaseConnectionPool httpManager =
   spockAsApp $ spock spockConfiguration $ do
+    middleware $ case configurationEnvironment configuration of
+      Development -> logStdoutDev
+      Production -> logStdout
+
     middleware $ staticPolicy (noDots >-> addBase (configurationClientPath configuration))
 
     get root appHtml
@@ -329,7 +337,8 @@ createApp configuration databaseConnectionPool httpManager =
 
 readConfiguration =
   Configuration
-    <$> readEnv "PORT"
+    <$> readDefaultedEnv "ENVIRONMENT" Production
+    <*> readEnv "PORT"
     <*> getEnv "CLIENT_PATH"
     <*> (OAuth2
       <$> byteStringEnv "GITHUB_OAUTH_CLIENT_ID"

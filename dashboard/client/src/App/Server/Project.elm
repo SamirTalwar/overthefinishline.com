@@ -1,7 +1,6 @@
 module App.Server.Project exposing (decoder)
 
 import Json.Decode exposing (..)
-import Url exposing (Url)
 
 import App.Model exposing (..)
 

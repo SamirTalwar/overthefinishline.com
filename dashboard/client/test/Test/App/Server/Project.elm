@@ -4,7 +4,6 @@ import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
 import Json.Decode exposing (decodeString)
 import Task exposing (Task)
-import Url exposing (Url)
 
 import App.Model exposing (..)
 import App.Server.Project exposing (..)

@@ -175,25 +175,27 @@ createApp configuration databaseConnectionPool httpManager =
             return userId
 
     storeProject (Entity userId user) requestParams = do
-      projectName <- textParam "project-name" requestParams
-      repositoryNames <- textListParam "repository-names[]" requestParams
-      let project = Project userId projectName
+      (project, repositoryNames) <- projectParams userId requestParams
       withDatabase $ do
         projectId <- insert project
         mapM_ (insert . ProjectRepository projectId) repositoryNames
       return (user, project)
 
     updateProject (Entity userId user) existingProjectName requestParams = do
-      projectName <- textParam "project-name" requestParams
-      repositoryNames <- textListParam "repository-names[]" requestParams
-      let project = Project userId projectName
+      (project, repositoryNames) <- projectParams userId requestParams
       Entity projectId _ <- withDatabase (getBy (UniqueProjectNameByUser userId existingProjectName))
-                              `orException` (MissingProject existingProjectName)
+                              `orException` MissingProject existingProjectName
       withDatabase $ do
         replace projectId project
         Sql.delete $ from $ \repository -> where_ (repository ^. ProjectRepositoryProjectId ==. val projectId)
         mapM_ (insert . ProjectRepository projectId) repositoryNames
         return (user, project)
+
+    projectParams userId requestParams = do
+      projectName <- textParam "project-name" requestParams
+      repositoryNames <- textListParam "repository-names[]" requestParams
+      let project = Project userId projectName
+      return (project, repositoryNames)
 
     fetchGitHubUser accessToken =
       fetch accessToken "https://api.github.com/user"

@@ -36,32 +36,27 @@ main =
 
 init : Location -> (Model, Cmd Message)
 init location =
-  Loading ! [load Location.Me, load location]
+  Loading ! [fetchMe, delay (Load location)]
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
   case (message, model) of
-    (Load Location.Home, Model me navigationState _) ->
-      let (Me _ projects) = me
-      in Model me navigationState (SelectAProjectPage projects) ! []
-    (Load Location.Me, model) ->
-      model ! [App.Http.get App.Server.Me.endpoint |> Task.perform ErrorMessage MeMessage]
-    (Load Location.NewProject, Model me navigationState _) ->
-      Model me navigationState (NewProjectPage []) ! []
-    (Load (Location.Project url), Model me navigationState page) ->
-      Model me navigationState page
-        ! [App.Http.get (App.Server.Dashboard.endpoint (Location.Project url)) |> Task.perform ErrorMessage DashboardMessage]
-    (Load (Location.Error log), Model me navigationState _) ->
-      Model me navigationState (ErrorPage (UnknownError log)) ! []
     (Load location, Loading) ->
-      Loading ! [load location]
+      Loading ! [delay (Load location)]
     (Load location, Unauthenticated) ->
       Unauthenticated ! []
     (Load location, CatastrophicFailure error) ->
       CatastrophicFailure error ! []
+    (Load location, (Model me navigationState page)) ->
+      Model me navigationState page ! [fetch me location]
 
     (NavigateTo location, model) ->
       model ! [Location.navigateTo location]
+
+    (Render page, Model me navigationState _) ->
+      Model me navigationState page ! []
+    (Render page, model) ->
+      model ! [delay (Render page)]
 
     (MeMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
@@ -92,13 +87,28 @@ update message model =
       CatastrophicFailure error ! []
 
 urlUpdate : Location -> Model -> (Model, Cmd Message)
-urlUpdate location model = (model ! [load location])
+urlUpdate location model = (model ! [send Load (Task.succeed location)])
 
-load : Location -> Cmd Message
-load location =
+delay : Message -> Cmd Message
+delay message =
   Process.sleep (100 * Time.millisecond)
-    |> Task.map (always location)
-    |> Task.perform ErrorMessage Load
+    |> Task.map (always message)
+    |> send identity
+
+fetch : Me -> Location -> Cmd Message
+fetch (Me _ projects) location =
+  case location of
+    Location.Me -> fetchMe
+    Location.Home -> Task.succeed (SelectAProjectPage projects) |> send Render
+    Location.NewProject -> Task.succeed (NewProjectPage []) |> send Render
+    Location.Project url -> App.Http.get (App.Server.Dashboard.endpoint (Location.Project url)) |> send DashboardMessage
+    Location.Error error -> Task.succeed (ErrorPage (UnknownError error)) |> send Render
+
+fetchMe : Cmd Message
+fetchMe = App.Http.get App.Server.Me.endpoint |> send MeMessage
+
+send : (a -> Message) -> Task Error a -> Cmd Message
+send = Task.perform ErrorMessage
 
 view : Model -> Html Message
 view model =

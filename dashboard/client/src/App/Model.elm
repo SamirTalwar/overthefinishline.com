@@ -11,6 +11,7 @@ import App.Navigation as Navigation
 type Message =
     Load Location
   | NavigateTo Location
+  | Render Page
   | MeMessage (Response Me)
   | NavigationMessage Navigation.Message
   | NewProjectMessage (List Name)

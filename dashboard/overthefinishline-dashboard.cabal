@@ -37,8 +37,10 @@ executable overthefinishline-dashboard-exe
   build-depends:       base
                      , overthefinishline-dashboard
                      , aeson
+                     , base64-bytestring
                      , bytestring
                      , containers
+                     , cryptonite
                      , esqueleto
                      , filepath
                      , hoauth2

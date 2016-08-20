@@ -11,9 +11,11 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.List
 import Control.Monad.Trans.Maybe
+import Crypto.Random (getRandomBytes)
 import Data.Aeson as Aeson hiding (json)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
+import qualified Data.ByteString.Base64 as Base64
 import qualified Data.ByteString.Char8 as ByteStringC
 import Data.ByteString.Lazy (toStrict)
 import qualified Data.Function as Function
@@ -23,7 +25,7 @@ import Data.Maybe (catMaybes, fromJust, isJust, listToMaybe, mapMaybe)
 import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
-import Data.Time.Clock (NominalDiffTime, getCurrentTime)
+import Data.Time.Clock (NominalDiffTime, addUTCTime, getCurrentTime)
 import qualified Database.Persist as Database
 import qualified Database.Esqueleto as Sql
 import Database.Esqueleto hiding (delete, get)
@@ -60,7 +62,7 @@ data Configuration = Configuration {
   configurationSessionStoreInterval :: NominalDiffTime
 }
 
-type Context = SpockActionCtx () () (Maybe UserId) ()
+type Context = SpockActionCtx () () () ()
 
 instance ToJSON Status where
   toJSON (Status code message) = object ["code" .= code, "message" .= decodeUtf8 message]
@@ -87,7 +89,7 @@ server configuration =
           void $ installHandler sigTERM (Catch (closeSockets >> putStrLn "Application shut down.")) Nothing)
 
 createApp configuration databaseConnectionPool httpManager =
-  spockAsApp $ spock spockConfiguration $ do
+  spockAsApp $ spock (defaultSpockCfg () PCNoDatabase ()) $ do
     middleware $ case configurationEnvironment configuration of
       Development -> logStdoutDev
       Production -> logStdout
@@ -99,8 +101,10 @@ createApp configuration databaseConnectionPool httpManager =
     get ("authentication" <//> "by" <//> "github") authenticateWithGitHub
 
     get ("authorization" <//> "by" <//> "github") $ do
-      userId <- runExceptT storeUser
-      either handleException storeSession userId
+      response <- runExceptT $ do
+        userId <- storeUser
+        storeSession userId
+      either handleException (const (redirect "/")) response
 
     get "projects" appHtml
 
@@ -159,10 +163,34 @@ createApp configuration databaseConnectionPool httpManager =
 
     authenticateWithGitHub = redirect $ decodeUtf8 $ authorizationUrl gitHubOAuthCredentials
 
+    readUserId :: ExceptT Exception Context UserId
+    readUserId = do
+      now <- liftIO getCurrentTime
+      authId <- cookie "authId" `orException` UnauthenticatedUser
+      sessions <- withDatabase $ do
+        Sql.delete $ from $ \session ->
+          where_ $ session ^. SessionExpiryTime <. val now
+        select $ from $ \session -> do
+          where_ $ session ^. SessionAuthId ==. val authId
+          return session
+      Entity sessionId session <- return (listToMaybe sessions) `orException` UnauthenticatedUser
+      let newExpiryTime = addUTCTime sessionTTL now
+      withDatabase $ update $ \session -> do
+        set session [SessionExpiryTime =. val newExpiryTime]
+        where_ $ session ^. SessionId ==. val sessionId
+      return $ sessionUserId session
+
+    storeSession :: UserId -> ExceptT Exception Context ()
     storeSession userId = do
-      sessionRegenerateId
-      writeSession $ Just userId
-      redirect "/"
+      authId <- decodeUtf8 . Base64.encode <$> liftIO (getRandomBytes 64)
+      now <- liftIO getCurrentTime
+      let expiryTime = addUTCTime sessionTTL now
+      withDatabase $ insert (Session authId expiryTime userId)
+      lift $ setCookie "authId" authId sessionCookieSettings
+
+    sessionCookieSettings = defaultCookieSettings { cs_EOL = CookieValidFor sessionTTL }
+
+    sessionTTL = configurationSessionTTL configuration
 
     storeUser = do
       code <- param "code" `orException` MissingParam "code"
@@ -225,9 +253,6 @@ createApp configuration databaseConnectionPool httpManager =
       let userService = UserService userId GitHub
       (Entity _ (ServiceCredentials _ _ _ accessToken)) <- withDatabase (getBy userService) `orException` MissingUser
       return $ AccessToken accessToken Nothing Nothing Nothing Nothing
-
-    readUserId :: ExceptT Exception Context UserId
-    readUserId = readSession `orException` UnauthenticatedUser
 
     readUser :: ExceptT Exception Context (Entity User)
     readUser = do
@@ -315,33 +340,6 @@ createApp configuration databaseConnectionPool httpManager =
       ] ++ extras))
 
     gitHubOAuthCredentials = configurationGitHubOAuthCredentials configuration
-
-    spockConfiguration = (defaultSpockCfg Nothing PCNoDatabase ()) {
-      spc_sessionCfg = (defaultSessionCfg Nothing) {
-        sc_sessionTTL = configurationSessionTTL configuration,
-        sc_sessionExpandTTL = True,
-        sc_housekeepingInterval = configurationSessionStoreInterval configuration,
-        sc_persistCfg = Just sessionPersistenceConfiguration
-      }
-    }
-
-    sessionPersistenceConfiguration :: SessionPersistCfg (Maybe UserId)
-    sessionPersistenceConfiguration = SessionPersistCfg {
-      spc_load =
-        map (\(Entity _ (Session sessionId expiryTime value)) -> (sessionId, expiryTime, Just value))
-          <$> withDatabase (select $ from return),
-      spc_store = \sessions -> withDatabase $ do
-        existingSessionsById <- foldr (\s a -> Map.insert ((sessionSessionId . entityVal) s) s a) Map.empty <$> (select $ from return)
-        let databaseSessions = mapMaybe (\(sessionId, expiryTime, value) -> Session sessionId expiryTime <$> value) sessions
-        let entities = map (\session@(Session sessionId _ _) -> (Map.lookup sessionId existingSessionsById, session)) databaseSessions
-        let (sessionsToUpdate, sessionsToInsert) = List.partition (isJust . fst) entities
-        insertedKeys <- insertMany (map snd sessionsToInsert)
-        forM_ sessionsToUpdate $ \(Just (Entity key oldValue), newValue) ->
-          unless (oldValue == newValue) (replace key newValue)
-        let updatedKeys = map (entityKey . fromJust . fst) sessionsToUpdate
-        Sql.delete $ from $ \session ->
-          where_ (session ^. SessionId `notIn` valList (insertedKeys ++ updatedKeys))
-    }
 
     withDatabase :: MonadIO m => SqlPersistM a -> m a
     withDatabase = flip liftSqlPersistMPool databaseConnectionPool

@@ -65,10 +65,10 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     deriving Eq Show
 
   Session
-    sessionId Text
+    authId Text
     expiryTime UTCTime
     userId UserId
-    UniqueSessionId sessionId
+    UniqueAuthId authId
     deriving Eq Show
 
   Project

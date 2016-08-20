@@ -114,7 +114,7 @@ fetch (Me _ projects) location =
     Location.Home ->
       Task.succeed (SelectAProjectPage projects) |> send Render
     Location.NewProject ->
-      Task.succeed (EditProjectPage (Project "" "" [])) |> send Render
+      Task.succeed (NewProjectPage []) |> send Render
     Location.EditProject username projectName ->
       App.Http.get location App.Server.Project.decoder |> send EditProjectMessage
     Location.Project username name ->

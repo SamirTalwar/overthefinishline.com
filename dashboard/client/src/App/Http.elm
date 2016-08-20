@@ -18,10 +18,12 @@ type Response a =
 
 get : (Location, Decoder a) -> Task Error (Response a)
 get (location, underlyingDecoder) =
-  let request = {
+  let prependPath segment url = { url | path = segment :: url.path }
+      url = Url.toString (prependPath "api" (Location.url location))
+      request = {
         verb = "GET",
         headers = [("Accept", "application/json")],
-        url = Url.toString (Location.url location),
+        url = url,
         body = Http.empty
       }
   in Http.fromJson (decoder underlyingDecoder) (Http.send Http.defaultSettings request)

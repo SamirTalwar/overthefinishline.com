@@ -89,15 +89,6 @@ createApp configuration databaseConnectionPool httpManager =
       userId <- runExceptT storeUser
       either handleException storeSession userId
 
-    get "me" $ do
-      me <- runExceptT $ do
-        Entity userId user <- readUser
-        projects <- withDatabase $ selectList [ProjectUserId ==. userId] [Asc ProjectName]
-        let myProject project = MyProject (projectName project) (projectUrl user project)
-        let myProjects = map (myProject . entityVal) projects
-        return (user, myProjects)
-      either handleException (uncurry renderMe) me
-
     get "projects" appHtml
 
     post "projects" $ do
@@ -105,25 +96,33 @@ createApp configuration databaseConnectionPool httpManager =
       project <- runExceptT $ storeProject requestParams
       either handleException (redirect . uncurry projectUrl) project
 
-    get ("projects" <//> var <//> var) $ \username projectName -> do
-      format <- preferredFormat
-      case format of
-        PrefHTML -> appHtml
-        _ -> do
-          now <- liftIO getCurrentTime
-          pullRequests <- runExceptT $ do
-            accessToken <- readAccessToken
-            repositories <- withDatabase (rawSql (Text.pack $
-                  "SELECT ??"
-               ++ " FROM \"user\""
-               ++ " JOIN \"project\" ON \"user\".\"id\" = \"project\".\"user_id\""
-               ++ " JOIN \"project_repository\" ON \"project\".\"id\" = \"project_repository\".\"project_id\""
-               ++ " WHERE \"user\".\"username\" = ?"
-               ++ " AND \"project\".\"name\" = ?") [username, projectName]
-              ) `onEmpty` QueryFailure "No repositories found."
-            concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
-          let dashboard = Dashboard now <$> pullRequests
-          either handleException renderDashboard dashboard
+    get ("projects" <//> (var :: Var Text) <//> (var :: Var Text)) $ const $ const appHtml
+
+    subcomponent "api" $ do
+      get "me" $ do
+        me <- runExceptT $ do
+          Entity userId user <- readUser
+          projects <- withDatabase $ selectList [ProjectUserId ==. userId] [Asc ProjectName]
+          let myProject project = MyProject (projectName project) (projectUrl user project)
+          let myProjects = map (myProject . entityVal) projects
+          return (user, myProjects)
+        either handleException (uncurry renderMe) me
+
+      get ("projects" <//> var <//> var) $ \username projectName -> do
+        now <- liftIO getCurrentTime
+        pullRequests <- runExceptT $ do
+          accessToken <- readAccessToken
+          repositories <- withDatabase (rawSql (Text.pack $
+                "SELECT ??"
+             ++ " FROM \"user\""
+             ++ " JOIN \"project\" ON \"user\".\"id\" = \"project\".\"user_id\""
+             ++ " JOIN \"project_repository\" ON \"project\".\"id\" = \"project_repository\".\"project_id\""
+             ++ " WHERE \"user\".\"username\" = ?"
+             ++ " AND \"project\".\"name\" = ?") [username, projectName]
+            ) `onEmpty` QueryFailure "No repositories found."
+          concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
+        let dashboard = Dashboard now <$> pullRequests
+        either handleException renderDashboard dashboard
 
   where
     appHtml = file "text/html" (configurationClientPath configuration </> "index.html")

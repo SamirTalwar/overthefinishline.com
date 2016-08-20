@@ -176,7 +176,7 @@ createApp configuration databaseConnectionPool httpManager =
 
     storeProject (Entity userId user) requestParams = do
       projectName <- textParam "project-name" requestParams
-      repositoryNames <- filter (/= "") <$> textListParam "repository-names[]" requestParams
+      repositoryNames <- textListParam "repository-names[]" requestParams
       let project = Project userId projectName
       withDatabase $ do
         projectId <- insert project
@@ -185,7 +185,7 @@ createApp configuration databaseConnectionPool httpManager =
 
     updateProject (Entity userId user) existingProjectName requestParams = do
       projectName <- textParam "project-name" requestParams
-      repositoryNames <- filter (/= "") <$> textListParam "repository-names[]" requestParams
+      repositoryNames <- textListParam "repository-names[]" requestParams
       let project = Project userId projectName
       Entity projectId _ <- withDatabase (getBy (UniqueProjectNameByUser userId existingProjectName))
                               `orException` (MissingProject existingProjectName)
@@ -266,7 +266,7 @@ createApp configuration databaseConnectionPool httpManager =
     textListParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a [Text]
     textListParam name params = return values `onEmpty` MissingParam name
       where
-        values = map snd $ filter ((== name) . fst) params
+        values = filter (/= "") $ map snd $ filter ((== name) . fst) params
 
     orException :: Monad m => m (Maybe a) -> e -> ExceptT e m a
     maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)

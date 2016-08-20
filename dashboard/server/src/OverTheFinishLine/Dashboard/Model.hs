@@ -32,6 +32,7 @@ type Url = Text
 data Exception =
     UnauthenticatedUser
   | MissingUser
+  | MissingProject Text
   | MissingParam Text
   | InvalidAuthenticationCode Text
   | QueryFailure Text
@@ -73,13 +74,13 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
   Project
     userId UserId
     name Text
-    UniqueProjectName name
+    UniqueProjectNameByUser userId name
     deriving Eq Show
 
   ProjectRepository
     projectId ProjectId
     name Text
-    UniqueProjectRepositoryName name
+    UniqueProjectRepositoryNameByProject projectId name
     deriving Eq Show
 |]
 

@@ -94,12 +94,21 @@ createApp configuration databaseConnectionPool httpManager =
 
     post "projects" $ do
       requestParams <- params
-      project <- runExceptT $ storeProject requestParams
+      project <- runExceptT $ do
+        user <- readUser
+        storeProject user requestParams
       either handleException (redirect . uncurry projectUrl) project
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text)) $ const $ const appHtml
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ const $ const appHtml
+
+    post ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ \username projectName -> do
+      requestParams <- params
+      project <- runExceptT $  do
+        user <- readUserByName username
+        updateProject user projectName requestParams
+      either handleException (redirect . uncurry projectUrl) project
 
     subcomponent "api" $ do
       get "me" $ do
@@ -128,8 +137,7 @@ createApp configuration databaseConnectionPool httpManager =
 
       get ("projects" <//> var <//> var <//> "edit") $ \username projectName -> do
         project <- runExceptT $ do
-          userId <- readUserId
-          Entity _ user <- readUserByName userId username
+          Entity userId user <- readUserByName username
           project <- readProject user projectName
           return $ MySingleProject user project
         either handleException render project
@@ -166,8 +174,7 @@ createApp configuration databaseConnectionPool httpManager =
               where_ (serviceCredentials ^. ServiceCredentialsId ==. val serviceCredentialsId)
             return userId
 
-    storeProject requestParams = do
-      Entity userId user <- readUser
+    storeProject (Entity userId user) requestParams = do
       projectName <- textParam "project-name" requestParams
       repositoryNames <- filter (/= "") <$> textListParam "repository-names[]" requestParams
       let project = Project userId projectName
@@ -175,6 +182,18 @@ createApp configuration databaseConnectionPool httpManager =
         projectId <- insert project
         mapM_ (insert . ProjectRepository projectId) repositoryNames
       return (user, project)
+
+    updateProject (Entity userId user) existingProjectName requestParams = do
+      projectName <- textParam "project-name" requestParams
+      repositoryNames <- filter (/= "") <$> textListParam "repository-names[]" requestParams
+      let project = Project userId projectName
+      Entity projectId _ <- withDatabase (getBy (UniqueProjectNameByUser userId existingProjectName))
+                              `orException` (MissingProject existingProjectName)
+      withDatabase $ do
+        replace projectId project
+        Sql.delete $ from $ \repository -> where_ (repository ^. ProjectRepositoryProjectId ==. val projectId)
+        mapM_ (insert . ProjectRepository projectId) repositoryNames
+        return (user, project)
 
     fetchGitHubUser accessToken =
       fetch accessToken "https://api.github.com/user"
@@ -202,8 +221,9 @@ createApp configuration databaseConnectionPool httpManager =
       user <- withDatabase (Database.get userId) `orException` MissingUser
       return $ Entity userId user
 
-    readUserByName :: Key User -> Text -> ExceptT Exception Context (Entity User)
-    readUserByName userId username = do
+    readUserByName :: Text -> ExceptT Exception Context (Entity User)
+    readUserByName username = do
+      userId <- readUserId
       users <- withDatabase $
         select $ from $ \user -> do
           where_ (user ^. UserId ==. val userId &&. user ^. UserUsername ==. val username)
@@ -258,6 +278,9 @@ createApp configuration databaseConnectionPool httpManager =
       json unauthenticatedResponse
     handleException MissingUser =
       json unauthenticatedResponse
+    handleException (MissingProject project) = do
+      setStatus badRequest400
+      errorJson "missing project" ["project" .= project]
     handleException (MissingParam param) = do
       setStatus badRequest400
       errorJson "missing param" ["param" .= param]

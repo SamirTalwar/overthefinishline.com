@@ -14,7 +14,7 @@ type Message =
   | Render Page
   | MeMessage (Response Me)
   | NavigationMessage Navigation.Message
-  | NewProjectMessage (List Name)
+  | UpdateRepositoryNames (List Name)
   | EditProjectMessage (Response Project)
   | DashboardMessage (Response Dashboard)
   | ErrorMessage Error

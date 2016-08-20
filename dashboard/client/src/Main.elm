@@ -23,7 +23,7 @@ import App.Page.Error
 import App.Page.Frame
 import App.Page.Loading
 import App.Page.Navigation
-import App.Page.NewProject
+import App.Page.EditProject
 import App.Page.SelectAProject
 
 main : Program Never
@@ -78,9 +78,11 @@ update message model =
     (NavigationMessage _, model) ->
       model ! []
 
-    (NewProjectMessage repositoryNames, Model me navigationState (NewProjectPage _)) ->
+    (UpdateRepositoryNames repositoryNames, Model me navigationState (NewProjectPage _)) ->
       Model me navigationState (NewProjectPage repositoryNames) ! []
-    (NewProjectMessage repositoryNames, _) ->
+    (UpdateRepositoryNames repositoryNames, Model me navigationState (EditProjectPage (Project username projectName _))) ->
+      Model me navigationState (EditProjectPage (Project username projectName repositoryNames)) ! []
+    (UpdateRepositoryNames _, _) ->
       model ! []
 
     (EditProjectMessage UnauthenticatedResponse, _) ->
@@ -112,7 +114,7 @@ fetch (Me _ projects) location =
     Location.Home ->
       Task.succeed (SelectAProjectPage projects) |> send Render
     Location.NewProject ->
-      Task.succeed (NewProjectPage []) |> send Render
+      Task.succeed (EditProjectPage (Project "" "" [])) |> send Render
     Location.EditProject username projectName ->
       App.Http.get location App.Server.Project.decoder |> send EditProjectMessage
     Location.Project username name ->
@@ -136,8 +138,8 @@ view model =
       App.Page.Frame.html [navigationSignedIn me navigationState] <| case page of
         LoadingPage -> App.Page.Loading.html
         SelectAProjectPage projects -> App.Page.SelectAProject.html projects
-        NewProjectPage repositoryNames -> App.Page.NewProject.html repositoryNames
-        EditProjectPage (Project username name _) -> App.Page.Error.html (MissingPage (Location.EditProject username name))
+        NewProjectPage repositoryNames -> App.Page.EditProject.htmlForNewProject repositoryNames
+        EditProjectPage project -> App.Page.EditProject.htmlForExistingProject project
         DashboardPage dashboard -> App.Page.Dashboard.html dashboard
         ErrorPage error -> App.Page.Error.html error
 

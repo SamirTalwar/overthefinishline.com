@@ -23,9 +23,9 @@ import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Data.Time.Clock (NominalDiffTime, getCurrentTime)
 import qualified Database.Persist as Database
-import Database.Persist hiding (get)
-import Database.Persist.Postgresql hiding (get)
-import Database.Persist.Sql hiding (get)
+import qualified Database.Esqueleto as Sql
+import Database.Esqueleto hiding (delete, get)
+import Database.Persist.Postgresql (ConnectionString, runMigration, runSqlPersistMPool, withPostgresqlPool)
 import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (badRequest400, internalServerError500)
@@ -98,13 +98,15 @@ createApp configuration databaseConnectionPool httpManager =
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text)) $ const $ const appHtml
 
-    get ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ const $ const appHtml
-
     subcomponent "api" $ do
       get "me" $ do
         me <- runExceptT $ do
           Entity userId user <- readUser
-          projects <- withDatabase $ selectList [ProjectUserId ==. userId] [Asc ProjectName]
+          projects <- withDatabase $
+            select $ from $ \project -> do
+              where_ (project ^. ProjectUserId ==. val userId)
+              orderBy [asc (project ^. ProjectName)]
+              return project
           let myProject project = MyProject (projectName project) (projectUrl user project)
           let myProjects = map (myProject . entityVal) projects
           return (user, myProjects)
@@ -114,13 +116,14 @@ createApp configuration databaseConnectionPool httpManager =
         now <- liftIO getCurrentTime
         pullRequests <- runExceptT $ do
           accessToken <- readAccessToken
-          repositories <- withDatabase (rawSql (Text.pack $
-                "SELECT ??"
-             ++ " FROM \"user\""
-             ++ " JOIN \"project\" ON \"user\".\"id\" = \"project\".\"user_id\""
-             ++ " JOIN \"project_repository\" ON \"project\".\"id\" = \"project_repository\".\"project_id\""
-             ++ " WHERE \"user\".\"username\" = ?"
-             ++ " AND \"project\".\"name\" = ?") [username, projectName]
+          repositories <- withDatabase (
+              select $ from $ \(user `InnerJoin` project `InnerJoin` repository) -> do
+                  on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
+                  on (user ^. UserId ==. project ^. ProjectUserId)
+                  where_ $
+                    user ^. UserUsername ==. val username
+                    &&. project ^. ProjectName ==. val projectName
+                  return repository
             ) `onEmpty` QueryFailure "No repositories found."
           concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
         let dashboard = Dashboard now <$> pullRequests
@@ -153,7 +156,9 @@ createApp configuration databaseConnectionPool httpManager =
             return userId
           Just (Entity serviceCredentialsId (ServiceCredentials userId _ _ _)) -> do
             repsert userId user
-            update serviceCredentialsId [ServiceCredentialsAccessToken =. accessTokenString]
+            update $ \serviceCredentials -> do
+              set serviceCredentials [ServiceCredentialsAccessToken =. val accessTokenString]
+              where_ (serviceCredentials ^. ServiceCredentialsId ==. val serviceCredentialsId)
             return userId
 
     storeProject requestParams = do
@@ -241,9 +246,9 @@ createApp configuration databaseConnectionPool httpManager =
     sessionPersistenceConfiguration = SessionPersistCfg {
       spc_load =
         map (\(Entity _ (Session sessionId expiryTime value)) -> (sessionId, expiryTime, Just value))
-          <$> withDatabase (selectList [] []),
+          <$> withDatabase (select $ from return),
       spc_store = \sessions -> withDatabase $ do
-        existingSessionsById <- foldr (\s a -> Map.insert ((sessionSessionId . entityVal) s) s a) Map.empty <$> selectList [] []
+        existingSessionsById <- foldr (\s a -> Map.insert ((sessionSessionId . entityVal) s) s a) Map.empty <$> (select $ from return)
         let databaseSessions = mapMaybe (\(sessionId, expiryTime, value) -> Session sessionId expiryTime <$> value) sessions
         let entities = map (\session@(Session sessionId _ _) -> (Map.lookup sessionId existingSessionsById, session)) databaseSessions
         let (sessionsToUpdate, sessionsToInsert) = partition (isJust . fst) entities
@@ -251,7 +256,8 @@ createApp configuration databaseConnectionPool httpManager =
         forM_ sessionsToUpdate $ \(Just (Entity key oldValue), newValue) ->
           unless (oldValue == newValue) (replace key newValue)
         let updatedKeys = map (entityKey . fromJust . fst) sessionsToUpdate
-        deleteWhere [SessionId /<-. (insertedKeys ++ updatedKeys)]
+        Sql.delete $ from $ \session ->
+          where_ (session ^. SessionId `notIn_` valList (insertedKeys ++ updatedKeys))
     }
 
     withDatabase :: MonadIO m => SqlPersistM a -> m a

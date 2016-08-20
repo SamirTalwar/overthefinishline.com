@@ -48,7 +48,7 @@ update message model =
     (Load location, CatastrophicFailure error) ->
       CatastrophicFailure error ! []
     (Load location, (Model me navigationState page)) ->
-      Model me navigationState page ! [fetch me location]
+      Model me navigationState LoadingPage ! [fetch me location]
 
     (NavigateTo location, model) ->
       model ! [Location.navigateTo location]

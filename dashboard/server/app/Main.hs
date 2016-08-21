@@ -98,7 +98,7 @@ createApp configuration databaseConnectionPool httpManager =
 
     get root appHtml
 
-    get ("authentication" <//> "by" <//> "github") authenticateWithGitHub
+    post ("authentication" <//> "by" <//> "github") authenticateWithGitHub
 
     get ("authorization" <//> "by" <//> "github") $ do
       response <- runExceptT $ do

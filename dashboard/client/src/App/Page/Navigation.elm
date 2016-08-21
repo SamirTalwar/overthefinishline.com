@@ -32,13 +32,20 @@ signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
     ],
     li [class "nav-item pull-xs-right"] [
       form [method "post", Html.Attributes.action "/sign-out"] [
-        button [type' "submit", class "btn btn-secondary"] [text "Sign Out"]
+        button [type' "submit", class "btn btn-secondary"] [text "Sign out"]
       ]
     ]
   ]
 
 signedOut : Html Message
-signedOut = navigationBar []
+signedOut =
+  navigationBar [
+    li [class "nav-item pull-xs-right"] [
+      form [method "post", Html.Attributes.action "/authentication/by/github"] [
+        button [type' "submit", class "btn btn-secondary"] [text "Sign in with GitHub"]
+      ]
+    ]
+  ]
 
 navigationBar : List (Html Message) -> Html Message
 navigationBar items =

@@ -1,5 +1,7 @@
 SHELL := /bin/bash
 
+TAG = samirtalwar/overthefinishline.com-database
+
 .PHONY: build
 build:
-	docker build --tag=overthefinishline.com/database .
+	docker build --tag=$(TAG) .

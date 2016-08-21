@@ -71,6 +71,6 @@ docker:
 image:
   container:
     base: fpco/stack-run
-    name: overthefinishline.com/dashboard
+    name: samirtalwar/overthefinishline.com-dashboard
     add:
       'client/build/src': '/client'

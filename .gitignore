@@ -1,11 +1,9 @@
 # Local configuration
 *.env
 
-# Building
+# Build
 .built
-
-# Stack
 .stack-work
 
-# IntelliJ IDEA
-.idea
+# Deployment
+docker-cloud.yml

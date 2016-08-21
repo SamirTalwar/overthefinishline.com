@@ -4,6 +4,8 @@ PRODUCTION_OUTPUT_FILES = client/build/src/index.html client/build/src/styleshee
                           client/build/src/application.js client/build/src/load.js
 TEST_FILES = $(shell find client/test -name '*.elm')
 
+TAG = samirtalwar/overthefinishline.com-dashboard
+
 .PHONY: build
 build: $(PRODUCTION_OUTPUT_FILES)
 	stack build --test --no-run-tests
@@ -21,6 +23,10 @@ test: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
 lint:
 	stack exec which hlint >/dev/null || stack install hlint
 	stack exec hlint .
+
+.PHONY: push
+push:
+	docker push $(TAG)
 
 .PHONY: clean
 clean:

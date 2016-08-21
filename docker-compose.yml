@@ -2,7 +2,7 @@ version: '2'
 
 services:
   dashboard-proxy:
-    image: overthefinishline.com/proxy
+    image: samirtalwar/overthefinishline.com-proxy
     environment:
       'SERVER_NAME': 'dev.overthefinishline.com'
       'BACKEND': 'dashboard'
@@ -13,7 +13,7 @@ services:
       - dashboard
 
   dashboard:
-    image: overthefinishline.com/dashboard
+    image: samirtalwar/overthefinishline.com-dashboard
     entrypoint:
       - '/usr/local/bin/overthefinishline-dashboard-exe'
     env_file: development.env
@@ -26,7 +26,7 @@ services:
       - database
 
   database:
-    image: overthefinishline.com/database
+    image: samirtalwar/overthefinishline.com-database
     ports:
       - 5432
     env_file: development.env

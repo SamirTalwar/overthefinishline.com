@@ -106,6 +106,10 @@ createApp configuration databaseConnectionPool httpManager =
         storeSession userId
       either handleException (const (redirect "/")) response
 
+    post "sign-out" $ do
+      response <- runExceptT removeSession
+      either handleException (const (redirect "/")) response
+
     get "projects" appHtml
 
     post "projects" $ do
@@ -188,6 +192,14 @@ createApp configuration databaseConnectionPool httpManager =
       let expiryTime = addUTCTime sessionTTL now
       withDatabase $ insert (Session authId expiryTime userId)
       lift $ setCookie "authId" authId sessionCookieSettings
+
+    removeSession :: ExceptT Exception Context ()
+    removeSession = do
+      authId <- lift $ cookie "authId"
+      when (isJust authId) $ do
+        withDatabase $ Sql.delete $ from $ \session ->
+          where_ $ session ^. SessionAuthId ==. val (fromJust authId)
+        lift $ deleteCookie "authId"
 
     sessionCookieSettings = defaultCookieSettings { cs_EOL = CookieValidFor sessionTTL }
 

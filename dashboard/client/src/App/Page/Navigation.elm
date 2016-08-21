@@ -2,7 +2,7 @@ module App.Page.Navigation exposing (signedIn, signedOut)
 
 import App.Page.Html exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, style)
+import Html.Attributes exposing (alt, class, method, style, type')
 import Html.Events exposing (..)
 
 import App.Location as Location
@@ -25,9 +25,15 @@ signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
       div [class "dropdown-menu", style [("display", if projectsShown then "block" else "none")]] (
         (projects |> List.map (\(Project username name _) ->
           link NavigateTo (Location.Project username name) [class "dropdown-item"] [text name]
-        )) ++
-        [link NavigateTo Location.NewProject [class "dropdown-item"] [text "Create a project"]]
+        ))
+        ++ (if List.length projects == 0 then [] else [hr [] []])
+        ++ [link NavigateTo Location.NewProject [class "dropdown-item"] [text "Create a project"]]
       )
+    ],
+    li [class "nav-item pull-xs-right"] [
+      form [method "post", Html.Attributes.action "/sign-out"] [
+        button [type' "submit", class "btn btn-secondary"] [text "Sign Out"]
+      ]
     ]
   ]
 

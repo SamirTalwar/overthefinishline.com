@@ -2,6 +2,7 @@
 build:
 	make -C dashboard
 	make -C database
+	make -C proxy
 	touch .built
 
 .PHONY: check

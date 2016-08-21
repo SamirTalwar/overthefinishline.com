@@ -1,19 +1,19 @@
 $enable-flex: true;
 @import '../../vendor/bootstrap/scss/bootstrap';
 
-html, body, #root, #container {
-    height: 100%;
-}
-
 #container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    padding-top: 10em;
+    padding-bottom: 10em;
 }
 
 nav.navbar {
     position: fixed;
+    z-index: 100;
     width: 100%;
 
     span:not(:first-child) {
@@ -38,10 +38,7 @@ nav.navbar {
 }
 
 .project-list {
-    width: 400px;
-    max-height: 10em;
     margin-top: 1em;
-    overflow: scroll;
 }
 
 .summary {

@@ -17,10 +17,10 @@ import App.Server.Dashboard
 import App.Server.Me
 import App.Server.Project
 
-import App.Page.Authentication
 import App.Page.Dashboard
 import App.Page.Error
 import App.Page.Frame
+import App.Page.Home
 import App.Page.Loading
 import App.Page.Navigation
 import App.Page.EditProject
@@ -132,7 +132,7 @@ view : Model -> Html Message
 view model =
   case model of
     Loading -> App.Page.Frame.html [navigationSignedOut] App.Page.Loading.html
-    Unauthenticated -> App.Page.Frame.html [navigationSignedOut] App.Page.Authentication.html
+    Unauthenticated -> App.Page.Frame.html [navigationSignedOut] App.Page.Home.html
     CatastrophicFailure error -> App.Page.Frame.html [navigationSignedOut] (App.Page.Error.html error)
     Model me navigationState page ->
       App.Page.Frame.html [navigationSignedIn me navigationState] <| case page of

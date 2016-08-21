@@ -147,7 +147,8 @@ createApp configuration databaseConnectionPool httpManager =
                     &&. project ^. ProjectName ==. val projectName
                   return repository
             ) `onEmpty` QueryFailure "No repositories found."
-          concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
+          prs <- concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
+          return $ List.sortBy (compare `Function.on` prUpdatedAt) prs
         let dashboard = Dashboard now <$> pullRequests
         either handleException render dashboard
 

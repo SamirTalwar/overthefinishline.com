@@ -109,11 +109,11 @@ createApp configuration databaseConnectionPool httpManager =
       response <- runExceptT $ do
         userId <- storeUser
         storeSession userId
-      either handleException (const (redirect "/")) response
+      either handleFailure (const (redirect "/")) response
 
     post "sign-out" $ do
       response <- runExceptT removeSession
-      either handleException (const (redirect "/")) response
+      either handleFailure (const (redirect "/")) response
 
     get "projects" appHtml
 
@@ -122,7 +122,7 @@ createApp configuration databaseConnectionPool httpManager =
       project <- runExceptT $ do
         user <- readUser
         storeProject user requestParams
-      either handleException (redirect . uncurry projectUrl) project
+      either handleFailure (redirect . uncurry projectUrl) project
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text)) $ const $ const appHtml
 
@@ -133,7 +133,7 @@ createApp configuration databaseConnectionPool httpManager =
       project <- runExceptT $ do
         user <- readUserByName username
         updateProject user projectName requestParams
-      either handleException (redirect . uncurry projectUrl) project
+      either handleFailure (redirect . uncurry projectUrl) project
 
     subcomponent "api" $ do
       get "me" $ do
@@ -141,7 +141,7 @@ createApp configuration databaseConnectionPool httpManager =
           Entity userId user <- readUser
           projects <- readMyProjects userId user
           return (user, projects)
-        either handleException (uncurry renderMe) me
+        either handleFailure (uncurry renderMe) me
 
       decode2 (get ("projects" <//> var <//> var)) $ \username projectName -> do
         now <- liftIO getCurrentTime
@@ -159,38 +159,38 @@ createApp configuration databaseConnectionPool httpManager =
           prs <- concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
           return $ List.sortBy (compare `Function.on` prUpdatedAt) prs
         let dashboard = Dashboard now <$> pullRequests
-        either handleException render dashboard
+        either handleFailure render dashboard
 
       decode2 (get ("projects" <//> var <//> var <//> "edit")) $ \username projectName -> do
         project <- runExceptT $ do
           Entity userId user <- readUserByName username
           project <- readProject user projectName
           return $ MySingleProject user project
-        either handleException render project
+        either handleFailure render project
 
   where
     appHtml = file "text/html" (configurationClientPath configuration </> "index.html")
 
     authenticateWithGitHub = redirect $ decodeUtf8 $ authorizationUrl gitHubOAuthCredentials
 
-    readUserId :: ExceptT Exception Context UserId
+    readUserId :: ExceptT Failure Context UserId
     readUserId = do
       now <- liftIO getCurrentTime
-      authId <- cookie "authId" `orException` UnauthenticatedUser
+      authId <- cookie "authId" `orFailure` UnauthenticatedUser
       sessions <- withDatabase $ do
         Sql.delete $ from $ \session ->
           where_ $ session ^. SessionExpiryTime <. val now
         select $ from $ \session -> do
           where_ $ session ^. SessionAuthId ==. val authId
           return session
-      Entity sessionId session <- return (listToMaybe sessions) `orException` UnauthenticatedUser
+      Entity sessionId session <- return (listToMaybe sessions) `orFailure` UnauthenticatedUser
       let newExpiryTime = addUTCTime sessionTTL now
       withDatabase $ update $ \session -> do
         set session [SessionExpiryTime =. val newExpiryTime]
         where_ $ session ^. SessionId ==. val sessionId
       return $ sessionUserId session
 
-    storeSession :: UserId -> ExceptT Exception Context ()
+    storeSession :: UserId -> ExceptT Failure Context ()
     storeSession userId = do
       authId <- decodeUtf8 . Base64.encode <$> liftIO (getRandomBytes 64)
       now <- liftIO getCurrentTime
@@ -198,7 +198,7 @@ createApp configuration databaseConnectionPool httpManager =
       withDatabase $ insert (Session authId expiryTime userId)
       lift $ setCookie "authId" authId sessionCookieSettings
 
-    removeSession :: ExceptT Exception Context ()
+    removeSession :: ExceptT Failure Context ()
     removeSession = do
       authId <- lift $ cookie "authId"
       when (isJust authId) $ do
@@ -211,7 +211,7 @@ createApp configuration databaseConnectionPool httpManager =
     sessionTTL = configurationSessionTTL configuration
 
     storeUser = do
-      code <- param "code" `orException` MissingParam "code"
+      code <- param "code" `orFailure` MissingParam "code"
       accessToken <- withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
       (GitHubUser gitHubUserId gitHubUserLogin gitHubUserAvatarUrl) <- fetchGitHubUser accessToken
@@ -242,7 +242,7 @@ createApp configuration databaseConnectionPool httpManager =
     updateProject (Entity userId user) existingProjectName requestParams = do
       (project, repositoryNames) <- projectParams userId requestParams
       Entity projectId _ <- withDatabase (getBy (UniqueProjectNameByUser userId existingProjectName))
-                              `orException` MissingProject existingProjectName
+                              `orFailure` MissingProject existingProjectName
       withDatabase $ do
         replace projectId project
         Sql.delete $ from $ \repository -> where_ (repository ^. ProjectRepositoryProjectId ==. val projectId)
@@ -265,29 +265,29 @@ createApp configuration databaseConnectionPool httpManager =
       withExceptT (QueryFailure . decodeUtf8 . toStrict)
         . ExceptT . liftIO . authGetJSON httpManager accessToken
 
-    readAccessToken :: ExceptT Exception Context AccessToken
+    readAccessToken :: ExceptT Failure Context AccessToken
     readAccessToken = do
       userId <- readUserId
       let userService = UserService userId GitHub
-      (Entity _ (ServiceCredentials _ _ _ accessToken)) <- withDatabase (getBy userService) `orException` MissingUser
+      (Entity _ (ServiceCredentials _ _ _ accessToken)) <- withDatabase (getBy userService) `orFailure` MissingUser
       return $ AccessToken accessToken Nothing Nothing Nothing Nothing
 
-    readUser :: ExceptT Exception Context (Entity User)
+    readUser :: ExceptT Failure Context (Entity User)
     readUser = do
       userId <- readUserId
-      user <- withDatabase (Database.get userId) `orException` MissingUser
+      user <- withDatabase (Database.get userId) `orFailure` MissingUser
       return $ Entity userId user
 
-    readUserByName :: Text -> ExceptT Exception Context (Entity User)
+    readUserByName :: Text -> ExceptT Failure Context (Entity User)
     readUserByName username = do
       userId <- readUserId
       users <- withDatabase $
         select $ from $ \user -> do
           where_ (user ^. UserId ==. val userId &&. user ^. UserUsername ==. val username)
           return user
-      return (listToMaybe users) `orException` QueryFailure "Invalid user."
+      return (listToMaybe users) `orFailure` QueryFailure "Invalid user."
 
-    readMyProjects :: Key User -> User -> ExceptT Exception Context [MyProject]
+    readMyProjects :: Key User -> User -> ExceptT Failure Context [MyProject]
     readMyProjects userId user = do
       projectsAndRepositoryEntities <- withDatabase $
         select $ from $ \(project `LeftOuterJoin` repository) -> do
@@ -300,7 +300,7 @@ createApp configuration databaseConnectionPool httpManager =
       let myProject project repositories = MyProject (projectName project) (projectUrl user project) (map projectRepositoryName (catMaybes repositories))
       return $ map (uncurry myProject) groupedProjectsAndRepositories
 
-    readProject :: User -> Text -> ExceptT Exception Context MyProject
+    readProject :: User -> Text -> ExceptT Failure Context MyProject
     readProject user projectName = do
       projectAndRepositories :: [(Entity Project, Maybe (Entity ProjectRepository))] <- withDatabase $
         select $ from $ \(project `LeftOuterJoin` repository) -> do
@@ -309,7 +309,7 @@ createApp configuration databaseConnectionPool httpManager =
           orderBy [asc (repository ?. ProjectRepositoryName)]
           return (project, repository)
       project <- return (entityVal . fst <$> listToMaybe projectAndRepositories)
-                   `orException` QueryFailure "Invalid project."
+                   `orFailure` QueryFailure "Invalid project."
       let repositories = map entityVal $ mapMaybe snd projectAndRepositories
       return $ MyProject projectName (projectUrl user project) (map projectRepositoryName repositories)
 
@@ -317,41 +317,41 @@ createApp configuration databaseConnectionPool httpManager =
 
     render value = json (AuthenticatedResponse value)
 
-    textParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a Text
-    textParam name params = return (lookup name params) `orException` MissingParam name
+    textParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Failure a Text
+    textParam name params = return (lookup name params) `orFailure` MissingParam name
 
-    textListParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Exception a [Text]
+    textListParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Failure a [Text]
     textListParam name params = return values `onEmpty` MissingParam name
       where
         values = filter (/= "") $ map snd $ filter ((== name) . fst) params
 
-    orException :: Monad m => m (Maybe a) -> e -> ExceptT e m a
-    maybe `orException` exception = maybeToExceptT exception (MaybeT maybe)
+    orFailure :: Monad m => m (Maybe a) -> e -> ExceptT e m a
+    maybe `orFailure` failure = maybeToExceptT failure (MaybeT maybe)
 
     onEmpty :: Monad m => m [a] -> e -> ExceptT e m [a]
-    list `onEmpty` exception = ExceptT ((\l -> when (null l) (Left exception) >> Right l) <$> list)
+    list `onEmpty` failure = ExceptT ((\l -> when (null l) (Left failure) >> Right l) <$> list)
 
-    handleException exception = do
-      let (status, response) = exceptionResponse exception
+    handleFailure failure = do
+      let (status, response) = failureResponse failure
       runStdoutLoggingT $ $logDebugS "Web" (decodeUtf8 $ toStrict $ encode response)
       setStatus status
       json response
 
-    exceptionResponse :: Exception -> (Status, Aeson.Value)
-    exceptionResponse UnauthenticatedUser =
+    failureResponse :: Failure -> (Status, Aeson.Value)
+    failureResponse UnauthenticatedUser =
       (unauthorized401, toJSON unauthenticatedResponse)
-    exceptionResponse MissingUser =
+    failureResponse MissingUser =
       (unauthorized401, toJSON unauthenticatedResponse)
-    exceptionResponse (MissingProject project) =
-      exceptionJSON badRequest400 "missing project" ["project" .= project]
-    exceptionResponse (MissingParam param) =
-      exceptionJSON badRequest400 "missing param" ["param" .= param]
-    exceptionResponse (InvalidAuthenticationCode message) =
-      exceptionJSON badRequest400 "invalid authentication code" ["message" .= message]
-    exceptionResponse (QueryFailure message) =
-      exceptionJSON internalServerError500 "internal failure" ["message" .= message]
+    failureResponse (MissingProject project) =
+      failureJSON badRequest400 "missing project" ["project" .= project]
+    failureResponse (MissingParam param) =
+      failureJSON badRequest400 "missing param" ["param" .= param]
+    failureResponse (InvalidAuthenticationCode message) =
+      failureJSON badRequest400 "invalid authentication code" ["message" .= message]
+    failureResponse (QueryFailure message) =
+      failureJSON internalServerError500 "internal failure" ["message" .= message]
 
-    exceptionJSON status message extras =
+    failureJSON status message extras =
       (status, object ([
         "error" .= (message :: Text),
         "status" .= status

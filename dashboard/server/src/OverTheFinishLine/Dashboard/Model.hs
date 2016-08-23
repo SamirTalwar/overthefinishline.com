@@ -29,25 +29,6 @@ import OverTheFinishLine.Dashboard.Enumerations
 
 type Url = Text
 
-data Exception =
-    UnauthenticatedUser
-  | MissingUser
-  | MissingProject Text
-  | MissingParam Text
-  | InvalidAuthenticationCode Text
-  | QueryFailure Text
-
-data Response a = AuthenticatedResponse a | UnauthenticatedResponse | Error String
-  deriving (Generic, Show)
-instance ToJSON a => ToJSON (Response a) where
-  toJSON (AuthenticatedResponse value) =
-    let (Object hashMap) = toJSON value
-    in Object (HashMap.insert (pack "state") (toJSON (pack "Authenticated")) hashMap)
-  toJSON UnauthenticatedResponse = object ["state" .= pack "Unauthenticated"]
-
-unauthenticatedResponse :: Response ()
-unauthenticatedResponse = UnauthenticatedResponse
-
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
   User
     username Text
@@ -83,6 +64,25 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     UniqueProjectRepositoryNameByProject projectId name
     deriving Eq Show
 |]
+
+data Failure =
+    UnauthenticatedUser
+  | MissingUser
+  | MissingProject Text
+  | MissingParam Text
+  | InvalidAuthenticationCode Text
+  | QueryFailure Text
+
+data Response a = AuthenticatedResponse a | UnauthenticatedResponse | Error String
+  deriving (Generic, Show)
+instance ToJSON a => ToJSON (Response a) where
+  toJSON (AuthenticatedResponse value) =
+    let (Object hashMap) = toJSON value
+    in Object (HashMap.insert (pack "state") (toJSON (pack "Authenticated")) hashMap)
+  toJSON UnauthenticatedResponse = object ["state" .= pack "Unauthenticated"]
+
+unauthenticatedResponse :: Response ()
+unauthenticatedResponse = UnauthenticatedResponse
 
 instance ToJSON User where toJSON = genericToJSON (stripPrefix "user")
 

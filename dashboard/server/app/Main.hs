@@ -30,8 +30,8 @@ import qualified Database.Persist as Database
 import qualified Database.Esqueleto as Sql
 import Database.Esqueleto hiding (delete, get)
 import Database.Persist.Postgresql (ConnectionString, runMigration, runSqlPersistMPool, withPostgresqlPool)
-import Network.HTTP.Client (Manager, newManager)
-import Network.HTTP.Client.TLS (tlsManagerSettings)
+import Network.HTTP.Client as HTTPClient
+import Network.HTTP.Client.TLS as HTTPClientTLS
 import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, internalServerError500)
 import Network.OAuth.OAuth2 as OAuth2
 import qualified Network.Wai.Parse as Parse
@@ -59,7 +59,8 @@ data Configuration = Configuration {
   configurationDatabaseConnectionString :: ConnectionString,
   configurationDatabasePoolSize :: Int,
   configurationSessionTTL :: NominalDiffTime,
-  configurationSessionStoreInterval :: NominalDiffTime
+  configurationSessionStoreInterval :: NominalDiffTime,
+  configurationHttpClientTimeoutInSeconds :: Int
 }
 
 type Context = SpockActionCtx () () () ()
@@ -75,13 +76,16 @@ server configuration =
   runStdoutLoggingT $ withPostgresqlPool databaseConnectionString databasePoolSize $ \pool -> liftIO $ do
     putStrLn ("Application starting on port " ++ show port ++ ".")
     flip runSqlPersistMPool pool $ runMigration migrateAll
-    httpManager <- newManager tlsManagerSettings
+    httpManager <- HTTPClient.newManager httpClientSettings
     app <- createApp configuration pool httpManager
     Warp.runSettings warpSettings app
   where
     databaseConnectionString = configurationDatabaseConnectionString configuration
     databasePoolSize = configurationDatabasePoolSize configuration
     port = configurationPort configuration
+    httpClientSettings = HTTPClientTLS.tlsManagerSettings {
+      managerResponseTimeout = Just (configurationHttpClientTimeoutInSeconds configuration * secondsInMicroseconds)
+    }
     warpSettings = Warp.defaultSettings
       |> Warp.setPort port
       |> Warp.setGracefulShutdownTimeout (Just 1)
@@ -383,6 +387,7 @@ readConfiguration =
     <*> readEnv "DATABASE_POOL_SIZE"
     <*> (fromInteger <$> readDefaultedEnv "SESSION_TTL" 3600)
     <*> (fromInteger <$> readDefaultedEnv "SESSION_STORE_INTERVAL" 10)
+    <*> readDefaultedEnv "HTTP_CLIENT_TIMEOUT" 5
   where
     byteStringEnv name = ByteStringC.pack <$> getEnv name
 
@@ -407,5 +412,7 @@ groupQueryBy keyFunction valueFunction list =
   map (\g -> (keyFunction (List.head g), map valueFunction g)) grouped
   where
     grouped = List.groupBy ((==) `Function.on` keyFunction) list
+
+secondsInMicroseconds = 1000000
 
 (|>) = flip ($)

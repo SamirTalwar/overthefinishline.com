@@ -33,6 +33,7 @@ import Database.Persist.Postgresql (ConnectionString, runMigration, runSqlPersis
 import Network.HTTP.Client as HTTPClient
 import Network.HTTP.Client.TLS as HTTPClientTLS
 import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, internalServerError500)
+import Network.HTTP.Types.URI as URI
 import Network.OAuth.OAuth2 as OAuth2
 import qualified Network.Wai.Parse as Parse
 import qualified Network.Wai.Handler.Warp as Warp
@@ -127,9 +128,9 @@ createApp configuration databaseConnectionPool httpManager =
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ const $ const appHtml
 
-    post ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ \username projectName -> do
+    decode2 (post ("projects" <//> var <//> var <//> "edit")) $ \username projectName -> do
       requestParams <- params
-      project <- runExceptT $  do
+      project <- runExceptT $ do
         user <- readUserByName username
         updateProject user projectName requestParams
       either handleException (redirect . uncurry projectUrl) project
@@ -142,7 +143,7 @@ createApp configuration databaseConnectionPool httpManager =
           return (user, projects)
         either handleException (uncurry renderMe) me
 
-      get ("projects" <//> var <//> var) $ \username projectName -> do
+      decode2 (get ("projects" <//> var <//> var)) $ \username projectName -> do
         now <- liftIO getCurrentTime
         pullRequests <- runExceptT $ do
           accessToken <- readAccessToken
@@ -160,7 +161,7 @@ createApp configuration databaseConnectionPool httpManager =
         let dashboard = Dashboard now <$> pullRequests
         either handleException render dashboard
 
-      get ("projects" <//> var <//> var <//> "edit") $ \username projectName -> do
+      decode2 (get ("projects" <//> var <//> var <//> "edit")) $ \username projectName -> do
         project <- runExceptT $ do
           Entity userId user <- readUserByName username
           project <- readProject user projectName
@@ -406,6 +407,10 @@ readConfiguration =
           putStrLn $ "Failed to parse the variable " ++ name ++ " with the value \"" ++ value ++ "\"."
           ioError theError
         ) value
+
+decode2 request handler = request $ \a b -> handler (decode a) (decode b)
+  where
+    decode = decodeUtf8 . URI.urlDecode True . encodeUtf8
 
 groupQueryBy :: Eq k => (v -> k) -> (v -> w) -> [v] -> [(k, [w])]
 groupQueryBy keyFunction valueFunction list =

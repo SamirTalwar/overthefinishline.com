@@ -7,5 +7,5 @@ build:
 	docker build --tag=$(TAG) .
 
 .PHONY: push
-push:
+push: build
 	docker push $(TAG)

@@ -25,7 +25,7 @@ lint:
 	stack exec hlint .
 
 .PHONY: push
-push:
+push: build test
 	docker push $(TAG)
 
 .PHONY: clean

@@ -14,7 +14,7 @@ test:
 	make -C dashboard test
 
 .PHONY: push
-push: build test
+push:
 	make -C dashboard push
 	make -C proxy push
 

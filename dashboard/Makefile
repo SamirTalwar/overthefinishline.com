@@ -7,7 +7,7 @@ TEST_FILES = $(shell find client/test -name '*.elm')
 TAG = samirtalwar/overthefinishline.com-dashboard
 
 .PHONY: build
-build: $(PRODUCTION_OUTPUT_FILES)
+build: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
 	stack build --test --no-run-tests
 	stack image container
 

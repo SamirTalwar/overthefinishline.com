@@ -68,17 +68,24 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 data Failure =
     UnauthenticatedUser
   | MissingUser
-  | MissingProject Text
-  | MissingParam Text
-  | InvalidAuthenticationCode Text
-  | QueryFailure Text
+  | MissingProject { failureProject :: Text }
+  | MissingParam { failureParam :: Text }
+  | QueryFailure { failureMessage :: Text }
+  | RequestFailure { failureUrl :: Url, failureMessage :: Text }
+  deriving (Eq, Generic, Show)
+instance ToJSON Failure where toJSON = genericToJSON (stripPrefix "failure")
 
-data Response a = AuthenticatedResponse a | UnauthenticatedResponse | Error String
-  deriving (Generic, Show)
+data Response a = AuthenticatedResponse [Failure] a | UnauthenticatedResponse | Error String
+  deriving (Eq, Show)
 instance ToJSON a => ToJSON (Response a) where
-  toJSON (AuthenticatedResponse value) =
-    let (Object hashMap) = toJSON value
-    in Object (HashMap.insert (pack "state") (toJSON (pack "Authenticated")) hashMap)
+  toJSON (AuthenticatedResponse [] value) =
+    let Object hashMap = toJSON value
+    in Object (hashMap |> HashMap.insert (pack "state") (toJSON (pack "Authenticated")))
+  toJSON (AuthenticatedResponse failures value) =
+    let Object hashMap = toJSON value
+    in Object (hashMap
+      |> HashMap.insert (pack "state") (toJSON (pack "Authenticated"))
+      |> HashMap.insert (pack "failures") (toJSON failures))
   toJSON UnauthenticatedResponse = object ["state" .= pack "Unauthenticated"]
 
 unauthenticatedResponse :: Response ()
@@ -149,3 +156,5 @@ stripPrefix prefix = defaultOptions { fieldLabelModifier = stripPrefixFromFields
   where
   stripPrefixFromFields prefix = lowercaseFirstCharacter . drop (length prefix)
   lowercaseFirstCharacter (first : rest) = Char.toLower first : rest
+
+(|>) = flip ($)

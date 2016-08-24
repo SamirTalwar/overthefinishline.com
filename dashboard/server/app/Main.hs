@@ -4,6 +4,7 @@
 
 module Main where
 
+import Control.Exception (catch)
 import Control.Monad (forM_, mzero, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger
@@ -17,7 +18,8 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Base64 as Base64
 import qualified Data.ByteString.Char8 as ByteStringC
-import Data.ByteString.Lazy (toStrict)
+import Data.ByteString.Lazy (fromStrict, toStrict)
+import qualified Data.Either as Either
 import qualified Data.Function as Function
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -32,6 +34,7 @@ import Database.Esqueleto hiding (delete, get)
 import Database.Persist.Postgresql (ConnectionString, runMigration, runSqlPersistMPool, withPostgresqlPool)
 import Network.HTTP.Client as HTTPClient
 import Network.HTTP.Client.TLS as HTTPClientTLS
+import Network.HTTP.Conduit as HTTPConduit
 import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, internalServerError500)
 import Network.HTTP.Types.URI as URI
 import Network.OAuth.OAuth2 as OAuth2
@@ -145,28 +148,32 @@ createApp configuration databaseConnectionPool httpManager =
 
       decode2 (get ("projects" <//> var <//> var)) $ \username projectName -> do
         now <- liftIO getCurrentTime
-        pullRequests <- runExceptT $ do
-          accessToken <- readAccessToken
-          repositories <- withDatabase (
-              select $ from $ \(user `InnerJoin` project `InnerJoin` repository) -> do
-                  on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
-                  on (user ^. UserId ==. project ^. ProjectUserId)
-                  where_ $
-                    user ^. UserUsername ==. val username
-                    &&. project ^. ProjectName ==. val projectName
-                  return repository
-            ) `onEmpty` QueryFailure "No repositories found."
-          prs <- concat <$> mapM (fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
-          return $ List.sortBy (compare `Function.on` prUpdatedAt) prs
-        let dashboard = Dashboard now <$> pullRequests
-        either handleFailure render dashboard
+        potentialAccessToken <- runExceptT readAccessToken
+        potentialRepositories <- runExceptT $ withDatabase (
+            select $ from $ \(user `InnerJoin` project `InnerJoin` repository) -> do
+                on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
+                on (user ^. UserId ==. project ^. ProjectUserId)
+                where_ $
+                  user ^. UserUsername ==. val username
+                  &&. project ^. ProjectName ==. val projectName
+                return repository
+          ) `onEmpty` QueryFailure "No repositories found."
+
+        case (potentialAccessToken, potentialRepositories) of
+          (Left failure, _) -> handleFailure failure
+          (_, Left failure) -> handleFailure failure
+          (Right accessToken, Right repositories) -> do
+            requests <- mapM (runExceptT . fetchGitHubPullRequests accessToken . projectRepositoryName . entityVal) repositories
+            let (failures, responses) = Either.partitionEithers requests
+            let pullRequests = List.sortBy (compare `Function.on` prUpdatedAt) (concat responses)
+            render failures $ Dashboard now pullRequests
 
       decode2 (get ("projects" <//> var <//> var <//> "edit")) $ \username projectName -> do
-        project <- runExceptT $ do
+        myProject <- runExceptT $ do
           Entity userId user <- readUserByName username
           project <- readProject user projectName
           return $ MySingleProject user project
-        either handleFailure render project
+        either handleFailure (render []) myProject
 
   where
     appHtml = file "text/html" (configurationClientPath configuration </> "index.html")
@@ -212,7 +219,7 @@ createApp configuration databaseConnectionPool httpManager =
 
     storeUser = do
       code <- param "code" `orFailure` MissingParam "code"
-      accessToken <- withExceptT (InvalidAuthenticationCode . decodeUtf8 . toStrict) $
+      accessToken <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
         ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
       (GitHubUser gitHubUserId gitHubUserLogin gitHubUserAvatarUrl) <- fetchGitHubUser accessToken
       let accessTokenString = OAuth2.accessToken accessToken
@@ -261,9 +268,12 @@ createApp configuration databaseConnectionPool httpManager =
     fetchGitHubPullRequests accessToken repositoryName =
       fetch accessToken $ mconcat ["https://api.github.com/repos/", encodeUtf8 repositoryName, "/pulls"]
 
-    fetch accessToken =
-      withExceptT (QueryFailure . decodeUtf8 . toStrict)
-        . ExceptT . liftIO . authGetJSON httpManager accessToken
+    fetch :: (MonadIO m, FromJSON a) => AccessToken -> URI -> ExceptT Failure m a
+    fetch accessToken url =
+      withExceptT (RequestFailure (decodeUtf8 url) . decodeUtf8 . toStrict) $ ExceptT $ liftIO $
+        authGetJSON httpManager accessToken url
+        `catch` \(StatusCodeException status _ _) ->
+          return $ Left $ fromStrict $ ByteStringC.pack $ show status
 
     readAccessToken :: ExceptT Failure Context AccessToken
     readAccessToken = do
@@ -313,9 +323,9 @@ createApp configuration databaseConnectionPool httpManager =
       let repositories = map entityVal $ mapMaybe snd projectAndRepositories
       return $ MyProject projectName (projectUrl user project) (map projectRepositoryName repositories)
 
-    renderMe user projects = render (Me user projects)
+    renderMe user projects = render [] (Me user projects)
 
-    render value = json (AuthenticatedResponse value)
+    render failures value = json (AuthenticatedResponse failures value)
 
     textParam :: Monad a => Text -> [(Text, Text)] -> ExceptT Failure a Text
     textParam name params = return (lookup name params) `orFailure` MissingParam name
@@ -346,10 +356,10 @@ createApp configuration databaseConnectionPool httpManager =
       failureJSON badRequest400 "missing project" ["project" .= project]
     failureResponse (MissingParam param) =
       failureJSON badRequest400 "missing param" ["param" .= param]
-    failureResponse (InvalidAuthenticationCode message) =
-      failureJSON badRequest400 "invalid authentication code" ["message" .= message]
     failureResponse (QueryFailure message) =
       failureJSON internalServerError500 "internal failure" ["message" .= message]
+    failureResponse (RequestFailure url message) =
+      failureJSON internalServerError500 "request failure" ["url" .= url, "message" .= message]
 
     failureJSON status message extras =
       (status, object ([
@@ -419,5 +429,3 @@ groupQueryBy keyFunction valueFunction list =
     grouped = List.groupBy ((==) `Function.on` keyFunction) list
 
 secondsInMicroseconds = 1000000
-
-(|>) = flip ($)

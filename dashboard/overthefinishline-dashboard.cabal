@@ -46,6 +46,7 @@ executable overthefinishline-dashboard-exe
                      , hoauth2
                      , http-client
                      , http-client-tls
+                     , http-conduit
                      , http-types
                      , monad-logger
                      , persistent
@@ -72,6 +73,7 @@ test-suite overthefinishline-dashboard-server-test
                      , heredoc
                      , text
                      , time
+                     , transformers
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

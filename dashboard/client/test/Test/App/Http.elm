@@ -6,6 +6,7 @@ import Dict
 import Json.Decode exposing (..)
 import String
 import Task exposing (Task)
+import Url
 
 import App.Error as Error exposing (Error)
 import App.Http exposing (..)
@@ -65,6 +66,32 @@ tests =
         actual = get' send Location.Me (succeed True)
       in
         assert actual (equals expected)
+    ),
+
+    test "App.Http.get: extracts partial failures from the response" (
+      let
+        expected : Task Error (Response String)
+        expected = Task.succeed responseWithFailures
+
+        request = {
+          verb = "GET",
+          headers = [("Accept", "application/json")],
+          url = "/me",
+          body = Http.empty
+        }
+        response = {
+          status = 200,
+          statusText = "OK",
+          headers = Dict.empty,
+          url = "/me",
+          value = Http.Text responseWithFailuresJson
+        }
+        send = stubSend request response
+
+        actual : Task Error (Response String)
+        actual = get' send Location.Me ("thing" := string)
+      in
+        assert actual (equals expected)
     )
   ]
 
@@ -78,7 +105,7 @@ authenticatedJson =
   """
 
 authenticatedResponse : Response String
-authenticatedResponse = Response "something"
+authenticatedResponse = Response [] "something"
 
 unauthenticatedJson : String
 unauthenticatedJson =
@@ -87,6 +114,25 @@ unauthenticatedJson =
       "state": "Unauthenticated"
     }
   """
+
+responseWithFailuresJson : String
+responseWithFailuresJson =
+  """
+    {
+      "state": "Authenticated",
+      "failures": [
+        {
+          "tag": "RequestFailure",
+          "url": "https://example.com/foo",
+          "message": "Not found at all, mate."
+        }
+      ],
+      "thing": "something else"
+    }
+  """
+
+responseWithFailures : Response String
+responseWithFailures = Response [RequestFailure (Url.parse "https://example.com/foo") "Not found at all, mate."] "something else"
 
 stubSend : Http.Request -> Http.Response -> Send
 stubSend expectedRequest response actualRequest =

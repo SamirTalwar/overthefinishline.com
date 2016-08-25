@@ -5,7 +5,7 @@ import Url exposing (Url)
 
 import App.Error exposing (Error)
 import App.Location exposing (Location)
-import App.Http exposing (Response)
+import App.Http exposing (Failures, Response)
 import App.Navigation as Navigation
 
 type Message =
@@ -30,7 +30,7 @@ type Page =
   | SelectAProjectPage Projects
   | NewProjectPage (List Name)
   | EditProjectPage Project
-  | DashboardPage Dashboard
+  | DashboardPage Failures Dashboard
   | ErrorPage Error
 
 type Me = Me User Projects

@@ -62,13 +62,13 @@ update message model =
 
     (MeMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
-    (MeMessage (Response me), _) ->
+    (MeMessage (Response _ me), _) ->
       Model me App.Navigation.initialState LoadingPage ! []
 
     (DashboardMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
-    (DashboardMessage (Response dashboard), Model me navigationState _) ->
-      Model me navigationState (DashboardPage dashboard) ! []
+    (DashboardMessage (Response failures dashboard), Model me navigationState _) ->
+      Model me navigationState (DashboardPage failures dashboard) ! []
     (DashboardMessage _, model) ->
       model ! []
 
@@ -87,7 +87,7 @@ update message model =
 
     (EditProjectMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
-    (EditProjectMessage (Response project), Model me navigationState _) ->
+    (EditProjectMessage (Response _ project), Model me navigationState _) ->
       Model me navigationState (EditProjectPage project) ! []
     (EditProjectMessage _, _) ->
       model ! []
@@ -140,13 +140,13 @@ view model =
         SelectAProjectPage projects -> App.Page.SelectAProject.html projects
         NewProjectPage repositoryNames -> App.Page.EditProject.htmlForNewProject repositoryNames
         EditProjectPage project -> App.Page.EditProject.htmlForExistingProject project
-        DashboardPage dashboard -> App.Page.Dashboard.html dashboard
+        DashboardPage failures dashboard -> App.Page.Dashboard.html failures dashboard
         ErrorPage error -> App.Page.Error.html error
 
 subscriptions : Model -> Sub Message
 subscriptions model =
   case model of
-    Model me navigationState (DashboardPage (Dashboard location _ _)) ->
+    Model me navigationState (DashboardPage _ (Dashboard location _ _)) ->
       every minute (always (Load location))
     _ -> Sub.none
 

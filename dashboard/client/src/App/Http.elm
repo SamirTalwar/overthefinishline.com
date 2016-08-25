@@ -1,6 +1,8 @@
 module App.Http exposing (
     Send,
     Response (..),
+    Failures,
+    Failure (..),
     get,
     get',
     decoder
@@ -9,14 +11,18 @@ module App.Http exposing (
 import Http
 import Json.Decode exposing (..)
 import Task exposing (Task)
-import Url
+import Url exposing (Url)
 
 import App.Error exposing (..)
 import App.Location as Location exposing (Location)
 
 type Response a =
     UnauthenticatedResponse
-  | Response a
+  | Response Failures a
+
+type alias Failures = List Failure
+type Failure =
+    RequestFailure Url String
 
 type alias Send = Http.Request -> Task Http.RawError Http.Response
 
@@ -40,11 +46,25 @@ decoder wrapped =
   ("state" := string) `andThen` \state ->
     case state of
       "Authenticated" ->
-        object1 Response wrapped
+        object2 Response failuresDecoder wrapped
       "Unauthenticated" ->
         succeed UnauthenticatedResponse
       _ ->
           fail (state ++ " is not a recognized state")
+
+failuresDecoder : Decoder Failures
+failuresDecoder = map (Maybe.withDefault []) (maybe ("failures" := (list failureDecoder)))
+
+failureDecoder : Decoder Failure
+failureDecoder =
+  ("tag" := string) `andThen` \tag ->
+    case tag of
+      "RequestFailure" ->
+        object2 RequestFailure
+          ("url" := Url.decoder)
+          ("message" := string)
+      _ ->
+          fail (tag ++ " is not a recognized failure tag")
 
 fromJson : Decoder (Response a) -> Task Http.RawError Http.Response -> Task Error (Response a)
 fromJson decoder response =

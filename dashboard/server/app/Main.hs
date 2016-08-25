@@ -273,7 +273,7 @@ createApp configuration databaseConnectionPool httpManager =
       withExceptT (RequestFailure (decodeUtf8 url) . decodeUtf8 . toStrict) $ ExceptT $ liftIO $
         authGetJSON httpManager accessToken url
         `catch` \(StatusCodeException status _ _) ->
-          return $ Left $ fromStrict $ ByteStringC.pack $ show status
+          return $ Left $ fromStrict $ statusMessage status
 
     readAccessToken :: ExceptT Failure Context AccessToken
     readAccessToken = do

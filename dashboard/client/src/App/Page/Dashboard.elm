@@ -56,4 +56,5 @@ failureText : Http.Failure -> List (Html a)
 failureText failure =
   case failure of
     Http.RequestFailure url message ->
-      [text "Failed to get a response for ", a [href url] [text (Url.toString url)], text ".", br [] [], text message]
+      [text "Failed to get a response for ", a [href url] [text (Url.toString url)], text ".", br [] [],
+       text "Error: ", text message]

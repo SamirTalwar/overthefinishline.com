@@ -8,8 +8,7 @@ TAG = samirtalwar/overthefinishline.com-dashboard
 
 .PHONY: build
 build: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
-	stack build --test --no-run-tests
-	stack image container
+	stack image container --docker --test
 
 .PHONY: check
 check: test lint

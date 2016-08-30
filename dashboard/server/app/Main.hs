@@ -32,11 +32,9 @@ import qualified Database.Persist as Database
 import qualified Database.Esqueleto as Sql
 import Database.Esqueleto hiding (delete, get)
 import Database.Persist.Postgresql (ConnectionString, runMigration, runSqlPersistMPool, withPostgresqlPool)
-import Network.HTTP.Client as HTTPClient
-import Network.HTTP.Client.TLS as HTTPClientTLS
-import Network.HTTP.Conduit as HTTPConduit
+import Network.HTTP.Client (HttpException (StatusCodeException))
 import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, internalServerError500)
-import Network.HTTP.Types.URI as URI
+import qualified Network.HTTP.Types.URI as URI
 import Network.OAuth.OAuth2 as OAuth2
 import qualified Network.Wai.Parse as Parse
 import qualified Network.Wai.Handler.Warp as Warp
@@ -48,61 +46,30 @@ import System.IO.Error
 import System.Posix.Signals
 import Web.Spock
 
+import OverTheFinishLine.Dashboard.Configuration
+import OverTheFinishLine.Dashboard.Infrastructure
 import OverTheFinishLine.Dashboard.Enumerations
 import OverTheFinishLine.Dashboard.GitHub
 import OverTheFinishLine.Dashboard.Model
-
-data Environment = Development | Production
-  deriving (Eq, Read, Show)
-type Port = Int
-data Configuration = Configuration {
-  configurationEnvironment :: Environment,
-  configurationPort :: Port,
-  configurationClientPath :: FilePath,
-  configurationGitHubOAuthCredentials :: OAuth2,
-  configurationDatabaseConnectionString :: ConnectionString,
-  configurationDatabasePoolSize :: Int,
-  configurationSessionTTL :: NominalDiffTime,
-  configurationSessionStoreInterval :: NominalDiffTime,
-  configurationHttpClientTimeoutInSeconds :: Int
-}
-
-type Context = SpockActionCtx () () () ()
+import qualified OverTheFinishLine.Dashboard.Session as Session
 
 instance ToJSON Status where
   toJSON (Status code message) = object ["code" .= code, "message" .= decodeUtf8 message]
 
 main :: IO ()
-main = readConfiguration >>= server
+main = do
+  configuration <- readConfiguration
+  runWithInfrastructure configuration $ \infrastructure -> do
+    app <- createApp infrastructure
+    Warp.runSettings (warpSettings infrastructure) app
 
-server :: Configuration -> IO ()
-server configuration =
-  runStdoutLoggingT $ withPostgresqlPool databaseConnectionString databasePoolSize $ \pool -> liftIO $ do
-    putStrLn ("Application starting on port " ++ show port ++ ".")
-    flip runSqlPersistMPool pool $ runMigration migrateAll
-    httpManager <- HTTPClient.newManager httpClientSettings
-    app <- createApp configuration pool httpManager
-    Warp.runSettings warpSettings app
-  where
-    databaseConnectionString = configurationDatabaseConnectionString configuration
-    databasePoolSize = configurationDatabasePoolSize configuration
-    port = configurationPort configuration
-    httpClientSettings = HTTPClientTLS.tlsManagerSettings {
-      managerResponseTimeout = Just (configurationHttpClientTimeoutInSeconds configuration * secondsInMicroseconds)
-    }
-    warpSettings = Warp.defaultSettings
-      |> Warp.setPort port
-      |> Warp.setGracefulShutdownTimeout (Just 1)
-      |> Warp.setInstallShutdownHandler (\closeSockets ->
-          void $ installHandler sigTERM (Catch (closeSockets >> putStrLn "Application shut down.")) Nothing)
-
-createApp configuration databaseConnectionPool httpManager =
+createApp infrastructure =
   spockAsApp $ spock (defaultSpockCfg () PCNoDatabase ()) $ do
-    middleware $ case configurationEnvironment configuration of
+    middleware $ case configurationEnvironment (configuration infrastructure) of
       Development -> logStdoutDev
       Production -> logStdout
 
-    middleware $ staticPolicy (noDots >-> addBase (configurationClientPath configuration))
+    middleware $ staticPolicy (noDots >-> addBase (configurationClientPath (configuration infrastructure)))
 
     get root appHtml
 
@@ -111,11 +78,11 @@ createApp configuration databaseConnectionPool httpManager =
     get ("authorization" <//> "by" <//> "github") $ do
       response <- runExceptT $ do
         userId <- storeUser
-        storeSession userId
+        Session.store userId infrastructure
       either handleFailure (const (redirect "/")) response
 
     post "sign-out" $ do
-      response <- runExceptT removeSession
+      response <- runExceptT (Session.remove infrastructure)
       either handleFailure (const (redirect "/")) response
 
     get "projects" appHtml
@@ -176,51 +143,14 @@ createApp configuration databaseConnectionPool httpManager =
         either handleFailure (render []) myProject
 
   where
-    appHtml = file "text/html" (configurationClientPath configuration </> "index.html")
+    appHtml = file "text/html" (configurationClientPath (configuration infrastructure) </> "index.html")
 
     authenticateWithGitHub = redirect $ decodeUtf8 $ authorizationUrl gitHubOAuthCredentials
-
-    readUserId :: ExceptT Failure Context UserId
-    readUserId = do
-      now <- liftIO getCurrentTime
-      authId <- cookie "authId" `orFailure` UnauthenticatedUser
-      sessions <- withDatabase $ do
-        Sql.delete $ from $ \session ->
-          where_ $ session ^. SessionExpiryTime <. val now
-        select $ from $ \session -> do
-          where_ $ session ^. SessionAuthId ==. val authId
-          return session
-      Entity sessionId session <- return (listToMaybe sessions) `orFailure` UnauthenticatedUser
-      let newExpiryTime = addUTCTime sessionTTL now
-      withDatabase $ update $ \session -> do
-        set session [SessionExpiryTime =. val newExpiryTime]
-        where_ $ session ^. SessionId ==. val sessionId
-      return $ sessionUserId session
-
-    storeSession :: UserId -> ExceptT Failure Context ()
-    storeSession userId = do
-      authId <- decodeUtf8 . Base64.encode <$> liftIO (getRandomBytes 64)
-      now <- liftIO getCurrentTime
-      let expiryTime = addUTCTime sessionTTL now
-      withDatabase $ insert (Session authId expiryTime userId)
-      lift $ setCookie "authId" authId sessionCookieSettings
-
-    removeSession :: ExceptT Failure Context ()
-    removeSession = do
-      authId <- lift $ cookie "authId"
-      when (isJust authId) $ do
-        withDatabase $ Sql.delete $ from $ \session ->
-          where_ $ session ^. SessionAuthId ==. val (fromJust authId)
-        lift $ deleteCookie "authId"
-
-    sessionCookieSettings = defaultCookieSettings { cs_EOL = CookieValidFor sessionTTL }
-
-    sessionTTL = configurationSessionTTL configuration
 
     storeUser = do
       code <- param "code" `orFailure` MissingParam "code"
       accessToken <- withExceptT (QueryFailure . decodeUtf8 . toStrict) $
-        ExceptT $ liftIO $ fetchAccessToken httpManager gitHubOAuthCredentials (encodeUtf8 code)
+        ExceptT $ liftIO $ fetchAccessToken (httpManager infrastructure) gitHubOAuthCredentials (encodeUtf8 code)
       (GitHubUser gitHubUserId gitHubUserLogin gitHubUserAvatarUrl) <- fetchGitHubUser accessToken
       let accessTokenString = OAuth2.accessToken accessToken
       withDatabase $ do
@@ -271,26 +201,26 @@ createApp configuration databaseConnectionPool httpManager =
     fetch :: (MonadIO m, FromJSON a) => AccessToken -> URI -> ExceptT Failure m a
     fetch accessToken url =
       withExceptT (RequestFailure (decodeUtf8 url) . decodeUtf8 . toStrict) $ ExceptT $ liftIO $
-        authGetJSON httpManager accessToken url
+        authGetJSON (httpManager infrastructure) accessToken url
         `catch` \(StatusCodeException status _ _) ->
           return $ Left $ fromStrict $ statusMessage status
 
     readAccessToken :: ExceptT Failure Context AccessToken
     readAccessToken = do
-      userId <- readUserId
+      userId <- Session.retrieve infrastructure
       let userService = UserService userId GitHub
       (Entity _ (ServiceCredentials _ _ _ accessToken)) <- withDatabase (getBy userService) `orFailure` MissingUser
       return $ AccessToken accessToken Nothing Nothing Nothing Nothing
 
     readUser :: ExceptT Failure Context (Entity User)
     readUser = do
-      userId <- readUserId
+      userId <- Session.retrieve infrastructure
       user <- withDatabase (Database.get userId) `orFailure` MissingUser
       return $ Entity userId user
 
     readUserByName :: Text -> ExceptT Failure Context (Entity User)
     readUserByName username = do
-      userId <- readUserId
+      userId <- Session.retrieve infrastructure
       users <- withDatabase $
         select $ from $ \user -> do
           where_ (user ^. UserId ==. val userId &&. user ^. UserUsername ==. val username)
@@ -367,56 +297,10 @@ createApp configuration databaseConnectionPool httpManager =
         "status" .= status
       ] ++ extras))
 
-    gitHubOAuthCredentials = configurationGitHubOAuthCredentials configuration
+    gitHubOAuthCredentials = configurationGitHubOAuthCredentials (configuration infrastructure)
 
     withDatabase :: MonadIO m => SqlPersistM a -> m a
-    withDatabase = flip liftSqlPersistMPool databaseConnectionPool
-
-readConfiguration =
-  Configuration
-    <$> readDefaultedEnv "ENVIRONMENT" Production
-    <*> readEnv "PORT"
-    <*> getEnv "CLIENT_PATH"
-    <*> (OAuth2
-      <$> byteStringEnv "GITHUB_OAUTH_CLIENT_ID"
-      <*> byteStringEnv "GITHUB_OAUTH_CLIENT_SECRET"
-      <*> pure "https://github.com/login/oauth/authorize?scope=user:email%20repo"
-      <*> pure "https://github.com/login/oauth/access_token"
-      <*> pure Nothing)
-    <*> do
-      host <- getEnv "DATABASE_HOST"
-      port <- getEnv "DATABASE_PORT"
-      database <- getEnv "DATABASE_DASHBOARD_NAME"
-      username <- getEnv "DATABASE_DASHBOARD_USERNAME"
-      password <- getEnv "DATABASE_DASHBOARD_PASSWORD"
-      return $ ByteStringC.pack $ unwords $ map (\(key, value) -> key ++ "='" ++ value ++ "'") [
-        ("host", host),
-        ("port", port),
-        ("dbname", database),
-        ("user", username),
-        ("password", password)]
-    <*> readEnv "DATABASE_POOL_SIZE"
-    <*> (fromInteger <$> readDefaultedEnv "SESSION_TTL" 3600)
-    <*> (fromInteger <$> readDefaultedEnv "SESSION_STORE_INTERVAL" 10)
-    <*> readDefaultedEnv "HTTP_CLIENT_TIMEOUT" 5
-  where
-    byteStringEnv name = ByteStringC.pack <$> getEnv name
-
-    readEnv :: Read a => String -> IO a
-    readEnv name = do
-      value <- getEnv name
-      readIO value `catchIOError` \theError -> do
-        putStrLn $ "Failed to parse the variable " ++ name ++ " with the value \"" ++ value ++ "\"."
-        ioError theError
-
-    readDefaultedEnv :: Read a => String -> a -> IO a
-    readDefaultedEnv name defaultValue = do
-      value <- lookupEnv name
-      maybe (return defaultValue) (\value ->
-        readIO value `catchIOError` \theError -> do
-          putStrLn $ "Failed to parse the variable " ++ name ++ " with the value \"" ++ value ++ "\"."
-          ioError theError
-        ) value
+    withDatabase = flip liftSqlPersistMPool (databaseConnectionPool infrastructure)
 
 decode2 request handler = request $ \a b -> handler (decode a) (decode b)
   where
@@ -427,5 +311,3 @@ groupQueryBy keyFunction valueFunction list =
   map (\g -> (keyFunction (List.head g), map valueFunction g)) grouped
   where
     grouped = List.groupBy ((==) `Function.on` keyFunction) list
-
-secondsInMicroseconds = 1000000

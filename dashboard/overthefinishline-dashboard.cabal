@@ -15,19 +15,34 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      server/src
-  exposed-modules:     OverTheFinishLine.Dashboard.Enumerations
+  exposed-modules:     OverTheFinishLine.Dashboard.Configuration
+                     , OverTheFinishLine.Dashboard.Enumerations
                      , OverTheFinishLine.Dashboard.GitHub
+                     , OverTheFinishLine.Dashboard.Infrastructure
                      , OverTheFinishLine.Dashboard.Model
+                     , OverTheFinishLine.Dashboard.Session
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , base64-bytestring
                      , bytestring
+                     , cryptonite
+                     , esqueleto
+                     , filepath
+                     , hoauth2
+                     , http-client
+                     , http-client-tls
                      , http-types
+                     , monad-logger
                      , persistent
                      , persistent-postgresql
                      , persistent-template
+                     , Spock
                      , text
                      , time
+                     , transformers
+                     , unix
                      , unordered-containers
+                     , warp
   default-language:    Haskell2010
 
 executable overthefinishline-dashboard-exe

@@ -19,7 +19,6 @@ services:
     env_file: development.env
     environment:
       'ENVIRONMENT': 'Development'
-      'CLIENT_PATH': '/client'
     ports:
       - 80
     depends_on:

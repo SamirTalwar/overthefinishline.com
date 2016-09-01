@@ -3,6 +3,7 @@
 module OverTheFinishLine.Dashboard.Configuration where
 
 import qualified Data.ByteString.Char8
+import qualified Data.Maybe as Maybe
 import Data.Time.Clock (NominalDiffTime)
 import Database.Persist.Postgresql (ConnectionString)
 import Network.OAuth.OAuth2 (OAuth2 (OAuth2))
@@ -31,7 +32,7 @@ readConfiguration =
   Configuration
     <$> readDefaultedEnv "ENVIRONMENT" Production
     <*> readEnv "PORT"
-    <*> getEnv "CLIENT_PATH"
+    <*> getDefaultedEnv "CLIENT_PATH" "/client"
     <*> (OAuth2
       <$> byteStringEnv "GITHUB_OAUTH_CLIENT_ID"
       <*> byteStringEnv "GITHUB_OAUTH_CLIENT_SECRET"
@@ -55,7 +56,9 @@ readConfiguration =
     <*> (fromInteger <$> readDefaultedEnv "SESSION_STORE_INTERVAL" 10)
     <*> readDefaultedEnv "HTTP_CLIENT_TIMEOUT" 5
   where
-    byteStringEnv name = Data.ByteString.Char8.pack <$> getEnv name
+    getDefaultedEnv :: String -> String -> IO String
+    getDefaultedEnv name defaultValue =
+      Maybe.fromMaybe defaultValue <$> lookupEnv name
 
     readEnv :: Read a => String -> IO a
     readEnv name = do
@@ -65,10 +68,10 @@ readConfiguration =
         ioError theError
 
     readDefaultedEnv :: Read a => String -> a -> IO a
-    readDefaultedEnv name defaultValue = do
-      value <- lookupEnv name
-      maybe (return defaultValue) (\value ->
+    readDefaultedEnv name defaultValue =
+      lookupEnv name >>= maybe (return defaultValue) (\value ->
         readIO value `catchIOError` \theError -> do
           putStrLn $ "Failed to parse the variable " ++ name ++ " with the value \"" ++ value ++ "\"."
-          ioError theError
-        ) value
+          ioError theError)
+
+    byteStringEnv name = Data.ByteString.Char8.pack <$> getEnv name

@@ -1,3 +1,5 @@
+STACK = overthefinishline
+
 .PHONY: build
 build:
 	make -C dashboard
@@ -17,6 +19,8 @@ test:
 push:
 	make -C dashboard push
 	make -C proxy push
+	sleep 60
+	docker-cloud stack update $(STACK)
 
 .PHONY: clean
 clean:

@@ -17,6 +17,7 @@ test:
 
 .PHONY: push
 push:
+	git push
 	make -C dashboard push
 	make -C proxy push
 	sleep 60

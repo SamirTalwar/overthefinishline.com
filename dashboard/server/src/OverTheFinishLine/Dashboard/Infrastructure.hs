@@ -5,7 +5,7 @@ module OverTheFinishLine.Dashboard.Infrastructure (
 ) where
 
 import Control.Monad (void)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (runStdoutLoggingT)
 import Database.Persist.Postgresql (ConnectionPool, withPostgresqlPool)
 import qualified Network.HTTP.Client
@@ -26,23 +26,25 @@ data Infrastructure = Infrastructure {
 }
 
 runWithInfrastructure :: Configuration -> (Infrastructure -> IO ()) -> IO ()
-runWithInfrastructure configuration startApp =
-  runStdoutLoggingT $ withPostgresqlPool databaseConnectionString databasePoolSize $ \databaseConnectionPool -> liftIO $ do
-    httpManager <- Network.HTTP.Client.newManager httpClientSettings
-    let infrastructure = Infrastructure databaseConnectionPool httpManager warpSettings configuration
+runWithInfrastructure configuration' startApp =
+  runStdoutLoggingT $ withPostgresqlPool databaseConnectionString databasePoolSize $ \databaseConnectionPool' -> liftIO $ do
+    httpManager' <- Network.HTTP.Client.newManager httpClientSettings
+    let infrastructure = Infrastructure databaseConnectionPool' httpManager' warpSettings' configuration'
     startApp infrastructure
   where
-    databaseConnectionString = configurationDatabaseConnectionString configuration
-    databasePoolSize = configurationDatabasePoolSize configuration
+    databaseConnectionString = configurationDatabaseConnectionString configuration'
+    databasePoolSize = configurationDatabasePoolSize configuration'
     httpClientSettings = Network.HTTP.Client.TLS.tlsManagerSettings {
-      Network.HTTP.Client.managerResponseTimeout = Just (configurationHttpClientTimeoutInSeconds configuration * secondsInMicroseconds)
+      Network.HTTP.Client.managerResponseTimeout = Just (configurationHttpClientTimeoutInSeconds configuration' * secondsInMicroseconds)
     }
-    warpSettings = Warp.defaultSettings
-      |> Warp.setPort (configurationPort configuration)
+    warpSettings' = Warp.defaultSettings
+      |> Warp.setPort (configurationPort configuration')
       |> Warp.setGracefulShutdownTimeout (Just 1)
       |> Warp.setInstallShutdownHandler (\closeSockets ->
           void $ installHandler sigTERM (Catch closeSockets) Nothing)
 
+secondsInMicroseconds :: Int
 secondsInMicroseconds = 1000000
 
+(|>) :: a -> (a -> b) -> b
 (|>) = flip ($)

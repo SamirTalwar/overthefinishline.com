@@ -14,7 +14,7 @@ import Control.Monad.Trans.Maybe (MaybeT (MaybeT), maybeToExceptT)
 import Crypto.Random (getRandomBytes)
 import qualified Data.ByteString.Base64 as Base64
 import qualified Data.Maybe as Maybe
-import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Data.Text.Encoding (decodeUtf8)
 import qualified Data.Time.Clock as Clock
 import Database.Esqueleto
 import qualified Web.Spock as Spock
@@ -33,19 +33,19 @@ retrieve infrastructure = do
     select $ from $ \session -> do
       where_ $ session ^. SessionAuthId ==. val authId
       return session
-  Entity sessionId session <- return (Maybe.listToMaybe sessions) `orFailure` UnauthenticatedUser
+  Entity sessionId currentSession <- return (Maybe.listToMaybe sessions) `orFailure` UnauthenticatedUser
   let newExpiryTime = Clock.addUTCTime (sessionTTL infrastructure) now
   withDatabase infrastructure $ update $ \session -> do
     set session [SessionExpiryTime =. val newExpiryTime]
     where_ $ session ^. SessionId ==. val sessionId
-  return $ sessionUserId session
+  return $ sessionUserId currentSession
 
 store :: UserId -> Infrastructure -> ExceptT Failure Context ()
 store userId infrastructure = do
   authId <- decodeUtf8 . Base64.encode <$> liftIO (getRandomBytes 64)
   now <- liftIO Clock.getCurrentTime
   let expiryTime = Clock.addUTCTime (sessionTTL infrastructure) now
-  withDatabase infrastructure $ insert (Session authId expiryTime userId)
+  _ <- withDatabase infrastructure $ insert (Session authId expiryTime userId)
   lift $ Spock.setCookie "authId" authId (sessionCookieSettings infrastructure)
 
 remove :: Infrastructure -> ExceptT Failure Context ()
@@ -60,11 +60,13 @@ withDatabase :: MonadIO m => Infrastructure -> SqlPersistM a -> m a
 withDatabase = flip liftSqlPersistMPool . databaseConnectionPool
 
 orFailure :: Monad m => m (Maybe a) -> e -> ExceptT e m a
-maybe `orFailure` failure = maybeToExceptT failure (MaybeT maybe)
+maybeValue `orFailure` failure = maybeToExceptT failure (MaybeT maybeValue)
 
+sessionCookieSettings :: Infrastructure -> Spock.CookieSettings
 sessionCookieSettings infrastructure =
   Spock.defaultCookieSettings {
     Spock.cs_EOL = Spock.CookieValidFor (sessionTTL infrastructure)
   }
 
+sessionTTL :: Infrastructure -> Clock.NominalDiffTime
 sessionTTL = configurationSessionTTL . configuration

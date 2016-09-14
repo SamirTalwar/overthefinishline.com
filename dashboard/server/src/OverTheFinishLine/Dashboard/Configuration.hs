@@ -8,7 +8,6 @@ import Data.Time.Clock (NominalDiffTime)
 import Database.Persist.Postgresql (ConnectionString)
 import Network.OAuth.OAuth2 (OAuth2 (OAuth2))
 import System.Environment (getEnv, lookupEnv)
-import System.FilePath (FilePath)
 import System.IO.Error (catchIOError)
 
 data Configuration = Configuration {
@@ -28,6 +27,7 @@ data Environment = Development | Production
 
 type Port = Int
 
+readConfiguration :: IO Configuration
 readConfiguration =
   Configuration
     <$> readDefaultedEnv "ENVIRONMENT" Production

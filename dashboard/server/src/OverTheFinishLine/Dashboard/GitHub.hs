@@ -1,46 +1,57 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module OverTheFinishLine.Dashboard.GitHub (GitHubUser (..)) where
+module OverTheFinishLine.Dashboard.GitHub (
+  User (..),
+  PullRequest (..),
+  Repository (..)
+) where
 
-import Control.Monad ((<=<), foldM, mzero)
+import Control.Monad (mzero)
 import Data.Aeson
-import qualified Data.HashMap.Strict as HashMap
 import Data.Text (Text, pack)
 
-import OverTheFinishLine.Dashboard.Model
+import qualified OverTheFinishLine.Dashboard.Model as Model
 
-data GitHubUser =
-  GitHubUser {
+data User =
+  User {
     gitHubUserId :: Text,
     gitHubUserLogin :: Text,
     gitHubUserAvatarUrl :: Text
   }
   deriving (Eq, Show)
 
-instance FromJSON GitHubUser where
+instance FromJSON User where
   parseJSON (Object v) =
-    GitHubUser
+    User
       <$> (numberToText <$> v .: "id")
       <*> v .: "login"
       <*> v .: "avatar_url"
   parseJSON _ = mzero
 
+newtype PullRequest = PullRequest { unPullRequest :: Model.PullRequest }
+  deriving (Eq, Show)
+
 instance FromJSON PullRequest where
   parseJSON (Object v) =
     PullRequest
-      <$> (v .: "base" >>= (.: "repo"))
-      <*> v .: "number"
-      <*> v .: "title"
-      <*> v .: "updated_at"
-      <*> v .: "html_url"
+      <$> (Model.PullRequest
+        <$> (unRepository <$> (v .: "base" >>= (.: "repo")))
+        <*> v .: "number"
+        <*> v .: "title"
+        <*> v .: "updated_at"
+        <*> v .: "html_url")
   parseJSON _ = mzero
+
+newtype Repository = Repository { unRepository :: Model.Repository }
+  deriving (Eq, Show)
 
 instance FromJSON Repository where
   parseJSON (Object v) =
     Repository
-      <$> (v .: "owner" >>= (.: "login"))
-      <*> v .: "name"
-      <*> v .: "html_url"
+      <$> (Model.Repository
+        <$> (v .: "owner" >>= (.: "login"))
+        <*> v .: "name"
+        <*> v .: "html_url")
   parseJSON _ = mzero
 
 numberToText :: Integer -> Text

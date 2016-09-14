@@ -5,12 +5,12 @@ module Test.OverTheFinishLine.Dashboard.Model where
 import Data.Aeson
 import Data.Functor.Identity (runIdentity)
 import Data.Text (Text, pack)
-import Data.Time.Clock
 import Data.Time.Format
 import Test.Hspec
 
 import OverTheFinishLine.Dashboard.Model
 
+spec :: SpecWith ()
 spec = describe "JSON serialization of the model" $ do
   it "serializes users" $ do
     let user = User "Steve" "https://example.com/avatars/Steve.jpg"

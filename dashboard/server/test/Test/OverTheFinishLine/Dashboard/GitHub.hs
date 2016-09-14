@@ -4,23 +4,25 @@
 module Test.OverTheFinishLine.Dashboard.GitHub where
 
 import Data.Aeson
+import Data.ByteString.Lazy (ByteString)
 import Data.Functor.Identity
-import Data.Text (pack)
+import Data.Time.Clock (UTCTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Test.Hspec
 import Text.Heredoc
 
-import OverTheFinishLine.Dashboard.GitHub
+import qualified OverTheFinishLine.Dashboard.GitHub as GitHub
 import OverTheFinishLine.Dashboard.Model
 
+spec :: SpecWith ()
 spec = describe "parsing of GitHub JSON" $ do
   it "parses the user JSON" $ do
-    let expected = GitHubUser "47582" "SamirTalwar" "https://avatars.githubusercontent.com/u/47582?v=3"
+    let expected = GitHub.User "47582" "SamirTalwar" "https://avatars.githubusercontent.com/u/47582?v=3"
     let actual = decode userJson
     actual `shouldBe` Just expected
 
   it "parses pull request JSON" $ do
-    let expected = PullRequest {
+    let expected = GitHub.PullRequest PullRequest {
       prRepository = Repository "sandwiches" "cheese" "https://github.com/sandwiches/cheese",
       prNumber = 123,
       prTitle = "Add support for French cheese.",
@@ -30,8 +32,10 @@ spec = describe "parsing of GitHub JSON" $ do
     let actual = decode pullRequestJson
     actual `shouldBe` Just expected
 
+parseTime :: String -> UTCTime
 parseTime = runIdentity . parseTimeM False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%S%Z"))
 
+userJson :: ByteString
 userJson =
   [str|{
       |  "login": "SamirTalwar",
@@ -67,6 +71,7 @@ userJson =
       |}
       |]
 
+pullRequestJson :: ByteString
 pullRequestJson =
   [str|{
       |  "url": "https://api.github.com/repos/sandwiches/cheese/pulls/123",

@@ -65,6 +65,9 @@ extra-package-dbs: []
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
 
+ghc-options:
+  "*": -Wall -Werror
+
 image:
   container:
     base: fpco/stack-run

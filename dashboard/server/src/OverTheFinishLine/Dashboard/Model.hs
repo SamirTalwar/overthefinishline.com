@@ -19,8 +19,6 @@ import qualified Data.HashMap.Strict as HashMap
 import Data.Text (Text, pack)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Time (UTCTime)
-import Database.Persist
-import Database.Persist.Postgresql
 import Database.Persist.TH
 import GHC.Generics
 import Network.HTTP.Types.URI (encodePathSegments)
@@ -75,7 +73,7 @@ data Failure =
   deriving (Eq, Generic, Show)
 instance ToJSON Failure where toJSON = genericToJSON (stripPrefix "failure")
 
-data Response a = AuthenticatedResponse [Failure] a | UnauthenticatedResponse | Error String
+data Response a = AuthenticatedResponse [Failure] a | UnauthenticatedResponse
   deriving (Eq, Show)
 instance ToJSON a => ToJSON (Response a) where
   toJSON (AuthenticatedResponse [] value) =
@@ -152,9 +150,13 @@ projectUrl user project =
     $ encodePathSegments ["projects", userUsername user, projectName project]
 
 stripPrefix :: String -> Options
-stripPrefix prefix = defaultOptions { fieldLabelModifier = stripPrefixFromFields prefix }
+stripPrefix prefix =
+  defaultOptions {
+    fieldLabelModifier = lowercaseFirstCharacter . drop (length prefix)
+  }
   where
-  stripPrefixFromFields prefix = lowercaseFirstCharacter . drop (length prefix)
+  lowercaseFirstCharacter "" = ""
   lowercaseFirstCharacter (first : rest) = Char.toLower first : rest
 
+(|>) :: a -> (a -> b) -> b
 (|>) = flip ($)

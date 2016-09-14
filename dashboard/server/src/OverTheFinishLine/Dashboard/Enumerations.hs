@@ -7,7 +7,6 @@
 
 module OverTheFinishLine.Dashboard.Enumerations where
 
-import Database.Persist
 import Database.Persist.TH
 
 data ThirdPartyService = GitHub

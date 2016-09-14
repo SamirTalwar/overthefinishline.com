@@ -72,6 +72,7 @@ executable overthefinishline-dashboard-exe
                      , transformers
                      , unix
                      , unordered-containers
+                     , wai
                      , wai-extra
                      , wai-middleware-static
                      , warp
@@ -81,10 +82,13 @@ test-suite overthefinishline-dashboard-server-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      server/test
   main-is:             Spec.hs
+  other-modules:       Test.OverTheFinishLine.Dashboard.GitHub
+                     , Test.OverTheFinishLine.Dashboard.Model
   build-depends:       base
                      , overthefinishline-dashboard
                      , hspec
                      , aeson
+                     , bytestring
                      , heredoc
                      , text
                      , time

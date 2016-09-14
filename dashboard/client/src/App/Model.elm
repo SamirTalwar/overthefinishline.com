@@ -60,8 +60,10 @@ type alias Repository = {
 
 type Avatar = GitHubAvatar Url
 
+avatarSize = 24
+
 avatarLink : Avatar -> Url
-avatarLink (GitHubAvatar url) = Url.addQuery "s" "24" url
+avatarLink (GitHubAvatar url) = Url.addQuery "s" (toString avatarSize) url
 
 type alias Name = String
 type alias Username = String

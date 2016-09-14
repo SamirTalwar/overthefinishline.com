@@ -2,11 +2,11 @@ module App.Page.Navigation exposing (signedIn, signedOut)
 
 import App.Page.Html exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, method, style, type')
+import Html.Attributes exposing (alt, class, height, method, style, type', width)
 import Html.Events exposing (..)
 
 import App.Location as Location
-import App.Model exposing (Me (..), User (..), Project (..), avatarLink)
+import App.Model exposing (Me (..), User (..), Project (..), avatarLink, avatarSize)
 import App.Navigation exposing (..)
 
 signedIn : Me -> State -> Html Message
@@ -14,7 +14,7 @@ signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
   navigationBar [
     li [class "nav-item"] [
       a [class "nav-link", emptyHref] [
-        span [class "avatar"] [img [src (avatarLink avatar), alt ""] []],
+        span [class "avatar"] [img [src (avatarLink avatar), alt "", width avatarSize, height avatarSize] []],
         span [class "username"] [text username]
       ]
     ],

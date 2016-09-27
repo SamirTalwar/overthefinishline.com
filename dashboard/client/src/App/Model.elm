@@ -60,6 +60,7 @@ type alias Repository = {
 
 type Avatar = GitHubAvatar Url
 
+avatarSize : Int
 avatarSize = 24
 
 avatarLink : Avatar -> Url

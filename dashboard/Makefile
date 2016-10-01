@@ -21,7 +21,7 @@ test: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
 .PHONY: lint
 lint:
 	stack exec which hlint >/dev/null || stack install hlint
-	stack exec hlint .
+	stack exec hlint -- --ignore='Use ***' .
 
 .PHONY: push
 push: build test

@@ -24,7 +24,7 @@ lint:
 	stack exec hlint -- --ignore='Use ***' .
 
 .PHONY: push
-push: build test
+push: build test lint
 	docker push $(TAG)
 
 .PHONY: clean

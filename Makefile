@@ -2,9 +2,9 @@ STACK = overthefinishline
 
 .PHONY: build
 build:
-	make -C dashboard
-	make -C database
-	make -C proxy
+	make -C dashboard build
+	make -C database build
+	make -C proxy build
 	touch .built
 
 .PHONY: check

@@ -21,6 +21,7 @@ import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Data.Time.Clock (getCurrentTime)
 import qualified Database.Persist as Database
+import qualified Database.Persist.Postgresql as Postgresql
 import qualified Database.Esqueleto as Sql
 import Database.Esqueleto hiding (delete, get)
 import Network.HTTP.Client (HttpException (StatusCodeException))
@@ -49,7 +50,8 @@ main = do
     Warp.runSettings (warpSettings infrastructure) app
 
 createApp :: Infrastructure -> IO Network.Wai.Application
-createApp infrastructure =
+createApp infrastructure = do
+  withDatabase $ Postgresql.runMigration migrateAll
   spockAsApp $ spock (defaultSpockCfg () PCNoDatabase ()) $ do
     middleware $ case configurationEnvironment (configuration infrastructure) of
       Development -> logStdoutDev

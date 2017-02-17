@@ -34,7 +34,6 @@ import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.FilePath
 import Web.Spock (Var, file, get, json, middleware, param, params, post, redirect, root, setStatus, spock, spockAsApp, var, (<//>))
-import Web.Spock.Config (PoolOrConn (PCNoDatabase), defaultSpockCfg)
 
 import OverTheFinishLine.Dashboard.Configuration
 import OverTheFinishLine.Dashboard.Infrastructure
@@ -53,8 +52,7 @@ main = do
 createApp :: Infrastructure -> IO Network.Wai.Application
 createApp infrastructure = do
   withDatabase $ Postgresql.runMigration migrateAll
-  spockConfig <- defaultSpockCfg () PCNoDatabase ()
-  spockAsApp $ spock spockConfig $ do
+  spockAsApp $ spock (spockConfiguration infrastructure) $ do
     middleware $ case configurationEnvironment (configuration infrastructure) of
       Development -> logStdoutDev
       Production -> logStdout

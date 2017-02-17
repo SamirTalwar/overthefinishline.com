@@ -13,6 +13,7 @@ import qualified Network.HTTP.Client.TLS
 import qualified Network.Wai.Handler.Warp as Warp
 import System.Posix.Signals (Handler (Catch), installHandler, sigTERM)
 import qualified Web.Spock as Spock
+import Web.Spock.Config
 
 import OverTheFinishLine.Dashboard.Configuration
 
@@ -22,6 +23,7 @@ data Infrastructure = Infrastructure {
   databaseConnectionPool :: ConnectionPool,
   httpManager :: Network.HTTP.Client.Manager,
   warpSettings :: Warp.Settings,
+  spockConfiguration :: SpockCfg () () (),
   configuration :: Configuration
 }
 
@@ -29,7 +31,8 @@ runWithInfrastructure :: Configuration -> (Infrastructure -> IO ()) -> IO ()
 runWithInfrastructure configuration' startApp =
   runStdoutLoggingT $ withPostgresqlPool databaseConnectionString databasePoolSize $ \databaseConnectionPool' -> liftIO $ do
     httpManager' <- Network.HTTP.Client.newManager httpClientSettings
-    let infrastructure = Infrastructure databaseConnectionPool' httpManager' warpSettings' configuration'
+    spockConfiguration' <- defaultSpockCfg () PCNoDatabase ()
+    let infrastructure = Infrastructure databaseConnectionPool' httpManager' warpSettings' spockConfiguration' configuration'
     startApp infrastructure
   where
     databaseConnectionString = configurationDatabaseConnectionString configuration'

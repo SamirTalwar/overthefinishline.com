@@ -57,4 +57,4 @@ client/src/Native/Moment.js: client/native/src/Moment.js client/src/Native node_
 	./node_modules/.bin/browserify --outfile=$@ $<
 
 node_modules: package.json
-	npm install
+	npm install && npm prune

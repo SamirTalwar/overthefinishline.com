@@ -52,6 +52,10 @@ nav.navbar {
 }
 
 .details {
+    td:not(.pr-title) {
+      white-space: nowrap;
+    }
+
     td.link {
         padding: 0;
 

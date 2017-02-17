@@ -2,7 +2,7 @@ module App.Page.Dashboard exposing (html)
 
 import App.Page.Html exposing (href, role)
 import Html exposing (..)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, classList)
 import List
 import Moment exposing (Moment)
 import Url
@@ -29,16 +29,16 @@ html failures (Dashboard _ now pullRequests) =
               old = Moment.durationBetween pullRequest.updatedAt now > Moment.durationOf 3 Moment.Hours
             in
               tr [] [
-                td [class "link"] [
+                td [class "link repository"] [
                   a [href pullRequest.repository.url] [
                     text (pullRequest.repository.owner ++ " / " ++ pullRequest.repository.name)]],
-                td [class "link"] [
+                td [class "link pr-number"] [
                   a [href pullRequest.url] [
                     text ("#" ++ (toString pullRequest.number))]],
-                td [class "link"] [
+                td [class "link pr-title"] [
                   a [href pullRequest.url] [
                     text pullRequest.title]],
-                td (if old then [class "old"] else []) [
+                td ([classList [("timestamp", True), ("old", old)]]) [
                   text ("updated " ++ pullRequest.updatedAt `Moment.from` now)]
               ]
           )

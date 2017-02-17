@@ -35,7 +35,9 @@ runWithInfrastructure configuration' startApp =
     databaseConnectionString = configurationDatabaseConnectionString configuration'
     databasePoolSize = configurationDatabasePoolSize configuration'
     httpClientSettings = Network.HTTP.Client.TLS.tlsManagerSettings {
-      Network.HTTP.Client.managerResponseTimeout = Just (configurationHttpClientTimeoutInSeconds configuration' * secondsInMicroseconds)
+      Network.HTTP.Client.managerResponseTimeout =
+        Network.HTTP.Client.responseTimeoutMicro (
+          configurationHttpClientTimeoutInSeconds configuration' * secondsInMicroseconds)
     }
     warpSettings' = Warp.defaultSettings
       |> Warp.setPort (configurationPort configuration')

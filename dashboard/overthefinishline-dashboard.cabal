@@ -21,7 +21,7 @@ library
                      , OverTheFinishLine.Dashboard.Infrastructure
                      , OverTheFinishLine.Dashboard.Model
                      , OverTheFinishLine.Dashboard.Session
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base >= 4.9 && < 5
                      , aeson
                      , base64-bytestring
                      , bytestring

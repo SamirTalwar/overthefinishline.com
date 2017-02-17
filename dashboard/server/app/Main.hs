@@ -24,7 +24,7 @@ import qualified Database.Persist as Database
 import qualified Database.Persist.Postgresql as Postgresql
 import qualified Database.Esqueleto as Sql
 import Database.Esqueleto hiding (delete, get)
-import Network.HTTP.Client (HttpException (StatusCodeException))
+import Network.HTTP.Client (HttpException (HttpExceptionRequest), HttpExceptionContent (StatusCodeException), responseStatus)
 import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, internalServerError500)
 import qualified Network.HTTP.Types.URI as URI
 import qualified Network.OAuth.OAuth2 as OAuth2
@@ -33,7 +33,8 @@ import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import Network.Wai.Middleware.Static (addBase, noDots, staticPolicy, (>->))
 import System.FilePath
-import Web.Spock (PoolOrConn (PCNoDatabase), Var, defaultSpockCfg, file, get, json, middleware, param, params, post, redirect, root, setStatus, spock, spockAsApp, subcomponent, var, (<//>))
+import Web.Spock (Var, file, get, json, middleware, param, params, post, redirect, root, setStatus, spock, spockAsApp, var, (<//>))
+import Web.Spock.Config (PoolOrConn (PCNoDatabase), defaultSpockCfg)
 
 import OverTheFinishLine.Dashboard.Configuration
 import OverTheFinishLine.Dashboard.Infrastructure
@@ -52,7 +53,8 @@ main = do
 createApp :: Infrastructure -> IO Network.Wai.Application
 createApp infrastructure = do
   withDatabase $ Postgresql.runMigration migrateAll
-  spockAsApp $ spock (defaultSpockCfg () PCNoDatabase ()) $ do
+  spockConfig <- defaultSpockCfg () PCNoDatabase ()
+  spockAsApp $ spock spockConfig $ do
     middleware $ case configurationEnvironment (configuration infrastructure) of
       Development -> logStdoutDev
       Production -> logStdout
@@ -93,44 +95,43 @@ createApp infrastructure = do
         updateProject user selectedProjectName requestParams
       either handleFailure (redirect . uncurry projectUrl) project
 
-    subcomponent "api" $ do
-      get "me" $ do
-        me <- runExceptT $ do
-          Entity userId user <- readUser
-          projects <- readMyProjects userId user
-          return (user, projects)
-        either handleFailure (uncurry renderMe) me
+    get ("api" <//> "me") $ do
+      me <- runExceptT $ do
+        Entity userId user <- readUser
+        projects <- readMyProjects userId user
+        return (user, projects)
+      either handleFailure (uncurry renderMe) me
 
-      decode2 (get ("projects" <//> var <//> var)) $ \username selectedProjectName -> do
-        now <- liftIO getCurrentTime
-        potentialAccessToken <- runExceptT readAccessToken
-        potentialRepositories <- runExceptT $ withDatabase (
-            select $ from $ \(user `InnerJoin` project `InnerJoin` repository) -> do
-                on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
-                on (user ^. UserId ==. project ^. ProjectUserId)
-                where_ $
-                  user ^. UserUsername ==. val username
-                  &&. project ^. ProjectName ==. val selectedProjectName
-                return repository
-          ) `onEmpty` QueryFailure "No repositories found."
+    decode2 (get ("api" <//> "projects" <//> var <//> var)) $ \username selectedProjectName -> do
+      now <- liftIO getCurrentTime
+      potentialAccessToken <- runExceptT readAccessToken
+      potentialRepositories <- runExceptT $ withDatabase (
+          select $ from $ \(user `InnerJoin` project `InnerJoin` repository) -> do
+              on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
+              on (user ^. UserId ==. project ^. ProjectUserId)
+              where_ $
+                user ^. UserUsername ==. val username
+                &&. project ^. ProjectName ==. val selectedProjectName
+              return repository
+        ) `onEmpty` QueryFailure "No repositories found."
 
-        case (potentialAccessToken, potentialRepositories) of
-          (Left failure, _) -> handleFailure failure
-          (_, Left failure) -> handleFailure failure
-          (Right accessToken, Right repositories) -> do
-            requests :: [Either Failure [PullRequest]] <- forM repositories $ \repository -> runExceptT $ do
-              let name = projectRepositoryName (entityVal repository)
-              map GitHub.unPullRequest <$> fetchGitHubPullRequests accessToken name
-            let (failures, responses) = Either.partitionEithers requests
-            let pullRequests = List.sortBy (compare `Function.on` prUpdatedAt) (concat responses)
-            render failures $ Dashboard now pullRequests
+      case (potentialAccessToken, potentialRepositories) of
+        (Left failure, _) -> handleFailure failure
+        (_, Left failure) -> handleFailure failure
+        (Right accessToken, Right repositories) -> do
+          requests :: [Either Failure [PullRequest]] <- forM repositories $ \repository -> runExceptT $ do
+            let name = projectRepositoryName (entityVal repository)
+            map GitHub.unPullRequest <$> fetchGitHubPullRequests accessToken name
+          let (failures, responses) = Either.partitionEithers requests
+          let pullRequests = List.sortBy (compare `Function.on` prUpdatedAt) (concat responses)
+          render failures $ Dashboard now pullRequests
 
-      decode2 (get ("projects" <//> var <//> var <//> "edit")) $ \username selectedProjectName -> do
-        myProject <- runExceptT $ do
-          user <- entityVal <$> readUserByName username
-          project <- readProject user selectedProjectName
-          return $ MySingleProject user project
-        either handleFailure (render []) myProject
+    decode2 (get ("api" <//> "projects" <//> var <//> var <//> "edit")) $ \username selectedProjectName -> do
+      myProject <- runExceptT $ do
+        user <- entityVal <$> readUserByName username
+        project <- readProject user selectedProjectName
+        return $ MySingleProject user project
+      either handleFailure (render []) myProject
 
   where
     appHtml = file "text/html" (configurationClientPath (configuration infrastructure) </> "index.html")
@@ -194,8 +195,8 @@ createApp infrastructure = do
     fetch accessToken url =
       withExceptT (RequestFailure (decodeUtf8 url) . decodeUtf8 . toStrict) $ ExceptT $ liftIO $
         OAuth2.authGetJSON (httpManager infrastructure) accessToken url
-        `catch` \(StatusCodeException status _ _) ->
-          return $ Left $ fromStrict $ statusMessage status
+        `catch` \(HttpExceptionRequest _ (StatusCodeException response _)) ->
+          return $ Left $ fromStrict $ statusMessage $ responseStatus response
 
     readAccessToken :: ExceptT Failure Context OAuth2.AccessToken
     readAccessToken = do

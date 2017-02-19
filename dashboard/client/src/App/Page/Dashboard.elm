@@ -37,6 +37,8 @@ html failures (Dashboard _ now pullRequests) =
                 td [class "link pr-title"] [
                   a [href pullRequest.url] [
                     text pullRequest.title]],
+                td [class "pr-status"]
+                  (statusSymbol pullRequest.status),
                 td ([classList [("timestamp", True), ("old", old)]]) [
                   text ("updated " ++ Moment.from pullRequest.updatedAt now)]
               ]
@@ -57,3 +59,11 @@ failureText failure =
     RequestFailure url message ->
       [text "Failed to get a response for ", a [href url] [text (Url.toString url)], text ".", br [] [],
        text "Error: ", text message]
+
+statusSymbol : ItemStatus -> List (Html a)
+statusSymbol status =
+  case status of
+    NoStatus -> []
+    Failure -> [span [class "status-failure"] [text "✘"]]
+    Pending -> [span [class "status-pending"] [text "»"]]
+    Success -> [span [class "status-success"] [text "✔︎"]]

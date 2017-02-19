@@ -42,6 +42,7 @@ dashboard location =
         },
         number = 123,
         title = "Add support for French cheese.",
+        status = Success,
         updatedAt = Moment.parse "2016-05-04T15:44:33Z",
         url = Url.parse "https://github.com/sandwiches/cheese/pull/123"
       },
@@ -53,6 +54,7 @@ dashboard location =
         },
         number = 121,
         title = "Discontinue pre-sliced cheese wrapped in plastic.",
+        status = NoStatus,
         updatedAt = Moment.parse "2016-02-06T03:08:56Z",
         url = Url.parse "https://github.com/sandwiches/cheese/pull/121"
       }
@@ -73,6 +75,7 @@ dashboardJson =
           },
           "number": 123,
           "title": "Add support for French cheese.",
+          "status": "success",
           "updatedAt": "2016-05-04T15:44:33Z",
           "url": "https://github.com/sandwiches/cheese/pull/123"
         },
@@ -94,7 +97,13 @@ dashboardJson =
 dashboardResult
     : Location
     -> { now: Result String Moment,
-        pullRequests: List { repository : Repository, number : Int, title : String, updatedAt : Result String Moment, url : Url } }
+        pullRequests: List {
+          repository : Repository,
+          number : Int,
+          title : String,
+          status : ItemStatus,
+          updatedAt : Result String Moment,
+          url : Url } }
     -> Result String Dashboard
 dashboardResult location {now, pullRequests} =
   let

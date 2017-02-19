@@ -54,6 +54,7 @@ type alias PullRequest = {
     repository : Repository,
     number : Int,
     title : String,
+    status : ItemStatus,
     updatedAt : Moment,
     url : Url
   }
@@ -77,3 +78,9 @@ type alias Name = String
 type alias Username = String
 type alias ProjectName = String
 type alias RepositoryName = String
+
+type ItemStatus =
+    NoStatus
+  | Failure
+  | Pending
+  | Success

@@ -4,6 +4,7 @@ import Arborist.Framework exposing (..)
 import Arborist.Matchers exposing (..)
 import Json.Decode exposing (decodeString)
 import Task exposing (Task)
+import Test.Helpers.Task exposing (taskFromResult)
 import Url
 
 import App.Model exposing (..)
@@ -24,7 +25,7 @@ tests =
           ])
 
         actual : Task String Me
-        actual = decodeString decoder meJson |> Task.fromResult
+        actual = decodeString decoder meJson |> taskFromResult
       in
         assert actual (equals expected)
     )

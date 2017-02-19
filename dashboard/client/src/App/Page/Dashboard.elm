@@ -8,9 +8,8 @@ import Moment exposing (Moment)
 import Url
 
 import App.Model exposing (..)
-import App.Http as Http
 
-html : Http.Failures -> Dashboard -> List (Html Message)
+html : Failures -> Dashboard -> List (Html Message)
 html failures (Dashboard _ now pullRequests) =
   let
     pullRequestCount = List.length pullRequests
@@ -39,22 +38,22 @@ html failures (Dashboard _ now pullRequests) =
                   a [href pullRequest.url] [
                     text pullRequest.title]],
                 td ([classList [("timestamp", True), ("old", old)]]) [
-                  text ("updated " ++ pullRequest.updatedAt `Moment.from` now)]
+                  text ("updated " ++ Moment.from pullRequest.updatedAt now)]
               ]
           )
         )
       ]
     ]
 
-failureHtml : Http.Failures -> Html a
+failureHtml : Failures -> Html a
 failureHtml failures =
   div [class "failures"] (failures |> List.map (\failure ->
     div [class "alert alert-danger", role "alert"] (failureText failure)
   ))
 
-failureText : Http.Failure -> List (Html a)
+failureText : Failure -> List (Html a)
 failureText failure =
   case failure of
-    Http.RequestFailure url message ->
+    RequestFailure url message ->
       [text "Failed to get a response for ", a [href url] [text (Url.toString url)], text ".", br [] [],
        text "Error: ", text message]

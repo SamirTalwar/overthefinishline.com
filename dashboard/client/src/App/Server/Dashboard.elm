@@ -8,16 +8,16 @@ import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 
 decoder : Location -> Decoder Dashboard
-decoder location = object2 (Dashboard location)
-  ("now" := Moment.decode)
-  ("pullRequests" := list
-    (object5 PullRequest
-      (object3 Repository
+decoder location = map2 (Dashboard location)
+  (field "now" Moment.decode)
+  (field "pullRequests" <| list
+    (map5 PullRequest
+      (map3 Repository
         (at ["repository", "owner"] string)
         (at ["repository", "name"] string)
         (at ["repository", "url"] Url.decoder)
       )
-      ("number" := int)
-      ("title" := string)
-      ("updatedAt" := Moment.decode)
-      ("url" := Url.decoder)))
+      (field "number" int)
+      (field "title" string)
+      (field "updatedAt" Moment.decode)
+      (field "url" Url.decoder)))

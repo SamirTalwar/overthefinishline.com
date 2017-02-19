@@ -5,6 +5,7 @@ import Arborist.Matchers exposing (..)
 import Result
 import Process
 import Task
+import Test.Helpers.Task exposing (taskFromResult)
 
 import Moment exposing (..)
 
@@ -14,7 +15,7 @@ tests =
     test "Moment.now: responds with the current time" (
       let
         now = Moment.now ()
-        later = Process.sleep 100 `Task.andThen` Moment.now
+        later = Process.sleep 100 |> Task.andThen Moment.now
         difference = Task.map2 Moment.durationBetween now later
       in
         assert difference (isIntBetween (Task.succeed 50) (Task.succeed 300))
@@ -27,7 +28,7 @@ tests =
         formatted = Result.map Moment.format parsed
         assertion = Result.map ((==) timestamp) formatted
       in
-        assert (Task.fromResult formatted) (equals (Task.succeed timestamp))
+        assert (taskFromResult formatted) (equals (Task.succeed timestamp))
     ),
 
     test "Moment.compare: LT" (
@@ -36,7 +37,7 @@ tests =
         b = Moment.parse "2019-07-02T08:03:09.000Z"
         comparison = Result.map2 Moment.compare a b
       in
-        assert (Task.fromResult comparison) (equals (Task.succeed LT))
+        assert (taskFromResult comparison) (equals (Task.succeed LT))
     ),
 
     test "Moment.compare: GT" (
@@ -45,7 +46,7 @@ tests =
         b = Moment.parse "2019-07-30T10:50:00.000Z"
         comparison = Result.map2 Moment.compare a b
       in
-        assert (Task.fromResult comparison) (equals (Task.succeed GT))
+        assert (taskFromResult comparison) (equals (Task.succeed GT))
     ),
 
     test "Moment.compare: EQ" (
@@ -54,7 +55,7 @@ tests =
         b = Moment.parse "2019-09-01T12:34:56.789Z"
         comparison = Result.map2 Moment.compare a b
       in
-        assert (Task.fromResult comparison) (equals (Task.succeed EQ))
+        assert (taskFromResult comparison) (equals (Task.succeed EQ))
     ),
 
     test "Moment.durationOf: calculates durations in hours" (
@@ -70,7 +71,7 @@ tests =
         a = Moment.parse "2019-03-14T19:00:00.000Z"
         b = Moment.parse "2019-06-30T07:00:00.000Z"
         expected = 9288000000 |> Task.succeed
-        actual = Result.map2 Moment.durationBetween a b |> Task.fromResult
+        actual = Result.map2 Moment.durationBetween a b |> taskFromResult
       in
         assert actual (equals expected)
     ),
@@ -80,7 +81,7 @@ tests =
         a = Moment.parse "2022-04-05T15:00:00.000Z"
         b = Moment.parse "2022-04-09T08:00:00.000Z"
         expected = "4 days ago" |> Task.succeed
-        actual = Result.map2 Moment.from a b |> Task.fromResult
+        actual = Result.map2 Moment.from a b |> taskFromResult
       in
         assert actual (equals expected)
     )

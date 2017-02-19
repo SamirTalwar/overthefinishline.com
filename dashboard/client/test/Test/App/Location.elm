@@ -13,7 +13,7 @@ tests =
     test "App.Location: parses the URL for Home" (
       let
         expected = Home |> Task.succeed
-        actual = parser (locationWithPath "/") |> Task.succeed
+        actual = parse (locationWithPath "/") |> Task.succeed
       in
         assert actual (equals expected)
     ),
@@ -21,7 +21,7 @@ tests =
     test "App.Location: parses the URL for NewProject" (
       let
         expected = NewProject |> Task.succeed
-        actual = parser (locationWithPath "/projects") |> Task.succeed
+        actual = parse (locationWithPath "/projects") |> Task.succeed
       in
         assert actual (equals expected)
     ),
@@ -29,7 +29,7 @@ tests =
     test "App.Location: parses the URL for Project" (
       let
         expected = Project "sandwiches" "pickles" |> Task.succeed
-        actual = parser (locationWithPath "/projects/sandwiches/pickles") |> Task.succeed
+        actual = parse (locationWithPath "/projects/sandwiches/pickles") |> Task.succeed
       in
         assert actual (equals expected)
     ),
@@ -37,17 +37,17 @@ tests =
     test "App.Location: parses the URL for EditProject" (
       let
         expected = EditProject "sandwiches" "egg" |> Task.succeed
-        actual = parser (locationWithPath "/projects/sandwiches/egg/edit") |> Task.succeed
+        actual = parse (locationWithPath "/projects/sandwiches/egg/edit") |> Task.succeed
       in
         assert actual (equals expected)
     ),
 
     test "App.Location: fails when the URL could not be parsed" (
       let
-        actual = parser (locationWithPath "/not/gonna/work")
+        actual = parse (locationWithPath "/not/gonna/work")
       in
         case actual of
-          Error _ -> pass
+          Unknown "/not/gonna/work" -> pass
           value -> failWith ("Got " ++ toString value)
     )
   ]

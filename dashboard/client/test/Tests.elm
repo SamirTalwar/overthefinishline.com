@@ -3,7 +3,6 @@ module Tests exposing (tests)
 import Arborist.Framework exposing (..)
 import List
 
-import Test.App.Http
 import Test.App.List
 import Test.App.Location
 import Test.App.Model
@@ -15,7 +14,6 @@ import Test.Moment
 tests : List Test
 tests =
   List.concat [
-    Test.App.Http.tests,
     Test.App.List.tests,
     Test.App.Location.tests,
     Test.App.Model.tests,

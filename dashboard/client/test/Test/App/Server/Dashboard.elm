@@ -5,6 +5,7 @@ import Arborist.Matchers exposing (..)
 import Json.Decode exposing (decodeString)
 import Moment exposing (Moment)
 import Task exposing (Task)
+import Test.Helpers.Task exposing (taskFromResult)
 import Url exposing (Url)
 
 import App.Location as Location exposing (Location)
@@ -19,10 +20,10 @@ tests =
         location = Location.Project "sandwiches" "cheese"
 
         expected : Task String Dashboard
-        expected = dashboard location |> Task.fromResult
+        expected = dashboard location |> taskFromResult
 
         actual : Task String Dashboard
-        actual = decodeString (decoder location) dashboardJson |> Task.fromResult
+        actual = decodeString (decoder location) dashboardJson |> taskFromResult
       in
         assert actual (equals expected)
     )

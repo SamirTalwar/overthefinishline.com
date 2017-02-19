@@ -5,7 +5,6 @@ import Url exposing (Url)
 
 import App.Error exposing (Error)
 import App.Location exposing (Location)
-import App.Http exposing (Failures, Response)
 import App.Navigation as Navigation
 
 type Message =
@@ -18,6 +17,14 @@ type Message =
   | EditProjectMessage (Response Project)
   | DashboardMessage (Response Dashboard)
   | ErrorMessage Error
+
+type Response a =
+    UnauthenticatedResponse
+  | Response Failures a
+
+type alias Failures = List Failure
+type Failure =
+    RequestFailure Url String
 
 type Model =
     Loading

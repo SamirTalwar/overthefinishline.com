@@ -1,7 +1,7 @@
 module App.Page.Home exposing (html)
 
 import Html exposing (..)
-import Html.Attributes exposing (action, class, href, method, type')
+import Html.Attributes exposing (action, class, href, method, type_)
 
 html : List (Html a)
 html =
@@ -13,7 +13,7 @@ html =
     p [] [text "At the moment, Over The Finish Line only supports monitoring GitHub pull requests, but more will be coming soon."],
 
     form [method "post", action "/authentication/by/github"] [
-      button [type' "submit", class "sign-in"] [
+      button [type_ "submit", class "sign-in"] [
         span [class "fa fa-github"] [],
         text "Sign in with GitHub"
       ]

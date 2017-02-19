@@ -15,7 +15,7 @@ check: test lint
 
 .PHONY: test
 test: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
-	node ./elm-stuff/packages/SamirTalwar/arborist/2.1.0/bin/run Tests.tests $(TEST_FILES)
+	node ./elm-stuff/packages/SamirTalwar/arborist/3.0.0/bin/run Tests.tests $(TEST_FILES)
 	stack runhaskell -- -iserver/app:server/src:server/test server/test/Spec.hs
 
 .PHONY: lint

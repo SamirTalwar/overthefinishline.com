@@ -2,7 +2,7 @@ module App.Page.Navigation exposing (signedIn, signedOut)
 
 import App.Page.Html exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, height, method, style, type', width)
+import Html.Attributes exposing (alt, class, height, method, style, type_, width)
 import Html.Events exposing (..)
 
 import App.Location as Location
@@ -32,7 +32,7 @@ signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
     ],
     li [class "nav-item pull-xs-right"] [
       form [method "post", Html.Attributes.action "/sign-out"] [
-        button [type' "submit", class "btn btn-secondary"] [text "Sign out"]
+        button [type_ "submit", class "btn btn-secondary"] [text "Sign out"]
       ]
     ]
   ]
@@ -42,7 +42,7 @@ signedOut =
   navigationBar [
     li [class "nav-item pull-xs-right"] [
       form [method "post", Html.Attributes.action "/authentication/by/github"] [
-        button [type' "submit", class "btn btn-secondary"] [text "Sign in with GitHub"]
+        button [type_ "submit", class "btn btn-secondary"] [text "Sign in with GitHub"]
       ]
     ]
   ]

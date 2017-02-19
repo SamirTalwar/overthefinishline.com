@@ -7,13 +7,13 @@ import App.Model exposing (..)
 
 decoder : Decoder Me
 decoder =
-  at ["user", "username"] string `andThen` \username ->
-    object2 Me
-      ("user" := object2 User
+  at ["user", "username"] string |> andThen (\username ->
+    map2 Me
+      (field "user" <| map2 User
         (succeed username)
-        ("avatarUrl" := object1 (GitHubAvatar << Url.parse) string))
-      ("projects" := list
-        (object3 Project
+        (field "avatarUrl" <| map (GitHubAvatar << Url.parse) string))
+      (field "projects" <| list
+        (map3 Project
           (succeed username)
-          ("name" := string)
-          (succeed [])))
+          (field "name" string)
+          (succeed []))))

@@ -3,7 +3,7 @@ module App.Page.EditProject exposing (htmlForNewProject, htmlForExistingProject)
 import App.List exposing (slideThrough)
 import App.Page.Html exposing (formFor, link)
 import Html exposing (..)
-import Html.Attributes exposing (class, for, name, placeholder, required, type', value)
+import Html.Attributes exposing (class, for, name, placeholder, required, type_, value)
 import Html.Events exposing (onInput)
 import String
 
@@ -36,19 +36,19 @@ formElements projectName repositoryNames =
   [
     div [class "form-group"] [
       label [for "project-name"] [text "Project name"],
-      input ([type' "text", class "form-control", name "project-name", required True] ++ optionally value projectName) []
+      input ([type_ "text", class "form-control", name "project-name", required True] ++ optionally value projectName) []
     ],
     div [class "form-group"] <| [
       p [] [text "Repositories"]
     ] ++ slideThrough repositoryField (List.filter (not << String.isEmpty) repositoryNames ++ [""]),
-    button [type' "submit", class "btn btn-primary"] [text "Submit"]
+    button [type_ "submit", class "btn btn-primary"] [text "Submit"]
   ]
 
 repositoryField : List Name -> Name -> List Name -> Html Message
 repositoryField before repositoryName after =
   p [] [
     input
-      [type' "text", class "form-control", name "repository-names[]", placeholder "elm-lang/core", value repositoryName,
+      [type_ "text", class "form-control", name "repository-names[]", placeholder "elm-lang/core", value repositoryName,
        onInput (\newName -> UpdateRepositoryNames (before ++ [newName] ++ after))]
       []
   ]

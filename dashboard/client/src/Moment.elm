@@ -12,7 +12,7 @@ module Moment exposing (
     decode
   )
 
-import Json.Decode exposing (Decoder, customDecoder, string)
+import Json.Decode exposing (Decoder, andThen, fail, string, succeed)
 import Result exposing (Result (..))
 import Task exposing (Task)
 
@@ -48,4 +48,10 @@ from : Moment -> Moment -> String
 from = Native.Moment.from
 
 decode : Decoder Moment
-decode = customDecoder string parse
+decode = string |> andThen (parse >> decodeResult)
+
+decodeResult : Result String a -> Decoder a
+decodeResult result =
+  case result of
+    Ok value -> succeed value
+    Err error -> fail error

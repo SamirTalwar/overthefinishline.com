@@ -31,4 +31,4 @@ addQuery : String -> String -> Url -> Url
 addQuery = Erl.addQuery
 
 decoder : Decoder Url
-decoder = object1 Erl.parse string
+decoder = map Erl.parse string

@@ -1,14 +1,13 @@
 module Main exposing (main)
 
 import Html exposing (Html, div)
-import Html.App
 import Navigation
 import Process
 import Task exposing (Task)
 import Time exposing (every, minute)
 
 import App.Error exposing (..)
-import App.Http exposing (Response (..))
+import App.Http
 import App.Location as Location exposing (Location)
 import App.Model exposing (..)
 import App.Navigation
@@ -26,19 +25,18 @@ import App.Page.Navigation
 import App.Page.EditProject
 import App.Page.SelectAProject
 
-main : Program Never
+main : Program Never Model Message
 main =
-  Navigation.program (Navigation.makeParser Location.parser) {
+  Navigation.program (Location.parse >> Load) {
     init = init,
     update = update,
-    urlUpdate = urlUpdate,
     view = view,
     subscriptions = subscriptions
   }
 
-init : Location -> (Model, Cmd Message)
+init : Navigation.Location -> (Model, Cmd Message)
 init location =
-  Loading ! [fetchMe, delay (Load location)]
+  Loading ! [fetchMe, delay (Load (Location.parse location))]
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
@@ -97,9 +95,6 @@ update message model =
     (ErrorMessage error, _) ->
       CatastrophicFailure error ! []
 
-urlUpdate : Location -> Model -> (Model, Cmd Message)
-urlUpdate location model = (model ! [send Load (Task.succeed location)])
-
 delay : Message -> Cmd Message
 delay message =
   Process.sleep (100 * Time.millisecond)
@@ -116,17 +111,20 @@ fetch (Me _ projects) location =
     Location.NewProject ->
       Task.succeed (NewProjectPage []) |> send Render
     Location.EditProject username projectName ->
-      App.Http.get location App.Server.Project.decoder |> send EditProjectMessage
+      App.Http.get location App.Server.Project.decoder EditProjectMessage
     Location.Project username name ->
-      App.Http.get location (App.Server.Dashboard.decoder location) |> send DashboardMessage
-    Location.Error error ->
-      Task.succeed (ErrorPage (UnknownError error)) |> send Render
+      App.Http.get location (App.Server.Dashboard.decoder location) DashboardMessage
+    Location.Unknown path ->
+      Task.succeed (ErrorPage (UnknownError ("Unknown path: " ++ path))) |> send Render
 
 fetchMe : Cmd Message
-fetchMe = App.Http.get Location.Me App.Server.Me.decoder |> send MeMessage
+fetchMe = App.Http.get Location.Me App.Server.Me.decoder MeMessage
 
 send : (a -> Message) -> Task Error a -> Cmd Message
-send = Task.perform ErrorMessage
+send handle = Task.attempt <| \result ->
+  case result of
+    Ok value -> handle value
+    Err error -> ErrorMessage error
 
 view : Model -> Html Message
 view model =
@@ -151,7 +149,7 @@ subscriptions model =
     _ -> Sub.none
 
 navigationSignedIn : Me -> App.Navigation.State -> Html Message
-navigationSignedIn me state = Html.App.map NavigationMessage (App.Page.Navigation.signedIn me state)
+navigationSignedIn me state = Html.map NavigationMessage (App.Page.Navigation.signedIn me state)
 
 navigationSignedOut : Html Message
-navigationSignedOut = Html.App.map NavigationMessage App.Page.Navigation.signedOut
+navigationSignedOut = Html.map NavigationMessage App.Page.Navigation.signedOut

@@ -1,4 +1,4 @@
-module App.Http exposing (get)
+module App.Http exposing (get, decoder)
 
 import Http
 import Json.Decode exposing (..)
@@ -10,18 +10,22 @@ import App.Model exposing (Failure (..), Failures, Message (ErrorMessage), Respo
 
 get : Location -> Decoder a -> (Response a -> Message) -> Cmd Message
 get location underlyingDecoder messageConstructor =
-  let prependPath segment url = { url | path = segment :: url.path }
-      url = Url.toString (prependPath "api" (Location.url location))
-      httpRequest = Http.request {
-        method = "GET",
-        headers = [Http.header "Accept" "application/json"],
-        url = url,
-        body = Http.emptyBody,
-        expect = Http.expectJson (decoder underlyingDecoder),
-        timeout = Nothing,
-        withCredentials = False
-      }
-  in Http.send (processResponse messageConstructor) httpRequest
+  Http.send (processResponse messageConstructor) (getRequest location underlyingDecoder)
+
+getRequest : Location -> Decoder a -> Http.Request (Response a)
+getRequest location underlyingDecoder =
+  Http.request {
+    method = "GET",
+    headers = [Http.header "Accept" "application/json"],
+    url = Url.toString (prependPath "api" (Location.url location)),
+    body = Http.emptyBody,
+    expect = Http.expectJson (decoder underlyingDecoder),
+    timeout = Nothing,
+    withCredentials = False
+  }
+
+prependPath : String -> Url -> Url
+prependPath segment url = { url | path = segment :: url.path }
 
 decoder : Decoder a -> Decoder (Response a)
 decoder wrapped =

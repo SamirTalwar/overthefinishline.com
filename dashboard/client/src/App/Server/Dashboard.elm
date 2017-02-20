@@ -28,4 +28,5 @@ itemStatusDecoder = string |> andThen (\status -> case status of
   "failure" -> succeed Failure
   "pending" -> succeed Pending
   "success" -> succeed Success
+  "none" -> succeed NoStatus
   other -> fail ("Invalid item status: " ++ other))

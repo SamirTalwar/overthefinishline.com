@@ -87,6 +87,7 @@ dashboardJson =
           },
           "number": 121,
           "title": "Discontinue pre-sliced cheese wrapped in plastic.",
+          "status": "none",
           "updatedAt": "2016-02-06T03:08:56Z",
           "url": "https://github.com/sandwiches/cheese/pull/121"
         }

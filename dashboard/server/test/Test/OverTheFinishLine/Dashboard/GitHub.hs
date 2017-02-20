@@ -3,7 +3,6 @@
 
 module Test.OverTheFinishLine.Dashboard.GitHub where
 
-import Debug.Trace
 import Data.Aeson
 import Data.ByteString.Lazy (ByteString)
 import Data.Function (on)

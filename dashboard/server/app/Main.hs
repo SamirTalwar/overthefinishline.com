@@ -4,6 +4,7 @@
 
 module Main where
 
+import Control.Concurrent.Async (mapConcurrently)
 import Control.Exception (catch)
 import Control.Monad (forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -118,11 +119,11 @@ createApp infrastructure = do
         (Left failure, _) -> handleFailure failure
         (_, Left failure) -> handleFailure failure
         (Right accessToken, Right repositories) -> do
-          requests :: [Either Failure [PullRequest]] <- forM repositories $ \repository -> runExceptT $ do
+          requests :: [Either Failure [PullRequestWithStatus]] <- forM repositories $ \repository -> runExceptT $ do
             let name = projectRepositoryName (entityVal repository)
             fetchGitHubPullRequests accessToken name
           let (failures, responses) = Either.partitionEithers requests
-          let pullRequests = List.sortBy (compare `Function.on` prUpdatedAt) (concat responses)
+          let pullRequests = List.sortBy (compare `Function.on` prsUpdatedAt) (concat responses)
           render failures $ Dashboard now pullRequests
 
     decode2 (get ("api" <//> "projects" <//> var <//> var <//> "edit")) $ \username selectedProjectName -> do
@@ -186,17 +187,34 @@ createApp infrastructure = do
     fetchGitHubUser accessToken =
       fetch accessToken "https://api.github.com/user"
 
-    fetchGitHubPullRequests :: (MonadIO m) => OAuth2.AccessToken -> Text -> ExceptT Failure m [PullRequest]
+    fetchGitHubPullRequests :: (MonadIO m) => OAuth2.AccessToken -> Text -> ExceptT Failure m [PullRequestWithStatus]
     fetchGitHubPullRequests accessToken repositoryName = do
-      pullRequests <- fetch accessToken (mconcat ["https://api.github.com/repos/", encodeUtf8 repositoryName, "/pulls"])
-      return $ map GitHub.unPullRequest pullRequests
+      pullRequests <- fetch accessToken (mconcat ["https://api.github.com/repos/", repositoryName, "/pulls"])
+      statuses <- fetchMany accessToken (map GitHub.prStatusesUrl pullRequests)
+      return $ zipWith combinePullRequestWithStatuses pullRequests statuses
+      where
+        combinePullRequestWithStatuses githubPr statuses =
+          let pr = GitHub.unPullRequest githubPr
+              status = either (const StatusNone) (singleStatus . GitHub.unStatuses) statuses
+          in PullRequestWithStatus {
+            prsRepository = prRepository pr,
+            prsNumber = prNumber pr,
+            prsTitle = prTitle pr,
+            prsStatus = status,
+            prsUpdatedAt = prUpdatedAt pr,
+            prsUrl = prUrl pr
+          }
 
-    fetch :: (MonadIO m, FromJSON a) => OAuth2.AccessToken -> OAuth2.URI -> ExceptT Failure m a
+    fetch :: (MonadIO m, FromJSON a) => OAuth2.AccessToken -> Url -> ExceptT Failure m a
     fetch accessToken url =
-      withExceptT (RequestFailure (decodeUtf8 url) . decodeUtf8 . toStrict) $ ExceptT $ liftIO $
-        OAuth2.authGetJSON (httpManager infrastructure) accessToken url
+      withExceptT (RequestFailure url . decodeUtf8 . toStrict) $ ExceptT $ liftIO $
+        OAuth2.authGetJSON (httpManager infrastructure) accessToken (encodeUtf8 url)
         `catch` \(HttpExceptionRequest _ (StatusCodeException response _)) ->
           return $ Left $ fromStrict $ statusMessage $ responseStatus response
+
+    fetchMany :: (MonadIO m, FromJSON a) => OAuth2.AccessToken -> [Url] -> m [Either Failure a]
+    fetchMany accessToken urls =
+      liftIO (mapConcurrently (runExceptT . fetch accessToken) urls)
 
     readAccessToken :: ExceptT Failure Context OAuth2.AccessToken
     readAccessToken = do

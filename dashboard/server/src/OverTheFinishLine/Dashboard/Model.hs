@@ -17,6 +17,8 @@ import Data.ByteString.Lazy (toStrict)
 import qualified Data.Char as Char
 import Data.Hashable (Hashable, hashWithSalt)
 import qualified Data.HashMap.Strict as HashMap
+import Data.List (sort)
+import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Text (Text, pack)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Time (UTCTime)
@@ -133,7 +135,7 @@ instance ToJSON MyProject where toJSON = genericToJSON (stripPrefix "myProject")
 data Dashboard =
   Dashboard {
     dashboardNow :: UTCTime,
-    dashboardPullRequests :: [PullRequest]
+    dashboardPullRequests :: [PullRequestWithStatus]
   }
   deriving (Eq, Generic, Show)
 instance ToJSON Dashboard where toJSON = genericToJSON (stripPrefix "dashboard")
@@ -178,9 +180,12 @@ data StatusContext =
   deriving (Eq, Generic, Show)
 instance ToJSON StatusContext where toJSON = genericToJSON (stripPrefix "status")
 
-data ItemStatus = StatusFailure | StatusPending | StatusSuccess
-  deriving (Eq, Generic, Show)
+data ItemStatus = StatusFailure | StatusPending | StatusSuccess | StatusNone
+  deriving (Eq, Ord, Generic, Show)
 instance ToJSON ItemStatus where toJSON = genericToJSON (taggedUnionWithPrefix "Status")
+
+singleStatus :: [StatusContext] -> ItemStatus
+singleStatus = fromMaybe StatusNone . listToMaybe . sort . map (head . statusHistory)
 
 projectUrl :: User -> Project -> Url
 projectUrl user project =

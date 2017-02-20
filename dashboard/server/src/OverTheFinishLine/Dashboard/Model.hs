@@ -15,11 +15,14 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Builder (toLazyByteString)
 import Data.ByteString.Lazy (toStrict)
 import qualified Data.Char as Char
+import Data.Hashable (Hashable, hashWithSalt)
 import qualified Data.HashMap.Strict as HashMap
 import Data.Text (Text, pack)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Time (UTCTime)
+import Database.Persist.Class (PersistEntity, keyToValues)
 import Database.Persist.TH
+import Database.Persist.Types
 import GHC.Generics
 import Network.HTTP.Types.URI (encodePathSegments)
 
@@ -54,7 +57,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     userId UserId
     name Text
     UniqueProjectNameByUser userId name
-    deriving Eq Show
+    deriving Eq Generic Show
 
   ProjectRepository
     projectId ProjectId
@@ -62,6 +65,17 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     UniqueProjectRepositoryNameByProject projectId name
     deriving Eq Show
 |]
+
+instance Hashable PersistValue where
+  s `hashWithSalt` (PersistText text) = s `hashWithSalt` text
+  s `hashWithSalt` (PersistByteString byteString) = s `hashWithSalt` byteString
+  s `hashWithSalt` (PersistInt64 int) = s `hashWithSalt` int
+  _ `hashWithSalt` value = error ("I can't persist " ++ show value)
+
+instance PersistEntity a => Hashable (Key a) where
+  s `hashWithSalt` key = s `hashWithSalt` keyToValues key
+
+instance Hashable Project
 
 data Failure =
     UnauthenticatedUser

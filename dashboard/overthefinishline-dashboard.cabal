@@ -19,6 +19,7 @@ library
                      , OverTheFinishLine.Dashboard.Enumerations
                      , OverTheFinishLine.Dashboard.GitHub
                      , OverTheFinishLine.Dashboard.Infrastructure
+                     , OverTheFinishLine.Dashboard.Lists
                      , OverTheFinishLine.Dashboard.Model
                      , OverTheFinishLine.Dashboard.Session
   build-depends:       base >= 4.9 && < 5
@@ -28,6 +29,7 @@ library
                      , cryptonite
                      , esqueleto
                      , filepath
+                     , hashable
                      , hoauth2
                      , http-client
                      , http-client-tls
@@ -83,6 +85,7 @@ test-suite overthefinishline-dashboard-server-test
   hs-source-dirs:      server/test
   main-is:             Spec.hs
   other-modules:       Test.OverTheFinishLine.Dashboard.GitHub
+                     , Test.OverTheFinishLine.Dashboard.Lists
                      , Test.OverTheFinishLine.Dashboard.Model
   build-depends:       base
                      , overthefinishline-dashboard

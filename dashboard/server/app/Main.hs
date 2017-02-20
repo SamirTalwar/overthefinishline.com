@@ -38,6 +38,7 @@ import Web.Spock (Var, file, get, json, middleware, param, params, post, redirec
 import OverTheFinishLine.Dashboard.Configuration
 import OverTheFinishLine.Dashboard.Infrastructure
 import OverTheFinishLine.Dashboard.Enumerations
+import OverTheFinishLine.Dashboard.Lists
 import qualified OverTheFinishLine.Dashboard.GitHub as GitHub
 import OverTheFinishLine.Dashboard.Model
 import qualified OverTheFinishLine.Dashboard.Session as Session
@@ -298,12 +299,6 @@ decode2 :: ((Text -> Text -> a) -> b) -> (Text -> Text -> a) -> b
 decode2 request handler = request $ \a b -> handler (decodeUrlSegment a) (decodeUrlSegment b)
   where
     decodeUrlSegment = decodeUtf8 . URI.urlDecode True . encodeUtf8
-
-groupQueryBy :: Eq k => (v -> k) -> (v -> w) -> [v] -> [(k, [w])]
-groupQueryBy keyFunction valueFunction list =
-  map (\g -> (keyFunction (List.head g), map valueFunction g)) grouped
-  where
-    grouped = List.groupBy ((==) `Function.on` keyFunction) list
 
 data HttpStatus = HttpStatus Int Text
   deriving (Eq, Show)

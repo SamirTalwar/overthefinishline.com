@@ -72,7 +72,7 @@ instance FromJSON Statuses where
   parseJSON _ = mzero
 
 parseState :: MonadPlus m => Text -> m Model.ItemStatus
-parseState "failure" = return Model.StatusFailure
+parseState "error" = return Model.StatusFailure
 parseState "pending" = return Model.StatusPending
 parseState "success" = return Model.StatusSuccess
 parseState _ = mzero

@@ -179,7 +179,7 @@ statusesJson =
       |  {
       |    "url": "https://api.github.com/repos/sandwiches/cheese/statuses/70c7d1290cf4fcbbfee8aedefe2f48f250ac04b4",
       |    "id": 123456789,
-      |    "state": "failure",
+      |    "state": "error",
       |    "description": "The uber-linter failed. Whoops.",
       |    "target_url": "https://uberlinter.com/sandwiches/cheese/linting/456",
       |    "context": "continuous-integration/uber-linter/pr",

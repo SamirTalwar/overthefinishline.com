@@ -53,7 +53,25 @@ nav.navbar {
 
 .details {
     td:not(.pr-title) {
-      white-space: nowrap;
+        white-space: nowrap;
+    }
+
+    .pr-status {
+        text-align: center;
+        font-size: 2em;
+        line-height: 0.7em;
+    }
+
+    .status-success {
+        color: $state-success-text;
+    }
+
+    .status-pending {
+        color: $state-warning-text;
+    }
+
+    .status-failure {
+        color: $state-danger-text;
     }
 
     td.link {

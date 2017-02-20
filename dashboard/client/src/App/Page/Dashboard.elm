@@ -64,6 +64,6 @@ statusSymbol : ItemStatus -> List (Html a)
 statusSymbol status =
   case status of
     NoStatus -> []
-    Failure -> [span [class "status-failure"] [text "✘"]]
+    Failure -> [span [class "status-failure"] [text "✖︎"]]
     Pending -> [span [class "status-pending"] [text "»"]]
-    Success -> [span [class "status-success"] [text "✔︎"]]
+    Success -> [span [class "status-success"] [text "✓"]]

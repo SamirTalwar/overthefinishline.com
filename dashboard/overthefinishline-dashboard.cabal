@@ -44,6 +44,7 @@ library
                      , transformers
                      , unix
                      , unordered-containers
+                     , vector
                      , warp
   default-language:    Haskell2010
 

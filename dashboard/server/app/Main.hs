@@ -120,7 +120,7 @@ createApp infrastructure = do
         (Right accessToken, Right repositories) -> do
           requests :: [Either Failure [PullRequest]] <- forM repositories $ \repository -> runExceptT $ do
             let name = projectRepositoryName (entityVal repository)
-            map GitHub.unPullRequest <$> fetchGitHubPullRequests accessToken name
+            fetchGitHubPullRequests accessToken name
           let (failures, responses) = Either.partitionEithers requests
           let pullRequests = List.sortBy (compare `Function.on` prUpdatedAt) (concat responses)
           render failures $ Dashboard now pullRequests
@@ -186,9 +186,10 @@ createApp infrastructure = do
     fetchGitHubUser accessToken =
       fetch accessToken "https://api.github.com/user"
 
-    fetchGitHubPullRequests :: (MonadIO m) => OAuth2.AccessToken -> Text -> ExceptT Failure m [GitHub.PullRequest]
-    fetchGitHubPullRequests accessToken repositoryName =
-      fetch accessToken $ mconcat ["https://api.github.com/repos/", encodeUtf8 repositoryName, "/pulls"]
+    fetchGitHubPullRequests :: (MonadIO m) => OAuth2.AccessToken -> Text -> ExceptT Failure m [PullRequest]
+    fetchGitHubPullRequests accessToken repositoryName = do
+      pullRequests <- fetch accessToken (mconcat ["https://api.github.com/repos/", encodeUtf8 repositoryName, "/pulls"])
+      return $ map GitHub.unPullRequest pullRequests
 
     fetch :: (MonadIO m, FromJSON a) => OAuth2.AccessToken -> OAuth2.URI -> ExceptT Failure m a
     fetch accessToken url =

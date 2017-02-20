@@ -138,6 +138,15 @@ data Dashboard =
   deriving (Eq, Generic, Show)
 instance ToJSON Dashboard where toJSON = genericToJSON (stripPrefix "dashboard")
 
+data Repository =
+  Repository {
+    repoOwner :: Text,
+    repoName :: Text,
+    repoUrl :: Url
+  }
+  deriving (Eq, Generic, Show)
+instance ToJSON Repository where toJSON = genericToJSON (stripPrefix "repo")
+
 data PullRequest =
   PullRequest {
     prRepository :: Repository,
@@ -149,14 +158,29 @@ data PullRequest =
   deriving (Eq, Generic, Show)
 instance ToJSON PullRequest where toJSON = genericToJSON (stripPrefix "pr")
 
-data Repository =
-  Repository {
-    repoOwner :: Text,
-    repoName :: Text,
-    repoUrl :: Url
+data PullRequestWithStatus =
+  PullRequestWithStatus {
+    prsRepository :: Repository,
+    prsNumber :: Int,
+    prsTitle :: Text,
+    prsStatus :: ItemStatus,
+    prsUpdatedAt :: UTCTime,
+    prsUrl :: Url
   }
   deriving (Eq, Generic, Show)
-instance ToJSON Repository where toJSON = genericToJSON (stripPrefix "repo")
+instance ToJSON PullRequestWithStatus where toJSON = genericToJSON (stripPrefix "prs")
+
+data StatusContext =
+  StatusContext {
+    statusContext :: String,
+    statusHistory :: [ItemStatus]
+  }
+  deriving (Eq, Generic, Show)
+instance ToJSON StatusContext where toJSON = genericToJSON (stripPrefix "status")
+
+data ItemStatus = StatusFailure | StatusPending | StatusSuccess
+  deriving (Eq, Generic, Show)
+instance ToJSON ItemStatus where toJSON = genericToJSON (taggedUnionWithPrefix "Status")
 
 projectUrl :: User -> Project -> Url
 projectUrl user project =
@@ -168,9 +192,17 @@ stripPrefix prefix =
   defaultOptions {
     fieldLabelModifier = lowercaseFirstCharacter . drop (length prefix)
   }
-  where
-  lowercaseFirstCharacter "" = ""
-  lowercaseFirstCharacter (first : rest) = Char.toLower first : rest
+
+taggedUnionWithPrefix :: String -> Options
+taggedUnionWithPrefix prefix =
+  defaultOptions {
+    constructorTagModifier = lowercaseFirstCharacter . drop (length prefix),
+    sumEncoding = UntaggedValue
+  }
+
+lowercaseFirstCharacter :: String -> String
+lowercaseFirstCharacter "" = ""
+lowercaseFirstCharacter (first : rest) = Char.toLower first : rest
 
 (|>) :: a -> (a -> b) -> b
 (|>) = flip ($)

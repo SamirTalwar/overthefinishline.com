@@ -38,7 +38,7 @@ spec = describe "parsing of GitHub JSON" $ do
     actual `shouldBe` Right expected
 
   it "parses status JSON" $ do
-    let expected = [StatusContext "continuous-integration/travis-ci/pr" [StatusSuccess, StatusPending],
+    let expected = [StatusContext "continuous-integration/travis-ci/pr" [StatusSuccess, StatusFailure, StatusPending],
                     StatusContext "continuous-integration/uber-linter/pr" [StatusSuccess, StatusFailure]]
     let actual = List.sortBy (compare `on` statusContext) . GitHub.unStatuses <$> eitherDecode statusesJson
     actual `shouldBe` Right expected
@@ -148,7 +148,7 @@ statusesJson =
   [str| [
       |  {
       |    "url": "https://api.github.com/repos/sandwiches/cheese/statuses/70c7d1290cf4fcbbfee8aedefe2f48f250ac04b4",
-      |    "id": 123456792,
+      |    "id": 123456793,
       |    "state": "success",
       |    "description": "The Travis CI build passed",
       |    "target_url": "https://travis-ci.org/sandwiches/cheese/builds/123",
@@ -158,13 +158,23 @@ statusesJson =
       |  },
       |  {
       |    "url": "https://api.github.com/repos/sandwiches/cheese/statuses/70c7d1290cf4fcbbfee8aedefe2f48f250ac04b4",
-      |    "id": 123456791,
+      |    "id": 123456792,
       |    "state": "success",
       |    "description": "The uber-linter passed!",
       |    "target_url": "https://uberlinter.com/sandwiches/cheese/linting/456",
       |    "context": "continuous-integration/uber-linter/pr",
       |    "created_at": "2016-05-04T15:43:13Z",
       |    "updated_at": "2016-05-04T15:43:13Z"
+      |  },
+      |  {
+      |    "url": "https://api.github.com/repos/sandwiches/cheese/statuses/70c7d1290cf4fcbbfee8aedefe2f48f250ac04b4",
+      |    "id": 123456791,
+      |    "state": "failure",
+      |    "description": "The Travis CI build failed",
+      |    "target_url": "https://travis-ci.org/sandwiches/cheese/builds/123",
+      |    "context": "continuous-integration/travis-ci/pr",
+      |    "created_at": "2016-05-04T15:42:01Z",
+      |    "updated_at": "2016-05-04T15:42:01Z"
       |  },
       |  {
       |    "url": "https://api.github.com/repos/sandwiches/cheese/statuses/70c7d1290cf4fcbbfee8aedefe2f48f250ac04b4",
@@ -179,7 +189,7 @@ statusesJson =
       |  {
       |    "url": "https://api.github.com/repos/sandwiches/cheese/statuses/70c7d1290cf4fcbbfee8aedefe2f48f250ac04b4",
       |    "id": 123456789,
-      |    "state": "error",
+      |    "state": "failure",
       |    "description": "The uber-linter failed. Whoops.",
       |    "target_url": "https://uberlinter.com/sandwiches/cheese/linting/456",
       |    "context": "continuous-integration/uber-linter/pr",

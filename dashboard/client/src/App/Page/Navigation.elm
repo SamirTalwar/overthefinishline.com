@@ -29,29 +29,31 @@ signedIn (Me (User username avatar) projects) (ProjectsShown projectsShown) =
         ++ (if List.length projects == 0 then [] else [hr [] []])
         ++ [link NavigateTo Location.NewProject [class "dropdown-item"] [text "Create a project"]]
       )
-    ],
-    li [class "nav-item pull-xs-right"] [
+    ]
+  ] [
+    li [class "nav-item"] [
       form [method "post", Html.Attributes.action "/sign-out"] [
-        button [type_ "submit", class "btn btn-secondary"] [text "Sign out"]
+        button [type_ "submit", class "btn"] [text "Sign out"]
       ]
     ]
   ]
 
 signedOut : Html Message
 signedOut =
-  navigationBar [
-    li [class "nav-item pull-xs-right"] [
+  navigationBar [] [
+    li [class "nav-item"] [
       form [method "post", Html.Attributes.action "/authentication/by/github"] [
-        button [type_ "submit", class "btn btn-secondary"] [text "Sign in with GitHub"]
+        button [type_ "submit", class "btn"] [text "Sign in with GitHub"]
       ]
     ]
   ]
 
-navigationBar : List (Html Message) -> Html Message
-navigationBar items =
-  nav [class "navbar navbar-dark bg-inverse"] [
+navigationBar : List (Html Message) -> List (Html Message) -> Html Message
+navigationBar leftItems rightItems =
+  nav [class "navbar navbar-expand-lg navbar-dark bg-dark"] [
     title,
-    ul [class "nav navbar-nav"] items
+    ul [class "nav navbar-nav mr-auto"] leftItems,
+    ul [class "nav navbar-nav"] rightItems
   ]
 
 title : Html Message

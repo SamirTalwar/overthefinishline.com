@@ -1,4 +1,3 @@
-$enable-flex: true;
 @import '../../vendor/bootstrap/scss/bootstrap';
 
 #container {
@@ -17,7 +16,7 @@ nav.navbar {
     width: 100%;
 
     span:not(:first-child) {
-        padding-left: $spacer-x;
+        padding-left: $spacer;
     }
 
     .dropdown-menu {
@@ -33,7 +32,7 @@ nav.navbar {
     display: inline-block;
 
     span {
-        padding-right: $spacer-x;
+        padding-right: $spacer;
     }
 }
 
@@ -63,15 +62,15 @@ nav.navbar {
     }
 
     .status-success {
-        color: $state-success-text;
+        color: map-get($theme-colors, 'success');
     }
 
     .status-pending {
-        color: $state-warning-text;
+        color: map-get($theme-colors, 'warning');
     }
 
     .status-failure {
-        color: $state-danger-text;
+        color: map-get($theme-colors, 'danger');
     }
 
     td.link {
@@ -85,7 +84,7 @@ nav.navbar {
     }
 
     .old {
-        color: $state-danger-text;
+        color: map-get($theme-colors, 'danger');
     }
 }
 

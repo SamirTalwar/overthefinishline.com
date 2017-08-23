@@ -81,6 +81,7 @@ instance Hashable Project
 
 data Failure =
     UnauthenticatedUser
+  | NonExistent
   | MissingUser
   | MissingProject { failureProject :: Text }
   | MissingParam { failureParam :: Text }

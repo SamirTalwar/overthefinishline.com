@@ -26,7 +26,7 @@ import qualified Database.Persist.Postgresql as Postgresql
 import qualified Database.Esqueleto as Sql
 import Database.Esqueleto hiding (delete, get)
 import Network.HTTP.Client (HttpException (HttpExceptionRequest), HttpExceptionContent (StatusCodeException), responseStatus)
-import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, internalServerError500)
+import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, notFound404, internalServerError500)
 import qualified Network.HTTP.Types.URI as URI
 import qualified Network.OAuth.OAuth2 as OAuth2
 import qualified Network.Wai
@@ -114,7 +114,7 @@ createApp infrastructure = do
               project ^. ProjectUserId ==. val userId
               &&. project ^. ProjectName ==. val selectedProjectName
             return repository
-        return repositories `onEmpty` QueryFailure "No repositories found."
+        return repositories `onEmpty` NonExistent
 
       case (potentialAccessToken, potentialRepositories) of
         (Left failure, _) -> handleFailure failure
@@ -237,7 +237,7 @@ createApp infrastructure = do
         select $ from $ \user -> do
           where_ (user ^. UserId ==. val userId &&. user ^. UserUsername ==. val username)
           return user)
-      return user `orFailure` QueryFailure "Invalid user."
+      return user `orFailure` NonExistent
 
     readMyProjects :: Key User -> User -> ExceptT Failure Context [MyProject]
     readMyProjects userId user = do
@@ -290,6 +290,8 @@ createApp infrastructure = do
       json response
 
     failureResponse :: Failure -> (Status, Aeson.Value)
+    failureResponse NonExistent =
+      (notFound404, "non-existent document")
     failureResponse UnauthenticatedUser =
       (unauthorized401, toJSON unauthenticatedResponse)
     failureResponse MissingUser =

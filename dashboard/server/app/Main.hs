@@ -88,10 +88,10 @@ createApp infrastructure = do
 
     get ("projects" <//> (var :: Var Text) <//> (var :: Var Text) <//> "edit") $ const $ const appHtml
 
-    decode2 (post ("projects" <//> var <//> var <//> "edit")) $ \username selectedProjectName -> do
+    decode2 (post ("projects" <//> var <//> var <//> "edit")) $ \selectedUserName selectedProjectName -> do
       requestParams <- params
       project <- runExceptT $ do
-        user <- readUserByName username
+        user <- readUserByName selectedUserName
         updateProject user selectedProjectName requestParams
       either handleFailure (redirect . uncurry projectUrl) project
 
@@ -102,7 +102,7 @@ createApp infrastructure = do
         return (user, projects)
       either handleFailure (uncurry renderMe) me
 
-    decode2 (get ("api" <//> "projects" <//> var <//> var)) $ \username selectedProjectName -> do
+    decode2 (get ("api" <//> "projects" <//> var <//> var)) $ \selectedUserName selectedProjectName -> do
       now <- liftIO getCurrentTime
       potentialAccessToken <- runExceptT readAccessToken
       potentialRepositories <- runExceptT $ withDatabase (
@@ -110,7 +110,7 @@ createApp infrastructure = do
               on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
               on (user ^. UserId ==. project ^. ProjectUserId)
               where_ $
-                user ^. UserUsername ==. val username
+                user ^. UserUsername ==. val selectedUserName
                 &&. project ^. ProjectName ==. val selectedProjectName
               return repository
         ) `onEmpty` QueryFailure "No repositories found."
@@ -126,9 +126,9 @@ createApp infrastructure = do
           let pullRequests = List.sortBy (compare `Function.on` prsUpdatedAt) (concat responses)
           render failures $ Dashboard now pullRequests
 
-    decode2 (get ("api" <//> "projects" <//> var <//> var <//> "edit")) $ \username selectedProjectName -> do
+    decode2 (get ("api" <//> "projects" <//> var <//> var <//> "edit")) $ \selectedUserName selectedProjectName -> do
       myProject <- runExceptT $ do
-        user <- entityVal <$> readUserByName username
+        user <- entityVal <$> readUserByName selectedUserName
         project <- readProject user selectedProjectName
         return $ MySingleProject user project
       either handleFailure (render []) myProject

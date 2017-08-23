@@ -105,15 +105,16 @@ createApp infrastructure = do
     decode2 (get ("api" <//> "projects" <//> var <//> var)) $ \selectedUserName selectedProjectName -> do
       now <- liftIO getCurrentTime
       potentialAccessToken <- runExceptT readAccessToken
-      potentialRepositories <- runExceptT $ withDatabase (
-          select $ from $ \(user `InnerJoin` project `InnerJoin` repository) -> do
-              on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
-              on (user ^. UserId ==. project ^. ProjectUserId)
-              where_ $
-                user ^. UserUsername ==. val selectedUserName
-                &&. project ^. ProjectName ==. val selectedProjectName
-              return repository
-        ) `onEmpty` QueryFailure "No repositories found."
+      potentialRepositories <- runExceptT $ do
+        userId <- entityKey <$> readUserByName selectedUserName
+        repositories <- withDatabase $
+          select $ from $ \(project `InnerJoin` repository) -> do
+            on (project ^. ProjectId ==. repository ^. ProjectRepositoryProjectId)
+            where_ $
+              project ^. ProjectUserId ==. val userId
+              &&. project ^. ProjectName ==. val selectedProjectName
+            return repository
+        return repositories `onEmpty` QueryFailure "No repositories found."
 
       case (potentialAccessToken, potentialRepositories) of
         (Left failure, _) -> handleFailure failure
@@ -232,11 +233,11 @@ createApp infrastructure = do
     readUserByName :: Text -> ExceptT Failure Context (Entity User)
     readUserByName username = do
       userId <- Session.retrieve infrastructure
-      users <- withDatabase $
+      user <- listToMaybe <$> withDatabase (
         select $ from $ \user -> do
           where_ (user ^. UserId ==. val userId &&. user ^. UserUsername ==. val username)
-          return user
-      return (listToMaybe users) `orFailure` QueryFailure "Invalid user."
+          return user)
+      return user `orFailure` QueryFailure "Invalid user."
 
     readMyProjects :: Key User -> User -> ExceptT Failure Context [MyProject]
     readMyProjects userId user = do

@@ -65,8 +65,10 @@ appError error =
     Http.Timeout -> FailureToConnect
     Http.NetworkError -> FailureToConnect
     Http.BadStatus response ->
-      UnexpectedResponse ("Status: " ++ toString response.status.code ++ " " ++ response.status.message
-                       ++ "\nResponse: " ++ toString response)
+      case response.status.code of
+        404 -> NotFound
+        code -> UnexpectedResponse ("Status: " ++ toString code ++ " " ++ response.status.message
+                                 ++ "\nResponse: " ++ toString response)
     Http.BadPayload message response ->
       UnexpectedResponse ("Error: " ++ message
                        ++ "\nResponse: " ++ toString response)

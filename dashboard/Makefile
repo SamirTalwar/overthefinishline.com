@@ -58,3 +58,4 @@ client/src/Native/Moment.js: client/native/src/Moment.js client/src/Native node_
 
 node_modules: package.json package-lock.json
 	npm install && npm prune
+	touch $@

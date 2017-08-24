@@ -6,15 +6,17 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    padding-top: 10em;
-    padding-bottom: 10em;
+    padding-top: 10rem;
+    padding-bottom: 10rem;
 }
 
-nav.navbar {
+.top {
     position: fixed;
     z-index: 100;
     width: 100%;
+}
 
+nav.navbar {
     span:not(:first-child) {
         padding-left: $spacer;
     }
@@ -37,7 +39,7 @@ nav.navbar {
 }
 
 .project-list {
-    margin-top: 1em;
+    margin-top: 1rem;
 }
 
 .summary {

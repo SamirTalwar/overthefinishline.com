@@ -22,6 +22,7 @@ import App.Page.Frame
 import App.Page.Home
 import App.Page.Loading
 import App.Page.Navigation
+import App.Page.Progress
 import App.Page.EditProject
 import App.Page.SelectAProject
 
@@ -36,64 +37,68 @@ main =
 
 init : Navigation.Location -> (Model, Cmd Message)
 init location =
-  Loading ! [fetchMe, delay (Load (Location.parse location))]
+  FirstLoad ! [fetchMe, delay (Load (Location.parse location))]
 
 update : Message -> Model -> (Model, Cmd Message)
 update message model =
   case (message, model) of
-    (Load location, Loading) ->
-      Loading ! [delay (Load location)]
     (Load location, Unauthenticated) ->
       Unauthenticated ! []
-    (Load location, CatastrophicFailure error) ->
-      CatastrophicFailure error ! []
-    (Load location, (Model me navigationState page)) ->
-      Model me navigationState LoadingPage ! [fetch me location]
+    (Load location, Model me navigationState _ page) ->
+      Model me navigationState Loading page ! [fetch me location]
+    (Load location, _) ->
+      model ! [delay (Load location)]
 
     (NavigateTo location, model) ->
       model ! [Location.navigateTo location]
 
-    (Render page, Model me navigationState _) ->
-      Model me navigationState page ! []
-    (Render page, model) ->
-      model ! [delay (Render page)]
+    (Render page, Unauthenticated) ->
+      Unauthenticated ! []
+    (Render page, FirstLoad) ->
+      FirstLoad ! [delay (Render page)]
+    (Render page, Model me navigationState _ _) ->
+      Model me navigationState Finished page ! []
 
     (MeMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
+    (MeMessage (Response _ me), Model _ navigationState progress page) ->
+      Model me navigationState progress page ! []
     (MeMessage (Response _ me), _) ->
-      Model me App.Navigation.initialState LoadingPage ! []
+      Model me App.Navigation.initialState Loading LoadingPage ! []
 
     (DashboardMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
-    (DashboardMessage (Response failures dashboard), Model me navigationState _) ->
-      Model me navigationState (DashboardPage failures dashboard) ! []
-    (DashboardMessage _, model) ->
+    (DashboardMessage (Response failures dashboard), Model me navigationState _ _) ->
+      Model me navigationState Finished (DashboardPage failures dashboard) ! []
+    (DashboardMessage _, _) ->
       model ! []
 
-    (NavigationMessage message, Model me oldNavigationState page) ->
+    (NavigationMessage message, Model me oldNavigationState progress page) ->
       let (navigationState, command) = App.Navigation.update message oldNavigationState
-      in Model me navigationState page ! [Cmd.map NavigationMessage command]
-    (NavigationMessage _, model) ->
+      in Model me navigationState progress page ! [Cmd.map NavigationMessage command]
+    (NavigationMessage _, _) ->
       model ! []
 
-    (UpdateRepositoryNames repositoryNames, Model me navigationState (NewProjectPage _)) ->
-      Model me navigationState (NewProjectPage repositoryNames) ! []
-    (UpdateRepositoryNames repositoryNames, Model me navigationState (EditProjectPage (Project username projectName _))) ->
-      Model me navigationState (EditProjectPage (Project username projectName repositoryNames)) ! []
+    (UpdateRepositoryNames repositoryNames,
+     Model me navigationState progress (NewProjectPage _)) ->
+      Model me navigationState progress (NewProjectPage repositoryNames) ! []
+    (UpdateRepositoryNames repositoryNames,
+     Model me navigationState progress (EditProjectPage (Project username projectName _))) ->
+      Model me navigationState progress (EditProjectPage (Project username projectName repositoryNames)) ! []
     (UpdateRepositoryNames _, _) ->
       model ! []
 
     (EditProjectMessage UnauthenticatedResponse, _) ->
       Unauthenticated ! []
-    (EditProjectMessage (Response _ project), Model me navigationState _) ->
-      Model me navigationState (EditProjectPage project) ! []
+    (EditProjectMessage (Response _ project), Model me navigationState progress _) ->
+      Model me navigationState Finished (EditProjectPage project) ! []
     (EditProjectMessage _, _) ->
       model ! []
 
-    (ErrorMessage error, Model me navigationState _) ->
-      Model me navigationState (ErrorPage error) ! []
+    (ErrorMessage error, Model me navigationState progress page) ->
+      Model me navigationState (Error error) page ! []
     (ErrorMessage error, _) ->
-      CatastrophicFailure error ! []
+      Unauthenticated ! []
 
 delay : Message -> Cmd Message
 delay message =
@@ -129,11 +134,11 @@ send handle = Task.attempt <| \result ->
 view : Model -> Html Message
 view model =
   case model of
-    Loading -> App.Page.Frame.html [navigationSignedOut] App.Page.Loading.html
+    FirstLoad -> App.Page.Frame.html [navigationSignedOut] App.Page.Loading.html
     Unauthenticated -> App.Page.Frame.html [navigationSignedOut] App.Page.Home.html
-    CatastrophicFailure error -> App.Page.Frame.html [navigationSignedOut] (App.Page.Error.html error)
-    Model me navigationState page ->
-      App.Page.Frame.html [navigationSignedIn me navigationState] <| case page of
+    Model me navigationState progress page ->
+      let top = [navigationSignedIn me navigationState, App.Page.Progress.report progress]
+      in App.Page.Frame.html top <| case page of
         LoadingPage -> App.Page.Loading.html
         SelectAProjectPage projects -> App.Page.SelectAProject.html projects
         NewProjectPage repositoryNames -> App.Page.EditProject.htmlForNewProject repositoryNames
@@ -144,7 +149,7 @@ view model =
 subscriptions : Model -> Sub Message
 subscriptions model =
   case model of
-    Model me navigationState (DashboardPage _ (Dashboard location _ _)) ->
+    Model _ _ _ (DashboardPage _ (Dashboard location _ _)) ->
       every minute (always (Load location))
     _ -> Sub.none
 

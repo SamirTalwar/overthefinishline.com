@@ -27,10 +27,14 @@ type Failure =
     RequestFailure Url String
 
 type Model =
-    Loading
-  | Unauthenticated
-  | CatastrophicFailure Error
-  | Model Me Navigation.State Page
+    Unauthenticated
+  | FirstLoad
+  | Model Me Navigation.State Progress Page
+
+type Progress =
+    Finished
+  | Loading
+  | Error Error
 
 type Page =
     LoadingPage

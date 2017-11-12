@@ -4,11 +4,15 @@ services:
   dashboard-proxy:
     image: samirtalwar/overthefinishline.com-proxy
     environment:
-      'SERVER_NAME': 'dev.overthefinishline.com'
+      'SERVER_NAME': 'swarm.overthefinishline.com'
       'BACKEND': 'dashboard'
     ports:
       - 80:80
       - 443:443
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
     depends_on:
       - dashboard
 
@@ -16,19 +20,10 @@ services:
     image: samirtalwar/overthefinishline.com-dashboard
     entrypoint:
       - '/usr/local/bin/overthefinishline-dashboard-exe'
-    env_file: development.env
+    env_file: production.env
     ports:
       - 80
-    depends_on:
-      - database
-
-  database:
-    image: samirtalwar/overthefinishline.com-database
-    ports:
-      - 5432
-    env_file: development.env
-    volumes:
-      - database-data:/var/lib/postgresql/data
-
-volumes:
-  database-data: {}
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any

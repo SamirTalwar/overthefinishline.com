@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+unexport DOCKER_HOST
 
 TAG = samirtalwar/overthefinishline.com-database
 

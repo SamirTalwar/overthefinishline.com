@@ -1,3 +1,6 @@
+SHELL := /bin/bash
+unexport DOCKER_HOST
+
 PRODUCTION_FILES = $(shell find client/src -name '*.elm')
 PRODUCTION_NATIVE_FILES = client/src/Native/Moment.js
 PRODUCTION_OUTPUT_FILES = client/build/src/index.html client/build/src/stylesheet.css \

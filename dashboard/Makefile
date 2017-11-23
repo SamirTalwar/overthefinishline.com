@@ -44,11 +44,11 @@ client/build/src/index.html: client/static/index.html client/build/src
 client/build/src/load.js: client/static/load.js client/build/src
 	cp -f $< $@
 
-client/build/src/application.js: elm-package.json $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) client/build/src
+client/build/src/application.js: $(PRODUCTION_FILES) $(PRODUCTION_NATIVE_FILES) client/build/src elm-package.json
 	elm make --warn --yes --output=$@ $(PRODUCTION_FILES)
 
-client/build/src/stylesheet.css: elm-package.json client/src/stylesheet.scss client/build/src node_modules
-	./node_modules/.bin/node-sass client/src/stylesheet.scss > $@
+client/build/src/stylesheet.css: client/src/stylesheet.scss client/build/src node_modules elm-package.json
+	./node_modules/.bin/node-sass --output=$(dir $@) $<
 
 client/src/Native:
 	mkdir -p $@

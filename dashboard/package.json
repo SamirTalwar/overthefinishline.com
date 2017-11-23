@@ -14,12 +14,12 @@
     "test": "make test"
   },
   "dependencies": {
-    "moment": "^2.18.1"
+    "moment": "^2.19.2"
   },
   "devDependencies": {
-    "browserify": "^14.4.0",
+    "browserify": "^14.5.0",
     "elm": "^0.18.0",
-    "node-sass": "^4.5.3",
-    "npm-check": "^5.4.5"
+    "node-sass": "^4.7.2",
+    "npm-check": "^5.5.2"
   }
 }

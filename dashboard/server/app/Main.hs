@@ -63,6 +63,8 @@ createApp infrastructure = do
 
     get root appHtml
 
+    get "favicon.png" favicon
+
     post ("authentication" <//> "by" <//> "github") authenticateWithGitHub
 
     get ("authorization" <//> "by" <//> "github") $ do
@@ -136,6 +138,8 @@ createApp infrastructure = do
 
   where
     appHtml = file "text/html" (configurationClientPath (configuration infrastructure) </> "index.html")
+
+    favicon = file "image/png" (configurationClientPath (configuration infrastructure) </> "favicon.png")
 
     authenticateWithGitHub = redirect $ decodeUtf8 $ OAuth2.authorizationUrl gitHubOAuthCredentials
 

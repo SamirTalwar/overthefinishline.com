@@ -1,6 +1,8 @@
 PRODUCTION_FILES = $(shell find client/src -name '*.elm')
 PRODUCTION_NATIVE_FILES = client/src/Native/Moment.js
-PRODUCTION_OUTPUT_FILES = client/build/src/index.html client/build/src/stylesheet.css \
+PRODUCTION_OUTPUT_FILES = client/build/src/index.html \
+												  client/build/src/favicon.png \
+												  client/build/src/stylesheet.css \
                           client/build/src/application.js client/build/src/load.js
 TEST_FILES = $(shell find client/test -name '*.elm')
 
@@ -39,6 +41,9 @@ client/build/src:
 	mkdir -p $@
 
 client/build/src/index.html: client/static/index.html client/build/src
+	cp -f $< $@
+
+client/build/src/favicon.png: client/static/favicon.png client/build/src
 	cp -f $< $@
 
 client/build/src/load.js: client/static/load.js client/build/src

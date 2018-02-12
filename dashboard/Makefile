@@ -16,7 +16,7 @@ build: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
 check: test lint
 
 .PHONY: test
-test: $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
+test: elm-stuff/packages $(PRODUCTION_OUTPUT_FILES) $(PRODUCTION_NATIVE_FILES)
 	node ./elm-stuff/packages/SamirTalwar/arborist/3.0.0/bin/run Tests.tests $(TEST_FILES)
 	stack runhaskell -- -iserver/app:server/src:server/test server/test/Spec.hs
 
@@ -64,3 +64,6 @@ client/src/Native/Moment.js: client/native/src/Moment.js client/src/Native node_
 node_modules: package.json package-lock.json
 	npm install && npm prune
 	touch $@
+
+elm-stuff/packages: elm-package.json
+	elm package install

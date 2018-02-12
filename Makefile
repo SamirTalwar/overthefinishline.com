@@ -4,7 +4,6 @@ STACK = overthefinishline
 build:
 	make -C dashboard build
 	make -C database build
-	make -C proxy build
 	touch .built
 
 .PHONY: check
@@ -19,7 +18,6 @@ test:
 push:
 	git push
 	make -C dashboard push
-	make -C proxy push
 	sleep 60
 	docker-cloud stack update $(STACK)
 

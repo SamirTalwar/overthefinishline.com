@@ -1,17 +1,6 @@
 version: '2'
 
 services:
-  dashboard-proxy:
-    image: samirtalwar/overthefinishline.com-proxy
-    environment:
-      'SERVER_NAME': 'dev.overthefinishline.com'
-      'BACKEND': 'dashboard'
-    ports:
-      - 80:80
-      - 443:443
-    depends_on:
-      - dashboard
-
   dashboard:
     image: samirtalwar/overthefinishline.com-dashboard
     entrypoint:
@@ -20,7 +9,7 @@ services:
     environment:
       'ENVIRONMENT': 'Development'
     ports:
-      - 80
+      - 80:80
     depends_on:
       - database
 

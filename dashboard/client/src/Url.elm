@@ -25,7 +25,8 @@ parse : String -> Url
 parse = Erl.parse
 
 toString : Url -> String
-toString = Erl.toString
+toString url =
+  let urlString = Erl.toString url in if urlString == "" then "/" else urlString
 
 addQuery : String -> String -> Url -> Url
 addQuery = Erl.addQuery

@@ -24,7 +24,7 @@ import Data.Time.Clock (getCurrentTime)
 import qualified Database.Persist as Database
 import qualified Database.Persist.Postgresql as Postgresql
 import qualified Database.Esqueleto as Sql
-import Database.Esqueleto hiding (delete, get)
+import Database.Esqueleto hiding (get)
 import Network.HTTP.Client (HttpException (HttpExceptionRequest), HttpExceptionContent (StatusCodeException), responseStatus)
 import Network.HTTP.Types.Status (Status (..), badRequest400, unauthorized401, notFound404, internalServerError500)
 import qualified Network.HTTP.Types.URI as URI
@@ -179,7 +179,8 @@ createApp infrastructure = do
       withDatabase $ do
         replace projectId project
         Sql.delete $ from $ \repository -> where_ (repository ^. ProjectRepositoryProjectId ==. val projectId)
-        mapM_ (insert . ProjectRepository projectId) repositoryNames
+        let uniqueRepositoryNames = List.sort $ List.nub repositoryNames
+        mapM_ (insert . ProjectRepository projectId) uniqueRepositoryNames
         return (user, project)
 
     projectParams userId requestParams = do

@@ -18,8 +18,6 @@ test:
 push:
 	git push
 	make -C dashboard push
-	sleep 60
-	docker-cloud stack update $(STACK)
 
 .PHONY: clean
 clean:

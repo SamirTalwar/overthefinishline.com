@@ -14,7 +14,7 @@
     "test": "make test"
   },
   "dependencies": {
-    "moment": "^2.19.2"
+    "moment": "^2.19.3"
   },
   "devDependencies": {
     "browserify": "^14.5.0",
